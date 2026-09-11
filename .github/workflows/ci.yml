@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack & Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript typecheck
+        run: pnpm run typecheck
+
+      - name: Run unit & integration tests
+        run: pnpm run test
+
+      - name: Build production bundle
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/tutordesk"
+          BETTER_AUTH_SECRET: "ci-dummy-secret-key-at-least-thirty-two-characters"
+          BETTER_AUTH_URL: "http://localhost:3000"

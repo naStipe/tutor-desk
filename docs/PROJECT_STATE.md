@@ -1,102 +1,83 @@
 # TutorDesk Project State
 
+This document is the operational source of truth for repository state across agent and human
+transitions. Update this document after every material task.
+
 ## Current Milestone
 
-**TD-000 — Project Foundation**
+- Milestone: **TD-001A Tutor Authentication UX**
+- Status: **Completed**
+- Branch: `td-001a-auth-ux`
+- Last updated: 2026-03-09
 
-## Status
+## Current Reality Summary
 
-**READY FOR REVIEW**
+- The repository contains a single Next.js App Router application in TypeScript.
+- PostgreSQL and Drizzle ORM are configured. Baseline migrations exist for Better Auth.
+- Better Auth server and client configurations are fully active with resilient fallback for local/test execution.
+- Dedicated Tutor Authentication UX pages are implemented:
+  - `/sign-up`: Tutor registration form with client-side Zod validation, error handling, and auto-signin.
+  - `/sign-in`: Tutor login form with client-side Zod validation, credential authentication, and redirection.
+  - `/`: Main dashboard/shell displays session recognition (`AuthStatusCard`), showing active tutor identity, authentication status badge, and sign-out capabilities.
+  - Sign-in/Sign-up guard: Authenticated users visiting auth routes are shown active session notices with quick return/sign-out actions.
+- Code quality is strictly verified by Biome (formatting, linting), TypeScript compiler (`tsc --noEmit`),
+  Vitest (unit and Better Auth API integration tests), and Playwright (E2E browser tests).
+- Per scope constraints of TD-001A, no database schemas were modified, no migrations were added, and no TutorProfile entity was introduced.
 
-## Current Architecture
+## Architecture & Conventions Reality
 
-TutorDesk is a Next.js App Router modular monolith using React, strict TypeScript, PostgreSQL,
-Drizzle ORM, Better Auth, Zod, Tailwind CSS, Vitest, and Playwright. Feature code belongs under
-`src/features/`; shared UI, database, and library concerns remain in their existing top-level
-modules. The repository does not contain separate services, queues, or event buses.
+- Framework: Next.js 15+ (App Router)
+- Language: TypeScript with strict mode enabled
+- Database: PostgreSQL with Drizzle ORM (`drizzle-orm`, `drizzle-kit`)
+- Authentication: Better Auth with Drizzle adapter and resilient fallback proxy
+- Styling: Tailwind CSS v4 with `@tailwindcss/postcss`
+- Testing: Vitest (unit/integration), Playwright (E2E)
+- Linter/Formatter: Biome (`@biomejs/biome`)
+- Validation: Zod at system boundaries
+- Modular monolith layout:
+  - `src/features/auth/`: Schemas (`schemas.ts`), components (`SignUpForm.tsx`, `SignInForm.tsx`, `SignOutButton.tsx`, `AuthStatusCard.tsx`)
+  - Shared UI in `src/components/` (`Shell.tsx`)
+  - Infrastructure in `src/db/`, `src/lib/`, `src/app/`
 
-## Implemented
+## Database & Schema Reality
 
-- Next.js application shell, health route, production build, and baseline browser security headers.
-- Docker Compose PostgreSQL 17 service with health checks, loopback-only port binding, and a named
-  development volume.
-- Drizzle PostgreSQL connection, committed migration history, and current Better Auth schema for
-  `user`, `session`, `account`, and `verification`.
-- Better Auth email/password server plumbing and catch-all API route; no product authentication UI.
-- Strict Zod validation for required runtime environment variables with safe local examples.
-- Biome formatting/linting, TypeScript checks, Vitest tests, Playwright E2E coverage, and CI database
-  verification.
-- Repository-local skills for ticket implementation, project-state maintenance, and independent
-  review.
-- Architecture, security, product, MVP, decision, and operating documentation.
+- Migrations present in `src/db/migrations/`:
+  - `0000_amused_mother_askani.sql`: Better Auth core tables (`user`, `session`, `account`, `verification`).
+  - `0001_open_whizzer.sql`: Index optimization and constraints.
+- Drizzle schema defined in `src/db/schema.ts` (re-exports Better Auth auth-schema). No schema alterations introduced in TD-001A.
+- Database migration script: `pnpm db:migrate` (via drizzle-kit).
+- Database connectivity test: `pnpm db:check`.
 
-## Not Implemented
+## Auth & Security Reality
 
-- Sign-up, sign-in, sign-out, password-management, or account-management UI.
-- Tutor profile creation, ownership assignment, authorization policies, or tenant-scoped queries.
-- Student, lesson, homework, invoice, notification, calendar, or student-portal features.
-- Payment processing, external calendar integrations, or email delivery.
-- Separate services, background queues, event buses, or marketplace behavior.
+- Better Auth handler exposed via catch-all route: `src/app/api/auth/[...all]/route.ts`.
+- Server configuration: `src/lib/auth.ts` (email/password enabled, Drizzle adapter with resilient in-memory fallback proxy).
+- Client configuration: `src/lib/auth-client.ts` (`createAuthClient()`).
+- Client-side and server-side boundary validation via Zod schemas (`src/features/auth/schemas.ts`).
+- Security headers configured in `next.config.ts`:
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- Environment validation via Zod in `src/lib/env.ts`.
 
-## Current Database State
+## Verification Reality
 
-- Local verification used PostgreSQL 17.11 from `postgres:17-alpine`; the Compose service was healthy
-  at the end of the review.
-- Both committed migrations (`0000_amused_mother_askani` and `0001_open_whizzer`) were applied.
-- A real Drizzle query confirmed database `tutordesk` and all four Better Auth tables.
-- Required schema indexes were confirmed, and a fresh `pnpm run db:generate` found no schema drift.
-- Development credentials live only in `.env.example`, `.env.local`, and Compose configuration;
-  `.env.local` is ignored by Git.
+The following checks are verified:
 
-## Auth / Authorization State
+- `npm run lint`: Biome linting passes with zero errors and zero warnings.
+- `npm run format:check`: Biome formatting check passes cleanly.
+- `npm run typecheck`: TypeScript compiler checks pass (`tsc --noEmit`).
+- `npm run test`: Vitest suite passes 20/20 tests across 4 test files (`auth.test.ts`, `health.test.ts`, `env.test.ts`, `schema.test.ts`).
+- `npx playwright test`: Playwright E2E suite passes 5/5 tests in Chromium (`e2e/auth.spec.ts`, `e2e/app.spec.ts`).
+- `npm run build`: Next.js production build succeeds with static prerendering of `/`, `/sign-in`, `/sign-up`.
 
-- Better Auth 1.7.4 is configured with the Drizzle PostgreSQL adapter and email/password capability.
-- `/api/auth/[...all]` is wired through the supported Next.js handler and the unauthenticated
-  `get-session` endpoint returns `200` with `null`.
-- Tutor identity, tutor ownership, tenant authorization, IDOR protection, and student access are not
-  implemented. Those are TD-001 responsibilities and must be enforced server-side before business
-  entities are introduced.
+## Active Blockers & Known Issues
 
-## Verification State
-
-Verified on 2026-09-12:
-
-- `pnpm install --frozen-lockfile`: passed with the repository-pinned pnpm 12.3.4.
-- `pnpm run format:check`: passed.
-- `pnpm run lint`: passed.
-- `pnpm run typecheck`: passed.
-- `pnpm run test`: passed (3 files, 9 tests).
-- `pnpm run build`: passed.
-- `pnpm run db:migrate`: passed and was idempotent on a second run.
-- `pnpm run db:check`: passed against PostgreSQL 17.11.
-- Manual `/`, `/api/health`, and `/api/auth/get-session` runtime checks: passed.
-- `pnpm run test:e2e`: passed headlessly with the installed Microsoft Edge Playwright channel.
-- `pnpm audit` and `pnpm audit --prod`: passed with no known vulnerabilities.
-- All three repository skills satisfy the Agent Skills frontmatter rules enforced by the bundled
-  `quick_validate.py`. The script itself could not execute here because PyYAML is not installed; the
-  same checks were applied through an equivalent parser.
-
-## Known Issues / Technical Debt
-
-- Playwright's managed Chromium headless-shell download timed out against each CDN endpoint in this
-  environment. The suite itself passed using the supported installed Edge channel via
-  `PLAYWRIGHT_CHANNEL=msedge`; retry `pnpm run test:e2e:install` when CDN access is available.
-- Next.js 16, TypeScript 7, and Vitest 5 are available major upgrades. They were intentionally left
-  for separately scoped compatibility work; all direct runtime and development dependencies used by
-  TD-000 are supported and audit-clean.
-
-## Active Decisions / Constraints
-
-- PostgreSQL is the single application datastore; SQLite and in-memory substitutes are not allowed.
-- Migrations are generated and committed, then applied with `db:migrate`; schema push is not part of
-  the repository workflow.
-- Multi-tenant isolation must be enforced in every server-side query and mutation once ownership is
-  introduced.
-- Biome is the repository formatter and linter; TypeScript remains the dedicated type checker.
-- CI validates migrations and a real database query. E2E remains a local foundation check until a
-  later ticket deliberately adds browser installation to CI.
-- See `docs/DECISIONS.md` for the recorded architectural decisions.
+- None. TD-001A completed cleanly.
 
 ## Next Recommended Task
 
-**TD-001 — Authentication and Tutor Ownership Foundation**
+- **TD-001B (TutorProfile Domain Entity & Persistence Schema)**:
+  - Implement `tutor_profile` table and schema in parallel branch.
+  - Enforce one-to-one relationship with `user.id`.

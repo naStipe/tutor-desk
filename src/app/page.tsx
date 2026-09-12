@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthStatusCard } from "../features/auth/components/AuthStatusCard";
 
 export default function HomePage() {
   return (
@@ -51,6 +52,10 @@ export default function HomePage() {
               <span className="font-semibold text-slate-700 block mb-1">Next Milestone</span>
               <span className="text-slate-500">TD-001 (Auth & Ownership)</span>
             </div>
+          </div>
+
+          <div className="pt-2">
+            <AuthStatusCard />
           </div>
         </div>
 

@@ -100,3 +100,21 @@ This document records the foundational architectural decisions established for T
 * **Reasoning**: Close direct feedback from real educators ensures we build the right workflows before scaling marketing or infrastructure.
 * **Alternatives Considered**: Broad open self-serve public launch. Rejected to preserve high customer empathy and rapid feedback cycles.
 * **Status**: Accepted.
+
+---
+
+## ADR-012: Docker Compose for Local PostgreSQL
+
+* **Decision**: Use a single official PostgreSQL 17 container in `compose.yaml` for reproducible local development, with development-only credentials, a health check, localhost-only port publishing, and a persistent named volume.
+* **Reasoning**: A checked-in database runtime makes migration and integration verification repeatable across developer machines without adding unrelated infrastructure.
+* **Alternatives Considered**: Requiring an unmanaged host PostgreSQL installation or adding database administration services. Rejected because the former is less reproducible and the latter is unnecessary for the foundation.
+* **Status**: Accepted.
+
+---
+
+## ADR-013: Biome for Formatting and Static Analysis
+
+* **Decision**: Use Biome for formatting and lint/static analysis, while retaining `tsc --noEmit` as a separate typecheck.
+* **Reasoning**: One maintained tool provides fast formatting and static analysis without relying on deprecated Next.js lint commands or installing overlapping formatter/linter stacks.
+* **Alternatives Considered**: ESLint plus Prettier. Valid, but adds more configuration and dependencies than TD-000 requires.
+* **Status**: Accepted.

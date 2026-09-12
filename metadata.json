@@ -1,6 +1,0 @@
-{
-  "name": "TutorDesk",
-  "description": "Management SaaS for independent private tutors to manage students, schedules, lessons, homework, and invoicing.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

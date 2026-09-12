@@ -2,8 +2,14 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main id="main-content" className="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
-      <div id="foundation-card" className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl p-8 shadow-xs">
+    <main
+      id="main-content"
+      className="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12"
+    >
+      <div
+        id="foundation-card"
+        className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl p-8 shadow-xs"
+      >
         <div className="flex items-center justify-between pb-6 border-b border-slate-100">
           <div>
             <h1 id="brand-title" className="text-2xl font-bold tracking-tight text-slate-900">
@@ -22,11 +28,10 @@ export default function HomePage() {
         </div>
 
         <div className="py-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-800">
-            Project Foundation Established
-          </h2>
+          <h2 className="text-base font-semibold text-slate-800">Project Foundation Established</h2>
           <p className="text-sm leading-relaxed text-slate-600">
-            This minimal application shell verifies that the Next.js App Router, Tailwind CSS, TypeScript, and Drizzle ORM configuration are operating correctly.
+            This minimal application shell verifies that the Next.js App Router, Tailwind CSS,
+            TypeScript, and Drizzle ORM configuration are operating correctly.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
@@ -57,9 +62,7 @@ export default function HomePage() {
           >
             Verify API Health Endpoint &rarr;
           </Link>
-          <span className="text-xs text-slate-400">
-            Single-repo production foundation
-          </span>
+          <span className="text-xs text-slate-400">Single-repo production foundation</span>
         </div>
       </div>
     </main>

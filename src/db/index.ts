@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
-import { env } from "../lib/env";
+import { getEnv } from "../lib/env";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -14,6 +14,7 @@ declare global {
  */
 export function getDbPool(): Pool {
   if (!global._tutorDeskPgPool) {
+    const env = getEnv();
     global._tutorDeskPgPool = new Pool({
       connectionString: env.DATABASE_URL,
       max: 10,

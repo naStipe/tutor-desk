@@ -1,146 +1,100 @@
 # TutorDesk
 
-TutorDesk is a dedicated business management SaaS built specifically for independent private tutors. It consolidates the operational aspects of running a solo tutoring practice—including student records, lesson scheduling, plain-text homework assignments, and invoice generation—into a single, unified workspace.
+TutorDesk is a responsive business-management SaaS for independent private tutors. It is a
+TypeScript modular monolith built with Next.js App Router, React, PostgreSQL, Drizzle ORM, Better
+Auth, Zod, Tailwind CSS, Vitest, and Playwright. It is not a tutor marketplace.
 
-TutorDesk is **NOT** a marketplace, an institutional school management platform, or a video-conferencing tool.
+The repository currently contains project and authentication infrastructure only. See
+`docs/PROJECT_STATE.md` for the verified implementation state and `docs/MVP.md` for intended V1
+scope.
 
----
+## Prerequisites
 
-## Architecture & Technology Stack
+- Node.js 22 or newer
+- Corepack (included with supported Node.js 22 installations)
+- Docker Desktop with the Linux container engine running
 
-TutorDesk is architected as a **TypeScript Modular Monolith**:
+## Clean-clone setup (PowerShell)
 
-* **Framework**: Next.js App Router (React 19)
-* **Language**: TypeScript (strict mode)
-* **Database**: PostgreSQL
-* **ORM & Migrations**: Drizzle ORM (`drizzle-orm`, `drizzle-kit`)
-* **Authentication**: Better Auth with PostgreSQL adapter
-* **Validation**: Zod
-* **Styling**: Tailwind CSS v4
-* **Package Manager**: pnpm (Corepack enabled)
-* **Testing**: Vitest (unit/integration), Playwright (E2E)
-* **Continuous Integration**: GitHub Actions
+1. Enable the package manager declared in `package.json` and install dependencies:
 
----
+   ```powershell
+   corepack enable
+   pnpm install --frozen-lockfile
+   ```
 
-## Development Prerequisites
+2. Create a local environment file:
 
-* **Node.js**: v22+
-* **Package Manager**: `pnpm` v10+ (enable via `corepack enable`)
-* **Database**: PostgreSQL 15+ (local instance or cloud-hosted database)
+   ```powershell
+   Copy-Item .env.example .env.local
+   ```
 
----
+   Replace `BETTER_AUTH_SECRET` with a high-entropy value of at least 32 characters. The example
+   database credentials are development-only and match `compose.yaml`. Local environment files are
+   ignored by Git.
 
-## Setup Instructions
+3. Start PostgreSQL and wait for it to become healthy:
 
-### 1. Clone & Install Dependencies
+   ```powershell
+   docker compose up -d
+   docker compose ps
+   ```
 
-```bash
-# Enable pnpm via Corepack if not already installed
-corepack enable
+4. Apply the committed migrations and verify the connection and Better Auth tables:
 
-# Install project dependencies
-pnpm install
+   ```powershell
+   pnpm run db:migrate
+   pnpm run db:check
+   ```
+
+5. Start TutorDesk:
+
+   ```powershell
+   pnpm run dev
+   ```
+
+   Open `http://localhost:3000`. Stop PostgreSQL later with `docker compose down`; the named volume
+   preserves local data.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm run dev` | Start the Next.js development server on port 3000 |
+| `pnpm run build` | Create the production build |
+| `pnpm run start` | Run the production build on port 3000 |
+| `pnpm run format` | Format supported repository files with Biome |
+| `pnpm run format:check` | Check formatting without modifying files |
+| `pnpm run lint` | Run Biome static analysis |
+| `pnpm run typecheck` | Run TypeScript type checking |
+| `pnpm run test` | Run Vitest unit tests |
+| `pnpm run test:watch` | Run Vitest in watch mode |
+| `pnpm run test:e2e:install` | Install Playwright's Chromium headless shell |
+| `pnpm run test:e2e` | Start the app as needed and run headless Chromium E2E tests |
+| `pnpm run db:generate` | Generate a migration after an intentional schema change |
+| `pnpm run db:migrate` | Apply committed Drizzle migrations |
+| `pnpm run db:check` | Execute a real query and verify Better Auth tables |
+| `pnpm run db:studio` | Open Drizzle Studio |
+| `pnpm run verify` | Run format, lint, typecheck, unit tests, and build |
+
+`pnpm run test:e2e`, `pnpm run db:migrate`, and `pnpm run db:check` require the local environment
+file and healthy PostgreSQL service. E2E is intentionally not in CI during the foundation milestone;
+CI does validate formatting, linting, types, unit tests, migrations, a real database query, and the
+production build. If the managed Chromium download is unavailable and Microsoft Edge is installed,
+set `$env:PLAYWRIGHT_CHANNEL = "msedge"` for that PowerShell session before running E2E.
+
+## Repository layout
+
+```text
+src/app/             Next.js routes and layouts
+src/components/      Shared UI components
+src/features/        Feature-oriented modules (future tickets)
+src/db/              Drizzle client, schemas, and migrations
+src/lib/             Shared environment and authentication infrastructure
+src/test/            Vitest tests
+e2e/                 Playwright tests
+docs/                Product, architecture, security, decisions, and project state
+.agents/skills/      Repository-local Codex workflows
 ```
 
-### 2. Environment Setup
-
-Copy the example environment configuration:
-
-```bash
-cp .env.example .env.local
-```
-
-Configure your variables in `.env.local`:
-* `DATABASE_URL`: Your PostgreSQL connection string.
-* `BETTER_AUTH_SECRET`: A secure random secret (min. 32 characters).
-* `NEXT_PUBLIC_APP_URL`: Base application URL (`http://localhost:3000` for local development).
-
-### 3. Database Setup & Migrations
-
-TutorDesk uses Drizzle Kit for schema management.
-
-```bash
-# Generate SQL migrations from TypeScript schema definitions
-pnpm run db:generate
-
-# Apply migrations to the database
-pnpm run db:migrate
-
-# (Optional) Open Drizzle Studio to inspect database records
-pnpm run db:studio
-```
-
----
-
-## Available Commands
-
-| Command | Description |
-| :--- | :--- |
-| `pnpm run dev` | Starts the Next.js development server on port 3000 |
-| `pnpm run build` | Compiles the production build |
-| `pnpm run start` | Runs the compiled production server |
-| `pnpm run typecheck` | Validates TypeScript types across the project |
-| `pnpm run lint` | Runs the project linter and typecheck |
-| `pnpm run test` | Executes unit and integration test suites with Vitest |
-| `pnpm run test:watch` | Runs Vitest in interactive watch mode |
-| `pnpm run test:e2e` | Executes Playwright end-to-end browser tests |
-| `pnpm run db:generate` | Generates new migration SQL files via Drizzle Kit |
-| `pnpm run db:migrate` | Runs pending database migrations |
-| `pnpm run db:push` | Pushes schema changes directly (dev prototyping) |
-| `pnpm run db:studio` | Launches Drizzle Studio GUI for visual database management |
-
----
-
-## Repository Structure
-
-```
-tutordesk/
-├── src/
-│   ├── app/                 # Next.js App Router routes, pages, and API handlers
-│   │   ├── api/
-│   │   │   ├── auth/        # Better Auth catch-all route handler
-│   │   │   └── health/      # Application health check endpoint
-│   │   ├── layout.tsx       # Root HTML shell and metadata
-│   │   ├── page.tsx         # TutorDesk application landing/shell
-│   │   └── globals.css      # Tailwind CSS entrypoint
-│   ├── components/          # Reusable UI components
-│   ├── features/            # Feature modules (auth, students, lessons, etc.)
-│   ├── db/
-│   │   ├── schema/          # Drizzle schema definitions (auth, etc.)
-│   │   ├── migrations/      # Versioned migration SQL files
-│   │   └── index.ts         # Connection pool and Drizzle DB client
-│   ├── lib/
-│   │   ├── env.ts           # Strict Zod environment variable validation
-│   │   ├── auth.ts          # Server-side Better Auth initialization
-│   │   └── auth-client.ts   # Client-side Better Auth React client
-│   └── test/                # Unit and integration test suites (Vitest)
-├── docs/
-│   ├── PRODUCT.md           # Product positioning and problem statement
-│   ├── MVP.md               # V1 release scope and non-goals
-│   ├── ARCHITECTURE.md      # System architecture and design principles
-│   ├── DOMAIN_MODEL.md      # Domain entity definitions and relationship rules
-│   ├── SECURITY.md          # Security invariants and multi-tenant policies
-│   ├── DECISIONS.md         # Architecture Decision Records (ADRs)
-│   └── PROJECT_STATE.md     # Current milestone status and roadmap
-├── .github/
-│   └── workflows/
-│       └── ci.yml           # GitHub Actions automated verification pipeline
-├── AGENTS.md                # Operating guidelines for AI coding agents
-├── README.md                # Project documentation and developer guide
-├── .env.example             # Documented environment variable template
-├── drizzle.config.ts        # Drizzle Kit migration configuration
-├── next.config.ts           # Next.js framework configuration
-├── package.json             # Scripts and dependencies
-├── playwright.config.ts     # Playwright E2E configuration
-├── pnpm-lock.yaml           # Locked dependency graph
-├── tsconfig.json            # Strict TypeScript configuration
-└── vitest.config.ts         # Vitest test runner configuration
-```
-
----
-
-## Current Status & Next Steps
-
-* **Current Milestone**: `TD-000 — Bootstrap TutorDesk Project Foundation` (Complete)
-* **Recommended Next Milestone**: `TD-001 — Authentication and Tutor Ownership Foundation`
+Read `AGENTS.md` before making changes.

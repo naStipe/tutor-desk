@@ -12,11 +12,12 @@ We explicitly reject distributed systems complexity (microservices, distributed 
 
 * **Framework**: Next.js App Router (React, Server Components, Route Handlers, Server Actions).
 * **Language & Runtime**: Strict TypeScript on Node.js (v22+).
-* **Database**: PostgreSQL.
+* **Database**: PostgreSQL, with an official PostgreSQL 17 Docker image and persistent volume for local development.
 * **ORM & Query Builder**: Drizzle ORM (`drizzle-orm` and `drizzle-kit`).
-* **Authentication**: Better Auth with PostgreSQL session & user storage.
+* **Authentication**: Better Auth infrastructure with PostgreSQL session and user storage. Authentication UX and tutor authorization are not yet implemented.
 * **Validation**: Zod schemas for all runtime inputs, environment variables, and API payloads.
 * **Styling**: Tailwind CSS for responsive, accessible utility-first styling.
+* **Formatting and Static Analysis**: Biome, with TypeScript type checking as a separate check.
 * **Testing**: Vitest for unit/integration tests and Playwright for end-to-end browser verification.
 * **Continuous Integration**: GitHub Actions executing format, lint, typecheck, test, and build pipelines.
 
@@ -61,6 +62,7 @@ tutordesk/
 * Authorization is never trusted to the client.
 * Every database query and business operation must verify the active user session and enforce that all accessed resources belong strictly to the authenticated tutor (`tutorId` scoping).
 * Cross-tenant access must return a 404 or 403 error.
+* This is a design invariant for future tutor-owned resources, not functionality delivered by TD-000.
 
 ### 4. Direct, Type-Safe Data Access
 * Drizzle ORM provides typed queries mapped directly to PostgreSQL tables.

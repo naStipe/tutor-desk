@@ -6,17 +6,16 @@ import { z } from "zod";
  */
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  APP_URL: z.string().url().optional(),
   DATABASE_URL: z
     .string()
     .min(1, "DATABASE_URL is required")
-    .default("postgresql://postgres:postgres@localhost:5432/tutordesk"),
-  BETTER_AUTH_SECRET: z
-    .string()
-    .min(16, "BETTER_AUTH_SECRET must be at least 16 characters")
-    .default("development-fallback-secret-minimum-sixteen-chars"),
-  BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
+    .url("DATABASE_URL must be a valid URL")
+    .refine(
+      (value) => value.startsWith("postgresql://") || value.startsWith("postgres://"),
+      "DATABASE_URL must use the postgresql:// or postgres:// protocol",
+    ),
+  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+  BETTER_AUTH_URL: z.string().url("BETTER_AUTH_URL must be a valid URL"),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -30,4 +29,6 @@ export function validateEnv(data: Record<string, unknown> = process.env): Env {
   return result.data;
 }
 
-export const env = validateEnv();
+export function getEnv(): Env {
+  return validateEnv(process.env);
+}

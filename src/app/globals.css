@@ -48,14 +48,14 @@
 }
 
 :root {
-  --td-canvas: #f6f8f7;
-  --td-surface: #ffffff;
-  --td-surface-muted: #eef1ef;
-  --td-border: #e1e7e4;
-  --td-border-strong: #c9d2ce;
+  --td-canvas: #eceee9;
+  --td-surface: #f9faf7;
+  --td-surface-muted: #eef0eb;
+  --td-border: #dde1db;
+  --td-border-strong: #c5cdc7;
 
-  --td-ink: #101715;
-  --td-ink-muted: #56655f;
+  --td-ink: #202723;
+  --td-ink-muted: #57645d;
   --td-ink-subtle: #8a9791;
 
   --td-brand: #059669;
@@ -121,32 +121,32 @@
  * at once. Used via arbitrary-value utilities, e.g. bg-[var(--td2-bg-card)].
  */
 :root {
-  --td2-bg-page: #f2f3f0;
-  --td2-bg-rail: #ffffff;
-  --td2-bg-card: #ffffff;
-  --td2-bg-inset: #f5f6f3;
-  --td2-bg-inset-2: #f0f2ef;
-  --td2-bg-inset-3: #f3f4f1;
-  --td2-bg-inset-4: #f7f8f6;
-  --td2-bg-field: #ffffff;
-  --td2-bg-row-hover: #f7f8f6;
+  --td2-bg-page: #ecede8;
+  --td2-bg-rail: #f9faf7;
+  --td2-bg-card: #f9faf7;
+  --td2-bg-inset: #f0f1ec;
+  --td2-bg-inset-2: #ebede8;
+  --td2-bg-inset-3: #eef0eb;
+  --td2-bg-inset-4: #f3f4f0;
+  --td2-bg-field: #f9faf7;
+  --td2-bg-row-hover: #f3f4f0;
 
-  --td2-border-strong: #d8dbd6;
-  --td2-border-card: #e2e4df;
-  --td2-border-hairline: #ecefea;
-  --td2-border-rail: #e2e4df;
-  --td2-border-chip: #e2e4df;
+  --td2-border-strong: #d3d6cf;
+  --td2-border-card: #dee1d9;
+  --td2-border-hairline: #e6e8e2;
+  --td2-border-rail: #dee1d9;
+  --td2-border-chip: #dee1d9;
 
-  --td2-text-primary: #0b0d0c;
-  --td2-text-secondary: #3a403d;
-  --td2-text-secondary-2: #4a514e;
-  --td2-text-muted: #6b7270;
-  --td2-text-faint: #8c938f;
-  --td2-text-disabled: #a2a8a5;
-  --td2-text-disabled-2: #b6bcb9;
+  --td2-text-primary: #23282a;
+  --td2-text-secondary: #454c46;
+  --td2-text-secondary-2: #545b55;
+  --td2-text-muted: #737b74;
+  --td2-text-faint: #8f958e;
+  --td2-text-disabled: #a5aba3;
+  --td2-text-disabled-2: #b8bdb5;
 
   --td2-accent: #4cf0b3;
-  --td2-accent-ink: #0b0d0c;
+  --td2-accent-ink: #16211c;
   --td2-accent-text: #00734f;
   --td2-accent-text-strong: #00875f;
   --td2-accent-dot: #00a87a;
@@ -158,11 +158,11 @@
   --td2-attention-ink: #ffffff;
   --td2-attention-border: #d6c9fa;
 
-  --td2-bar-inactive: #e4e6e2;
-  --td2-bar-active: #0b0d0c;
+  --td2-bar-inactive: #dfe2da;
+  --td2-bar-active: #23282a;
 
   /* Primary fill (buttons, "up next"/prep queue surfaces): inverted per theme. */
-  --td2-primary-bg: #0b0d0c;
+  --td2-primary-bg: #23282a;
   --td2-primary-fg: #4cf0b3;
 }
 

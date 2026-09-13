@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LinkButton } from "../../../components/Button";
 import { PageHeader } from "../../../components/PageHeader";
@@ -14,7 +15,8 @@ import {
 } from "../../../features/lessons/date-utils";
 import { listLessonsInRange } from "../../../features/lessons/data";
 import { listActiveStudents } from "../../../features/students/data";
-import { createClient } from "../../../lib/supabase/server";
+import { cached } from "../../../lib/cache";
+import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -43,13 +45,23 @@ export default async function LessonsPage({
   const rangeDays = view === "day" ? 1 : 7;
   const rangeEnd = addDays(rangeStart, rangeDays);
 
-  const supabase = await createClient();
+  const { supabase, user } = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+
   const [lessons, students] = await Promise.all([
-    listLessonsInRange(supabase, {
-      start: rangeStart.toISOString(),
-      end: rangeEnd.toISOString(),
-    }),
-    listActiveStudents(supabase),
+    cached(
+      `lessons-range:${user.id}:${rangeStart.toISOString()}:${rangeEnd.toISOString()}`,
+      [`lessons:${user.id}`],
+      30_000,
+      () =>
+        listLessonsInRange(supabase, {
+          start: rangeStart.toISOString(),
+          end: rangeEnd.toISOString(),
+        }),
+    ),
+    cached(`students-active:${user.id}`, [`students:${user.id}`], 30_000, () =>
+      listActiveStudents(supabase),
+    ),
   ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));

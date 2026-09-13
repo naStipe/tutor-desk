@@ -2,17 +2,21 @@ import { redirect } from "next/navigation";
 import { TodayDashboard } from "../../features/dashboard/components/TodayDashboard";
 import { getTodayDashboardData } from "../../features/dashboard/data";
 import { firstNameFromEmail } from "../../lib/display-name";
-import { createClient } from "../../lib/supabase/server";
+import { cached } from "../../lib/cache";
+import { getCurrentUser } from "../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) redirect("/sign-in");
+  const { supabase, user } = await getCurrentUser();
+  if (!user) redirect("/sign-in");
 
-  const { todaysLessons, homeworkAttention, unbilled, weekLoad } =
-    await getTodayDashboardData(supabase);
+  const { todaysLessons, homeworkAttention, unbilled, weekLoad } = await cached(
+    `today-dashboard:${user.id}`,
+    [`lessons:${user.id}`, `homework:${user.id}`],
+    30_000,
+    () => getTodayDashboardData(supabase),
+  );
 
   const lessons = todaysLessons.map((lesson) => ({
     id: lesson.id,
@@ -35,7 +39,7 @@ export default async function DashboardPage() {
 
   return (
     <TodayDashboard
-      firstName={firstNameFromEmail(data.user.email ?? "")}
+      firstName={firstNameFromEmail(user.email ?? "")}
       lessons={lessons}
       homework={homework}
       unbilled={unbilled}

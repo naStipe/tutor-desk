@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "../../../../components/Avatar";
 import { Card } from "../../../../components/Card";
@@ -7,13 +8,21 @@ import { PageHeader } from "../../../../components/PageHeader";
 import { deleteStudentAction } from "../../../../features/students/actions";
 import { ConfirmDeleteForm } from "../../../../features/students/components/ConfirmDeleteForm";
 import { listArchivedStudents } from "../../../../features/students/data";
-import { createClient } from "../../../../lib/supabase/server";
+import { cached } from "../../../../lib/cache";
+import { getCurrentUser } from "../../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArchivedStudentsPage() {
-  const supabase = await createClient();
-  const students = await listArchivedStudents(supabase);
+  const { supabase, user } = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+
+  const students = await cached(
+    `students-archived:${user.id}`,
+    [`students:${user.id}`],
+    30_000,
+    () => listArchivedStudents(supabase),
+  );
 
   return (
     <div className="space-y-6">

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "../../../components/Avatar";
 import { LinkButton } from "../../../components/Button";
@@ -6,13 +7,18 @@ import { EmptyState } from "../../../components/EmptyState";
 import { UsersIcon } from "../../../components/icons";
 import { PageHeader } from "../../../components/PageHeader";
 import { listActiveStudents } from "../../../features/students/data";
-import { createClient } from "../../../lib/supabase/server";
+import { cached } from "../../../lib/cache";
+import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
 export default async function StudentsPage() {
-  const supabase = await createClient();
-  const students = await listActiveStudents(supabase);
+  const { supabase, user } = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+
+  const students = await cached(`students-active:${user.id}`, [`students:${user.id}`], 30_000, () =>
+    listActiveStudents(supabase),
+  );
 
   return (
     <div className="space-y-6">

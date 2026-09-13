@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "../../../components/Avatar";
 import { LinkButton } from "../../../components/Button";
@@ -7,7 +8,8 @@ import { BookIcon } from "../../../components/icons";
 import { PageHeader } from "../../../components/PageHeader";
 import { HomeworkStatusBadge } from "../../../features/homework/components/HomeworkStatusBadge";
 import { listHomework } from "../../../features/homework/data";
-import { createClient } from "../../../lib/supabase/server";
+import { cached } from "../../../lib/cache";
+import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +22,12 @@ function formatDueDate(value: string | null) {
 }
 
 export default async function HomeworkPage() {
-  const supabase = await createClient();
-  const homework = await listHomework(supabase);
+  const { supabase, user } = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+
+  const homework = await cached(`homework-list:${user.id}`, [`homework:${user.id}`], 30_000, () =>
+    listHomework(supabase),
+  );
 
   return (
     <div className="space-y-6">

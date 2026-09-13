@@ -23,15 +23,16 @@ export default function HomePage() {
             id="status-badge"
             className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
           >
-            TD-000 Initialized
+            Supabase foundation
           </span>
         </div>
 
         <div className="py-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-800">Project Foundation Established</h2>
+          <h2 className="text-base font-semibold text-slate-800">
+            Run your tutoring business from one place
+          </h2>
           <p className="text-sm leading-relaxed text-slate-600">
-            This minimal application shell verifies that the Next.js App Router, Tailwind CSS,
-            TypeScript, and Drizzle ORM configuration are operating correctly.
+            Secure tutor authentication and an isolated workspace are ready for the TutorDesk beta.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
@@ -41,28 +42,30 @@ export default function HomePage() {
             </div>
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
               <span className="font-semibold text-slate-700 block mb-1">Persistence</span>
-              <span className="text-slate-500">PostgreSQL + Drizzle ORM</span>
+              <span className="text-slate-500">Hosted Supabase PostgreSQL</span>
             </div>
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
               <span className="font-semibold text-slate-700 block mb-1">Authentication</span>
-              <span className="text-slate-500">Better Auth Plumbing</span>
+              <span className="text-slate-500">Supabase Auth</span>
             </div>
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-              <span className="font-semibold text-slate-700 block mb-1">Next Milestone</span>
-              <span className="text-slate-500">TD-001 (Auth & Ownership)</span>
+              <span className="font-semibold text-slate-700 block mb-1">Tenant isolation</span>
+              <span className="text-slate-500">Server authorization + RLS</span>
             </div>
           </div>
         </div>
 
         <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
           <Link
-            id="health-check-link"
-            href="/api/health"
+            id="sign-in-link"
+            href="/sign-in"
             className="text-xs text-blue-600 hover:text-blue-800 font-medium underline underline-offset-4"
           >
-            Verify API Health Endpoint &rarr;
+            Sign in &rarr;
           </Link>
-          <span className="text-xs text-slate-400">Single-repo production foundation</span>
+          <Link href="/sign-up" className="text-xs text-slate-500 hover:text-slate-700">
+            Create account
+          </Link>
         </div>
       </div>
     </main>

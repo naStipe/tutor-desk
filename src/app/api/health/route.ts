@@ -4,7 +4,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     app: "TutorDesk",
-    milestone: "TD-000",
+    milestone: "TD-001S",
     service: "project-foundation",
     timestamp: new Date().toISOString(),
   });

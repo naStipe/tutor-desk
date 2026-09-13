@@ -11,26 +11,12 @@ permissions:
 
 jobs:
   verify:
-    name: Format, Lint, Typecheck, Test, Database & Build
+    name: Format, Lint, Typecheck, Test & Build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: tutordesk
-          POSTGRES_USER: tutordesk
-          POSTGRES_PASSWORD: tutordesk_dev_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U tutordesk -d tutordesk"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     env:
-      DATABASE_URL: postgresql://tutordesk:tutordesk_dev_password@localhost:5432/tutordesk
-      BETTER_AUTH_SECRET: ci-dummy-secret-key-at-least-thirty-two-characters
-      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci-placeholder
 
     steps:
       - name: Checkout repository
@@ -58,12 +44,6 @@ jobs:
 
       - name: Run unit tests
         run: pnpm run test
-
-      - name: Apply database migrations
-        run: pnpm run db:migrate
-
-      - name: Verify database
-        run: pnpm run db:check
 
       - name: Build production bundle
         run: pnpm run build

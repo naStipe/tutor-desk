@@ -6,16 +6,14 @@ import { z } from "zod";
  */
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  DATABASE_URL: z
+  NEXT_PUBLIC_SITE_URL: z.string().url("NEXT_PUBLIC_SITE_URL must be a valid URL"),
+  NEXT_PUBLIC_SUPABASE_URL: z
     .string()
-    .min(1, "DATABASE_URL is required")
-    .url("DATABASE_URL must be a valid URL")
-    .refine(
-      (value) => value.startsWith("postgresql://") || value.startsWith("postgres://"),
-      "DATABASE_URL must use the postgresql:// or postgres:// protocol",
-    ),
-  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-  BETTER_AUTH_URL: z.string().url("BETTER_AUTH_URL must be a valid URL"),
+    .url("NEXT_PUBLIC_SUPABASE_URL must be a valid URL")
+    .refine((value) => value.startsWith("https://"), "Supabase URL must use HTTPS"),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z
+    .string()
+    .min(20, "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is required"),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -30,5 +28,10 @@ export function validateEnv(data: Record<string, unknown> = process.env): Env {
 }
 
 export function getEnv(): Env {
-  return validateEnv(process.env);
+  return validateEnv({
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  });
 }

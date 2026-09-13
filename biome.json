@@ -17,6 +17,11 @@
     }
   },
   "files": {
-    "includes": ["**", "!!src/db/migrations", "!!next-env.d.ts"]
+    "includes": [
+      "**",
+      "!!src/db/migrations",
+      "!!src/lib/supabase/database.types.ts",
+      "!!next-env.d.ts"
+    ]
   }
 }

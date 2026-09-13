@@ -1,4 +1,6 @@
 node_modules/
+.pnpm-store/
+supabase/.temp/
 build/
 dist/
 .next/

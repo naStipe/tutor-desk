@@ -9,7 +9,7 @@ describe("Health Check Route Handler", () => {
     const body = await response.json();
     expect(body.status).toBe("ok");
     expect(body.app).toBe("TutorDesk");
-    expect(body.milestone).toBe("TD-000");
+    expect(body.milestone).toBe("TD-001S");
     expect(body.timestamp).toBeDefined();
   });
 });

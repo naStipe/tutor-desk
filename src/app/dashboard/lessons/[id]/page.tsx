@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Avatar } from "../../../../components/Avatar";
 import { Button } from "../../../../components/Button";
 import { PageHeader } from "../../../../components/PageHeader";
 import { setLessonStatusAction, updateLessonAction } from "../../../../features/lessons/actions";
 import { LessonForm } from "../../../../features/lessons/components/LessonForm";
 import { StatusBadge } from "../../../../features/lessons/components/StatusBadge";
-import { toDateTimeLocalValue } from "../../../../features/lessons/date-utils";
+import { formatFullDateTime, toDateTimeLocalValue } from "../../../../features/lessons/date-utils";
 import { getLesson } from "../../../../features/lessons/data";
 import { LESSON_STATUSES, type LessonStatus } from "../../../../features/lessons/schemas";
 import { listActiveStudents } from "../../../../features/students/data";
@@ -41,7 +42,8 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     <div className="max-w-xl space-y-6">
       <PageHeader
         title={lesson.student?.name ?? "Lesson"}
-        description="Lesson details"
+        description={formatFullDateTime(lesson.start_time)}
+        avatar={<Avatar name={lesson.student?.name ?? "?"} />}
         actions={
           <Link href="/dashboard/lessons" className="text-sm text-slate-500 hover:text-slate-700">
             &larr; Back to lessons

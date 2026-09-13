@@ -23,6 +23,17 @@ export async function listLessonsInRange(
   return data as unknown as LessonWithStudent[];
 }
 
+export async function listLessonsForSelect(supabase: SupabaseClient<Database>, limit = 100) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .select(LESSON_COLUMNS)
+    .order("start_time", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Unable to load lessons: ${error.message}`);
+  return data as unknown as LessonWithStudent[];
+}
+
 export async function listUpcomingLessons(supabase: SupabaseClient<Database>, limit = 5) {
   const { data, error } = await supabase
     .from("lesson")
@@ -98,6 +109,23 @@ export async function updateLesson(
     .single();
 
   if (error) throw new Error(`Unable to update lesson: ${error.message}`);
+  return data as unknown as LessonWithStudent;
+}
+
+export async function updateLessonTime(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  startTime: string,
+  endTime: string,
+) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .update({ start_time: startTime, end_time: endTime, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select(LESSON_COLUMNS)
+    .single();
+
+  if (error) throw new Error(`Unable to move lesson: ${error.message}`);
   return data as unknown as LessonWithStudent;
 }
 

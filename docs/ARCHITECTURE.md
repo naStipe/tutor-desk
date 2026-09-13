@@ -42,6 +42,27 @@ subquery), so a tutor cannot link a lesson to another tutor's student even thoug
 would pass ownership. There is no hard-delete path; `cancelled`/`no_show` status values serve the
 lifecycle role that `archived_at` serves for students.
 
+`public.homework` rows are owned by a tutor through `tutor_id`, reference exactly one
+`public.student(id)`, and optionally one `public.lesson(id)` (`ON DELETE SET NULL`, so deleting a
+lesson never deletes its homework). Its insert/update RLS policies use the same correlated-subquery
+pattern as `lesson` to require the referenced student — and, when present, the referenced lesson —
+belong to that same tutor. There is no student portal yet, so submission and feedback text are both
+recorded by the tutor; see `docs/DOMAIN_MODEL.md` for the ownership caveat this implies.
+
+## Interactive calendar
+
+`/dashboard/lessons` renders `LessonCalendar` (`src/features/lessons/components/LessonCalendar.tsx`),
+a client component implementing a day/week time-grid with click-to-create and drag-to-reschedule,
+built on native Pointer Events rather than a drag-and-drop library or HTML5 Drag and Drop (kept the
+dependency surface unchanged per the no-new-dependency default). Two server actions support it
+without a full page navigation: `moveLessonAction` (reschedule; called directly from client code via
+`useTransition`, not bound to a `<form>`) and `quickCreateLessonAction` (create from a calendar
+click). Both re-derive `tutorId` from the session and re-validate through the same Zod schema and RLS
+policies as the form-based `createLessonAction`/`updateLessonAction` — the calendar is a second entry
+point into the same validated, ownership-checked data layer, not a parallel path around it. The
+calendar optimistically updates its local state on drag/create and reconciles with `router.refresh()`
+once the server call resolves, reverting on error.
+
 ## Repository boundaries
 
 - `src/app/`: routes, layouts, Server Components, and route handlers

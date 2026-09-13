@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
-import { createLesson, updateLesson, updateLessonStatus } from "./data";
+import { createLesson, updateLesson, updateLessonStatus, updateLessonTime } from "./data";
 import { lessonInputSchema, lessonStatusSchema } from "./schemas";
 
 export type LessonActionState = {
@@ -13,7 +13,10 @@ export type LessonActionState = {
 
 function fields(formData: FormData) {
   return {
-    studentId: formData.get("studentId"),
+    // A <select>'s currently-selected option being absent from submission (e.g. a disabled
+    // placeholder) makes FormData.get return null rather than "" — normalize so validation
+    // reports our friendly message instead of Zod's generic "expected string" one.
+    studentId: formData.get("studentId") ?? "",
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
     notes: formData.get("notes"),
@@ -72,6 +75,56 @@ export async function updateLessonAction(
   revalidatePath("/dashboard/lessons");
   revalidatePath(`/dashboard/lessons/${id}`);
   redirect(`/dashboard/lessons/${id}`);
+}
+
+export type CalendarActionResult = { error: string } | { id: string };
+
+/** Reschedules a lesson by dragging it on the calendar. Duration is preserved by the caller. */
+export async function moveLessonAction(
+  id: string,
+  startTime: string,
+  endTime: string,
+): Promise<CalendarActionResult> {
+  if (typeof id !== "string" || !id) return { error: "Missing lesson reference." };
+  if (Number.isNaN(Date.parse(startTime)) || Number.isNaN(Date.parse(endTime))) {
+    return { error: "Invalid lesson time." };
+  }
+  if (new Date(endTime) <= new Date(startTime)) {
+    return { error: "End time must be after start time." };
+  }
+
+  const { supabase } = await requireTutorId();
+
+  try {
+    const lesson = await updateLessonTime(supabase, id, startTime, endTime);
+    revalidatePath("/dashboard/lessons");
+    return { id: lesson.id };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Unable to move lesson." };
+  }
+}
+
+/** Creates a lesson from a calendar click, without leaving the calendar page. */
+export async function quickCreateLessonAction(input: {
+  studentId: string;
+  startTime: string;
+  endTime: string;
+}): Promise<CalendarActionResult> {
+  const parsed = lessonInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid lesson details." };
+  }
+
+  const { supabase, tutorId } = await requireTutorId();
+
+  try {
+    const lesson = await createLesson(supabase, tutorId, parsed.data);
+    revalidatePath("/dashboard/lessons");
+    revalidatePath("/dashboard");
+    return { id: lesson.id };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Unable to schedule lesson." };
+  }
 }
 
 export async function setLessonStatusAction(formData: FormData) {

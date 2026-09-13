@@ -27,6 +27,15 @@ export function toDateParam(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+/**
+ * Local midnight as an explicit-time ISO-shaped string (no "Z"/offset), safe to pass from a
+ * Server to a Client Component and reconstruct with `new Date(value)` without the UTC-parsing
+ * trap that a bare "YYYY-MM-DD" string has (that form is parsed as UTC midnight by the spec).
+ */
+export function toLocalMidnightValue(date: Date) {
+  return `${toDateParam(date)}T00:00:00`;
+}
+
 export function parseDateParam(value: string | undefined): Date {
   if (value) {
     const [year, month, day] = value.split("-").map(Number);
@@ -92,4 +101,49 @@ export function formatFullDateTime(iso: string) {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+export function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+export function minutesSinceMidnight(date: Date) {
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+export function formatHourLabel(hour: number) {
+  const period = hour < 12 || hour === 24 ? "AM" : "PM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour} ${period}`;
+}
+
+export function formatWeekdayShort(date: Date) {
+  return date.toLocaleDateString(DISPLAY_LOCALE, { weekday: "short" });
+}
+
+export function formatMinutesOfDay(minutes: number) {
+  const wrapped = ((minutes % 1440) + 1440) % 1440;
+  const hour = Math.floor(wrapped / 60);
+  const minute = wrapped % 60;
+  const period = hour < 12 ? "AM" : "PM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:${pad(minute)} ${period}`;
+}
+
+/** "HH:mm" (24h) for <input type="time"> values. */
+export function minutesToTimeInputValue(minutes: number) {
+  const wrapped = ((minutes % 1440) + 1440) % 1440;
+  return `${pad(Math.floor(wrapped / 60))}:${pad(wrapped % 60)}`;
+}
+
+export function timeInputValueToMinutes(value: string) {
+  const [hourStr, minuteStr] = value.split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+  return hour * 60 + minute;
 }

@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { EmptyState } from "../../components/EmptyState";
 import { LinkButton } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
+import { StatCard } from "../../components/StatCard";
+import { BookIcon, CalendarIcon, UsersIcon } from "../../components/icons";
+import { countHomeworkToReview } from "../../features/homework/data";
 import { countUpcomingLessons } from "../../features/lessons/data";
 import { listActiveStudents } from "../../features/students/data";
 import { createClient } from "../../lib/supabase/server";
@@ -20,9 +23,10 @@ export default async function DashboardPage() {
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) redirect("/sign-in");
 
-  const [students, upcomingLessonCount] = await Promise.all([
+  const [students, upcomingLessonCount, homeworkToReviewCount] = await Promise.all([
     listActiveStudents(supabase),
     countUpcomingLessons(supabase),
+    countHomeworkToReview(supabase),
   ]);
 
   return (
@@ -32,17 +36,20 @@ export default async function DashboardPage() {
         description="Here's what's happening with your tutoring business."
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-          <p className="text-sm font-medium text-slate-500">Active students</p>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{students.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-          <p className="text-sm font-medium text-slate-500">Upcoming lessons</p>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            {upcomingLessonCount}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="Active students" value={students.length} icon={UsersIcon} tone="blue" />
+        <StatCard
+          label="Upcoming lessons"
+          value={upcomingLessonCount}
+          icon={CalendarIcon}
+          tone="violet"
+        />
+        <StatCard
+          label="Homework to review"
+          value={homeworkToReviewCount}
+          icon={BookIcon}
+          tone="amber"
+        />
       </div>
 
       {students.length === 0 ? (
@@ -56,11 +63,16 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900">Quick actions</h2>
           </div>
-          <p className="mt-1 text-sm text-slate-500">Add a student or schedule a lesson.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Add a student, schedule a lesson, or assign homework.
+          </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <LinkButton href="/dashboard/students/new">Add student</LinkButton>
             <LinkButton href="/dashboard/lessons/new" variant="secondary">
               Schedule lesson
+            </LinkButton>
+            <LinkButton href="/dashboard/homework/new" variant="secondary">
+              Assign homework
             </LinkButton>
           </div>
         </div>

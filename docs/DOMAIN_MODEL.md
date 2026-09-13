@@ -42,12 +42,23 @@
 
 ### 6. Homework
 * A text-based homework task assigned by a tutor to a student.
-* Optionally tied to a completed `Lesson`.
-* Attributes (anticipated): id, tutorId, studentId, lessonId (optional), title, descriptionText, dueDate, status (assigned, submitted, reviewed).
+* Optionally tied to a `Lesson`.
+* TD-004 implements a single minimal `public.homework` table (not split into a separate
+  `HomeworkSubmission` entity, since V1 has no student-authenticated portal to author its own row —
+  see below): `id`, `tutor_id` (references `public.tutor_profile(user_id)`), `student_id`
+  (references `public.student(id)`), `lesson_id` (optional, references `public.lesson(id)`
+  `ON DELETE SET NULL`), `title`, `description`, `due_date`, `status` (`assigned`, `submitted`,
+  `reviewed`; check-constrained, defaults to `assigned`), `submission_text`, `submitted_at`,
+  `feedback_text`, `feedback_at`, `created_at`, `updated_at`.
+* Because there is no student portal yet, the tutor is the only actor who can write
+  `submission_text` (e.g. recording a submission made in person or by email) and `feedback_text`.
+  When a student portal is built, submission authorship should move to the student's own identity
+  rather than staying tutor-authored — revisit this table's ownership model at that point.
 
 ### 7. HomeworkSubmission
-* Plain text submission provided by a student in response to an assigned `Homework`.
-* Contains student answer text, submission timestamp, and tutor feedback text/grade.
+* Superseded for V1 by TD-004's single-table `Homework` design above (see rationale there). Kept as
+  a domain note: once a student portal exists, submissions may warrant a separate table so a student
+  can author their own row under RLS distinct from the tutor's `Homework` row.
 
 ### 8. Invoice
 * Represents a commercial billing document issued by a tutor to a student/parent.

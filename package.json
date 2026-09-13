@@ -23,6 +23,7 @@
     "db:test:hosted": "supabase db query --linked --file supabase/tests/tutor_profile_rls.sql",
     "db:test:hosted:students": "supabase db query --linked --file supabase/tests/student_rls.sql",
     "db:test:hosted:lessons": "supabase db query --linked --file supabase/tests/lesson_rls.sql",
+    "db:test:hosted:homework": "supabase db query --linked --file supabase/tests/homework_rls.sql",
     "db:types": "supabase gen types --project-id cmlvtnjoynffrznyelym --schema public",
     "db:types:check": "node scripts/check-generated-types.mjs",
     "verify": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"

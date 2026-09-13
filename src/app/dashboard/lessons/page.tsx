@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { LinkButton } from "../../../components/Button";
 import { PageHeader } from "../../../components/PageHeader";
-import { StatusBadge } from "../../../features/lessons/components/StatusBadge";
+import { LessonCalendar } from "../../../features/lessons/components/LessonCalendar";
 import {
   addDays,
   formatDayHeading,
-  formatTimeRange,
   formatWeekRange,
   parseDateParam,
   startOfDay,
   startOfWeek,
   toDateParam,
+  toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
-import { listLessonsInRange, type LessonWithStudent } from "../../../features/lessons/data";
+import { listLessonsInRange } from "../../../features/lessons/data";
+import { listActiveStudents } from "../../../features/students/data";
 import { createClient } from "../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -43,19 +44,23 @@ export default async function LessonsPage({
   const rangeEnd = addDays(rangeStart, rangeDays);
 
   const supabase = await createClient();
-  const lessons = await listLessonsInRange(supabase, {
-    start: rangeStart.toISOString(),
-    end: rangeEnd.toISOString(),
-  });
+  const [lessons, students] = await Promise.all([
+    listLessonsInRange(supabase, {
+      start: rangeStart.toISOString(),
+      end: rangeEnd.toISOString(),
+    }),
+    listActiveStudents(supabase),
+  ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
-  const lessonsByDay = new Map<string, LessonWithStudent[]>(
-    days.map((day) => [toDateParam(day), []]),
-  );
-  for (const lesson of lessons) {
-    const key = toDateParam(new Date(lesson.start_time));
-    lessonsByDay.get(key)?.push(lesson);
-  }
+  const calendarLessons = lessons.map((lesson) => ({
+    id: lesson.id,
+    studentId: lesson.student_id,
+    studentName: lesson.student?.name ?? "Unknown student",
+    startTime: lesson.start_time,
+    endTime: lesson.end_time,
+    status: lesson.status as "scheduled" | "completed" | "cancelled" | "no_show",
+  }));
 
   const step = view === "day" ? 1 : 7;
   const prevHref = buildHref(view, addDays(rangeStart, -step));
@@ -98,43 +103,15 @@ export default async function LessonsPage({
         </div>
       </div>
 
-      <div className="space-y-4">
-        {days.map((day) => {
-          const key = toDateParam(day);
-          const dayLessons = lessonsByDay.get(key) ?? [];
-          return (
-            <div key={key} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">{formatDayHeading(day)}</p>
-              </div>
-              {dayLessons.length === 0 ? (
-                <p className="px-4 py-5 text-sm text-slate-400">No lessons scheduled.</p>
-              ) : (
-                <ul className="divide-y divide-slate-100">
-                  {dayLessons.map((lesson) => (
-                    <li key={lesson.id}>
-                      <Link
-                        href={`/dashboard/lessons/${lesson.id}`}
-                        className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-slate-50"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-900">
-                            {formatTimeRange(lesson.start_time, lesson.end_time)}
-                          </p>
-                          <p className="truncate text-sm text-slate-500">
-                            {lesson.student?.name ?? "Unknown student"}
-                          </p>
-                        </div>
-                        <StatusBadge status={lesson.status} />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <p className="text-xs text-slate-400">
+        Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
+      </p>
+
+      <LessonCalendar
+        dayStartValues={days.map(toLocalMidnightValue)}
+        lessons={calendarLessons}
+        students={students}
+      />
     </div>
   );
 }

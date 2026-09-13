@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      homework: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_date: string | null
+          feedback_at: string | null
+          feedback_text: string | null
+          id: string
+          lesson_id: string | null
+          status: string
+          student_id: string
+          submission_text: string | null
+          submitted_at: string | null
+          title: string
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          feedback_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          lesson_id?: string | null
+          status?: string
+          student_id: string
+          submission_text?: string | null
+          submitted_at?: string | null
+          title: string
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          feedback_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          lesson_id?: string | null
+          status?: string
+          student_id?: string
+          submission_text?: string | null
+          submitted_at?: string | null
+          title?: string
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lesson"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       lesson: {
         Row: {
           created_at: string

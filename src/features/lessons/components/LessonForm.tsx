@@ -63,12 +63,14 @@ export function LessonForm({
         <select
           id="studentId"
           name="studentId"
-          defaultValue={defaultValues?.studentId ?? ""}
+          defaultValue={defaultValues?.studentId ?? students[0]?.id ?? ""}
           className={inputClassName}
         >
-          <option value="" disabled>
-            Select a student
-          </option>
+          {students.length === 0 && (
+            <option value="" disabled>
+              Select a student
+            </option>
+          )}
           {students.map((student) => (
             <option key={student.id} value={student.id}>
               {student.name}

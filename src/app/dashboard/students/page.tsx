@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Avatar } from "../../../components/Avatar";
 import { LinkButton } from "../../../components/Button";
 import { EmptyState } from "../../../components/EmptyState";
 import { PageHeader } from "../../../components/PageHeader";
@@ -31,9 +32,10 @@ export default async function StudentsPage() {
             <li key={student.id}>
               <Link
                 href={`/dashboard/students/${student.id}`}
-                className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50"
+                className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-slate-50"
               >
-                <div className="min-w-0">
+                <Avatar name={student.name} />
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-slate-900">{student.name}</p>
                   {student.email && (
                     <p className="truncate text-sm text-slate-500">{student.email}</p>

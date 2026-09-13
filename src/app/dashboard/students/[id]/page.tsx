@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Avatar } from "../../../../components/Avatar";
 import { Button } from "../../../../components/Button";
 import { PageHeader } from "../../../../components/PageHeader";
 import { archiveStudentAction, updateStudentAction } from "../../../../features/students/actions";
@@ -31,6 +32,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       <PageHeader
         title={student.name}
         description={`Added ${formatDate(student.created_at)}`}
+        avatar={<Avatar name={student.name} />}
         actions={
           <Link href="/dashboard/students" className="text-sm text-slate-500 hover:text-slate-700">
             &larr; Back to students

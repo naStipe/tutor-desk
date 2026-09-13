@@ -26,7 +26,14 @@
 ### 4. Lesson
 * Represents an individual scheduled tutoring session.
 * Belongs to a tutor and is associated with one student.
-* Attributes (anticipated): id, tutorId, studentId, seriesId (optional), startTime, endTime, durationMinutes, subject, hourlyRate, status (scheduled, completed, cancelled, no_show), notes.
+* TD-003 implements a minimal `public.lesson` table: `id`, `tutor_id` (references
+  `public.tutor_profile(user_id)`), `student_id` (references `public.student(id)`), `start_time`,
+  `end_time` (`end_time > start_time` enforced by a check constraint), `status` (`scheduled`,
+  `completed`, `cancelled`, `no_show`; check-constrained, defaults to `scheduled`), `notes`,
+  `created_at`, `updated_at`. There is no hard-delete path; `cancelled`/`no_show` are the lifecycle's
+  equivalent of archiving.
+* Remaining anticipated attributes (seriesId, durationMinutes, subject, hourlyRate) are deliberately
+  deferred — TD-003 is single lessons only, no recurrence or pricing.
 
 ### 5. LessonSeries
 * Represents a recurring schedule rule (e.g., "Every Thursday at 17:00 for 60 minutes").

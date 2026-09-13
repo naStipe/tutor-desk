@@ -6,9 +6,12 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { signOutAction } from "../features/auth/actions";
 
-const NAV_ITEMS = [{ href: "/dashboard/students", label: "Students" }];
+const NAV_ITEMS = [
+  { href: "/dashboard/students", label: "Students" },
+  { href: "/dashboard/lessons", label: "Lessons" },
+];
 
-const COMING_LATER = ["Lessons", "Calendar", "Homework", "Invoices"];
+const COMING_LATER = ["Calendar", "Homework", "Invoices"];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (

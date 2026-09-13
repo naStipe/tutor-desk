@@ -13,14 +13,18 @@ Every tutor-owned row must be scoped to the validated tutor identity in server c
 Security is an independent database boundary, not a substitute for server authorization.
 `public.tutor_profile` policies compare `(select auth.uid())` with `user_id` for select, insert, and
 update. `public.student` policies compare `(select auth.uid())` with `tutor_id` for select, insert,
-and update. Anonymous access and ordinary deletes are denied on both tables. Cross-tenant access
-must fail closed.
+and update. `public.lesson` policies compare `(select auth.uid())` with `tutor_id` for select,
+insert, and update, and the insert/update policies additionally require (via a correlated subquery)
+that `student_id` reference a student owned by that same tutor — this prevents a tutor from linking a
+lesson to another tutor's student even though the `tutor_id` check alone would otherwise pass.
+Anonymous access and ordinary deletes are denied on all three tables. Cross-tenant access must fail
+closed.
 
 Any route accepting a resource ID must verify ownership server-side and return 404 or 403 when
-ownership does not match. IDOR analysis is required for every tutor-owned feature. The student
-detail/edit page relies on RLS to fail closed: a student ID owned by another tutor resolves to no
-row and the route renders a 404, never another tutor's data. Student ownership (`tutor_id`) is
-always derived from the authenticated session server-side and is never accepted from the browser.
+ownership does not match. IDOR analysis is required for every tutor-owned feature. The student and
+lesson detail/edit pages rely on RLS to fail closed: an ID owned by another tutor resolves to no row
+and the route renders a 404, never another tutor's data. Ownership (`tutor_id`) is always derived
+from the authenticated session server-side and is never accepted from the browser.
 
 ## Credentials and data access
 

@@ -35,6 +35,13 @@ authenticated session server-side; RLS independently restricts each tutor to the
 Archiving a student sets `archived_at` rather than deleting the row; there is no hard-delete path in
 the application.
 
+`public.lesson` rows are owned by a tutor through `tutor_id` and reference exactly one
+`public.student(id)` through `student_id`. Both the insert and update RLS policies additionally
+require that the referenced student's `tutor_id` match the lesson's `tutor_id` (a correlated
+subquery), so a tutor cannot link a lesson to another tutor's student even though `tutor_id` alone
+would pass ownership. There is no hard-delete path; `cancelled`/`no_show` status values serve the
+lifecycle role that `archived_at` serves for students.
+
 ## Repository boundaries
 
 - `src/app/`: routes, layouts, Server Components, and route handlers

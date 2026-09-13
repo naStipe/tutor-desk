@@ -10,7 +10,8 @@ import { createClient } from "../../../../lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, {
+  // Fixed locale keeps this readable regardless of the server's OS locale.
+  return new Date(value).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",

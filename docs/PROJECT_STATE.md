@@ -2,77 +2,108 @@
 
 ## Current Milestone
 
-- Milestone: **TD-001S — Supabase Foundation Migration**
-- Status: **Implemented; independent review required**
-- Branch: `td-001s-supabase-migration`
-- Base: `backup/td-000-baseline` at `a6deb5b`
+- Milestone: **TD-002 — Student Management + TutorDesk App UI**
+- Status: **Implemented; independent review recommended**
+- Branch: `main`
 - Last updated: 2026-09-13
 
 ## Current Reality
 
 TutorDesk is a Next.js App Router modular monolith using hosted Supabase Auth and PostgreSQL.
-Drizzle, Better Auth, the standalone PostgreSQL Compose service, and their migrations/wrappers have
-been removed. There is no local Supabase or Docker development requirement.
+Tutors can sign in with email/password or Google, land in a real application shell with sidebar/mobile
+navigation, and manage a student roster: add, list, view, edit, and archive students. The application
+no longer looks like isolated demo pages; `/dashboard` and `/dashboard/students/**` share a protected
+layout with consistent navigation, typography, and form styling.
 
-The repository is linked to hosted project `cmlvtnjoynffrznyelym` (Supabase name: TutorHub). It was
-healthy at inspection time but contained disposable public tables and a global Auth trigger from an
-earlier test implementation. After the owner confirmed that state was irrelevant, TD-001S removed
-it with a reviewed forward migration. Existing managed Auth identities were left intact. The hosted
-public schema now contains only `tutor_profile` and has no custom `auth.users` trigger or public
-function.
+The repository is linked to hosted project `cmlvtnjoynffrznyelym` (Supabase name: TutorHub).
 
 ## Database and authorization
 
-- Both TD-001S migrations are applied remotely and match hosted migration history. The first creates
-  `tutor_profile`; the second removes the explicitly discarded test schema and its Auth trigger.
-- `tutor_profile.user_id` is a UUID primary key referencing `auth.users(id) ON DELETE CASCADE`.
-- `created_at` and `updated_at` are non-null `timestamptz` values with database defaults.
-- RLS permits authenticated users to select, insert, and update only their own row. Anonymous and
-  cross-user access are denied; no ordinary delete policy exists.
-- Profile initialization is explicit and idempotent. There is no global Auth-user trigger.
-- Generated hosted types are committed at `src/lib/supabase/database.types.ts`.
+- `public.tutor_profile` (from TD-001S) is unchanged.
+- TD-002 adds `public.student`: `id` (uuid, default `gen_random_uuid()`), `tutor_id` (uuid, references
+  `public.tutor_profile(user_id)` `ON DELETE CASCADE`), `name`, `email` (nullable), `notes` (nullable),
+  `archived_at` (nullable timestamptz), `created_at`, `updated_at`. Migration:
+  `supabase/migrations/20260913150812_create_student.sql`, applied remotely via `supabase db push`.
+- RLS is enabled on `student`. Policies compare `(select auth.uid())` to `tutor_id` for select, insert,
+  and update. `anon` has no grants. There is no ordinary delete policy; archiving sets `archived_at`.
+- Generated hosted types are committed at `src/lib/supabase/database.types.ts` and verified in sync
+  with `pnpm run db:types:check`.
+- Hosted RLS/ownership behavior (own-row create/update/archive, cross-tenant read/insert/update denial)
+  is verified by `supabase/tests/student_rls.sql`, run via `pnpm run db:test:hosted:students`.
 
 ## Authentication
 
-- Email/password signup supports immediate sessions and email-confirmation-required projects.
-- Login, logout, cookie session restoration, confirmation callback, and `/dashboard` protection are
-  implemented with `@supabase/ssr` and `@supabase/supabase-js`.
-- Protected server behavior validates identity through `auth.getUser()` and performs profile access
-  in that user's RLS context.
-- The hosted project currently has email confirmations disabled and older Google/MFA/SMS settings.
-  TD-001S did not remove or weaken those pre-existing settings; its UI exposes email/password only.
+Unchanged from TD-001S/Google OAuth work: email/password and Google sign-in, cookie session
+restoration, confirmation callback, and `/dashboard` protection via `@supabase/ssr`. The protected
+segment now lives under a single `src/app/dashboard/layout.tsx` that validates the session, initializes
+the tutor profile, and renders the shared `AppShell` around every dashboard route.
+
+## UI
+
+- `src/components/AppShell.tsx`: client component providing the sidebar (desktop) / hamburger menu
+  (mobile) navigation, account email, and sign-out control. Nav shows Dashboard and Students as real
+  links; Lessons/Calendar/Homework/Invoices render as disabled "Coming later" entries — no fake pages.
+- `src/components/{PageHeader,EmptyState,Field,Button}.tsx`: small shared primitives used by the
+  dashboard and student pages to keep headers, empty states, form fields, and buttons consistent.
+- `/dashboard`: redesigned home with a time-based greeting, a real "Active students" count card, a
+  placeholder card indicating lessons/homework/invoices are not yet available, and a getting-started
+  empty state (or quick action) depending on whether the tutor has any students.
+- `/dashboard/students`: active student list with name/email, an "Add student" action, and a clean
+  empty state when there are no students.
+- `/dashboard/students/new`: create form (name required, optional email/notes) using
+  `createStudentAction`.
+- `/dashboard/students/[id]`: detail page with an inline edit form (`updateStudentAction`) and an
+  Archive action (`archiveStudentAction`). An invalid or non-owned ID renders `notFound()` (RLS returns
+  no row for a non-owned student, so cross-tenant access fails closed as a 404).
+- Verified responsive behavior manually: sidebar on desktop, hamburger-toggled nav on a 375px mobile
+  viewport.
 
 ## Not Implemented
 
-- Student authentication and all student, lesson, homework, invoice, calendar, and portal features.
-- Password reset, account management, MFA UI, OAuth UI, organizations, invitations, or RBAC.
-- Storage, email delivery, payments, monitoring, calendar integrations, queues, or separate services.
+- Lessons, calendar, homework, invoices, student portal, invitations, payments.
+- Student phone/parent contact fields, default rate, tags, avatar, billing info, custom fields.
+- Archived-student management UI beyond the default active-only list (not required by TD-002).
+- Password reset, account settings, MFA UI, organizations, multiple tutors, search/pagination
+  infrastructure.
 
 ## Verification State
 
-- Supabase MCP configuration is enabled with OAuth for the intended project-specific endpoint.
-- Hosted project linkage/reachability and project ref: passed.
-- Migration dry runs, forward applications, and local/remote migration-history match: passed.
-- Final hosted inventory: only `public.tutor_profile`; no public functions or custom Auth-user
-  triggers.
-- Generated-type drift check against the hosted project: passed.
-- Rollback-only hosted schema/RLS verification: passed.
-- Disposable-user hosted signup, profile initialization, logout, login, validated identity, and
-  cleanup: passed.
-- `pnpm run format:check`, `lint`, `typecheck`, and unit tests: passed (3 files, 7 tests).
-- `pnpm run build`: passed with all application routes compiled.
-- Playwright E2E: passed using the installed Microsoft Edge channel (1 test).
-- `pnpm audit` and `pnpm audit --prod`: passed with no known vulnerabilities.
+- `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (4 unit test files, 11 tests, including
+  new `src/test/student-schemas.test.ts`).
+- `pnpm run build`: Next.js compiled successfully, type-checked, and generated all static/dynamic
+  routes (8/8). The `output: "standalone"` file-tracing step then failed with `EPERM` while creating
+  symlinks under `.next/standalone/node_modules` — a pre-existing Windows-local-filesystem permission
+  limitation unrelated to this change (not reproducible on Linux/CI). Application code and routing are
+  otherwise verified as compiling and type-safe.
+- Hosted migration: dry-run reviewed, then applied with `supabase db push --linked`; `list_tables`
+  confirms `public.student` with RLS enabled and the expected FK/columns.
+- Hosted RLS/ownership SQL test (`supabase/tests/student_rls.sql`, transaction-rolled-back): passed —
+  own-tutor create/update/archive succeeded; cross-tenant read, insert, and update were denied.
+- Generated-type drift check (`pnpm run db:types:check`): passed.
+- Manual browser walkthrough against the hosted dev project (real signed-in account): sign in → dashboard
+  → add student → student appears in list and detail → edit student → archive student → student
+  disappears from active list and empty state renders → mobile hamburger nav opens/closes. All passed.
+  One student record created during this walkthrough was archived (not hard-deleted) and remains in the
+  hosted dev database in an archived state.
+- Playwright E2E: not run. `e2e/app.spec.ts` requires a Chromium binary that is not installed in this
+  environment (`npx playwright install` was not run to avoid an unrequested environment change);
+  `e2e/auth.spec.ts` predates the current `AuthForm` markup (it references `#signup-name` and other
+  selectors that no longer exist) and was already stale before this task — not modified, as it is
+  unrelated to the assigned ticket.
+- `pnpm audit`: not re-run; no new dependencies were added in this task.
 
 ## Known Issues
 
-- Supabase's advisor reports that leaked-password protection is disabled for hosted Auth.
-- Supabase MCP is configured and OAuth-enabled, but this already-running task cannot load newly added
-  MCP tools until a new task/session starts; CLI access provided project and database verification.
-- Ordinary CI intentionally has no hosted credentials, so remote schema/RLS and generated-type drift
-  are release checks rather than pull-request checks.
+- Supabase's advisor still reports leaked-password protection disabled for hosted Auth (pre-existing,
+  unrelated to TD-002).
+- `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component and will fail if run;
+  fixing it is outside TD-002's scope.
+- `pnpm run build`'s standalone output step cannot complete on this Windows machine due to symlink
+  permissions; verify on Linux/CI or with Windows Developer Mode enabled before relying on the
+  standalone build output locally.
 
 ## Next Recommended Task
 
-**Independent review of TD-001S, focused on SSR cookie handling, explicit profile initialization,
-the hosted cleanup migration, and RLS verification.**
+**Lessons: a minimal `lesson` domain (single lessons tied to a student, an internal day/week calendar
+view, and marking lessons completed/cancelled/no-show) so the dashboard's "Coming later" placeholder
+can become real, following the same ownership/RLS and app-shell patterns established in TD-002.**

@@ -29,6 +29,12 @@ Profile initialization is explicit and idempotent during tutor signup confirmati
 signup, login, and protected dashboard entry. There is no global `auth.users` trigger because future
 student identities must not automatically become tutors.
 
+`public.student` rows are owned by a tutor through `tutor_id`, a foreign key to
+`public.tutor_profile(user_id)` (not `auth.users` directly). Ownership is always derived from the
+authenticated session server-side; RLS independently restricts each tutor to their own students.
+Archiving a student sets `archived_at` rather than deleting the row; there is no hard-delete path in
+the application.
+
 ## Repository boundaries
 
 - `src/app/`: routes, layouts, Server Components, and route handlers

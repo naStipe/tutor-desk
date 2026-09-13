@@ -20,7 +20,8 @@
 * **Important domain rule**: **`Student` and `User` are distinct concepts.**
   * A tutor must be able to create, schedule lessons with, and invoice a student who does *not* have a TutorDesk login account. Many students are young children, or prefer communicating solely via parental email or in-person interactions.
   * A `Student` may optionally be linked to a `User` when an invitation is accepted for the student portal, but the existence of a `Student` entity is never blocked on user registration.
-* Attributes (anticipated): id, tutorId, name, email, phone, parentName, parentEmail, defaultRate, notes, status (active/archived).
+* TD-002 implements a minimal `public.student` table: `id`, `tutor_id` (references `public.tutor_profile(user_id)`, not `auth.users` directly), `name`, `email`, `notes`, `archived_at`, `created_at`, `updated_at`. Archiving sets `archived_at` rather than deleting the row; there is no hard-delete path in the application UI.
+* Remaining anticipated attributes (phone, parentName, parentEmail, defaultRate, portal linkage) are deliberately deferred to later tickets and are not yet part of the schema.
 
 ### 4. Lesson
 * Represents an individual scheduled tutoring session.

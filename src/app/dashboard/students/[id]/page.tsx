@@ -1,0 +1,71 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { Button } from "../../../../components/Button";
+import { PageHeader } from "../../../../components/PageHeader";
+import { archiveStudentAction, updateStudentAction } from "../../../../features/students/actions";
+import { StudentForm } from "../../../../features/students/components/StudentForm";
+import { getStudent } from "../../../../features/students/data";
+import { createClient } from "../../../../lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
+
+  const supabase = await createClient();
+  const student = await getStudent(supabase, id);
+  if (!student) notFound();
+
+  return (
+    <div className="max-w-xl space-y-6">
+      <PageHeader
+        title={student.name}
+        description={`Added ${formatDate(student.created_at)}`}
+        actions={
+          <Link href="/dashboard/students" className="text-sm text-slate-500 hover:text-slate-700">
+            &larr; Back to students
+          </Link>
+        }
+      />
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        <h2 className="text-sm font-semibold text-slate-900">Edit details</h2>
+        <div className="mt-4">
+          <StudentForm
+            action={updateStudentAction}
+            studentId={student.id}
+            defaultValues={{
+              name: student.name,
+              email: student.email ?? "",
+              notes: student.notes ?? "",
+            }}
+            submitLabel="Save changes"
+            pendingLabel="Saving…"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        <h2 className="text-sm font-semibold text-slate-900">Archive student</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Archived students are hidden from your active roster. This does not delete their data.
+        </p>
+        <form action={archiveStudentAction} className="mt-4">
+          <input type="hidden" name="id" value={student.id} />
+          <Button type="submit" variant="danger">
+            Archive student
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}

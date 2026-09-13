@@ -12,10 +12,15 @@ user metadata are never authorization evidence.
 Every tutor-owned row must be scoped to the validated tutor identity in server code. Row Level
 Security is an independent database boundary, not a substitute for server authorization.
 `public.tutor_profile` policies compare `(select auth.uid())` with `user_id` for select, insert, and
-update. Anonymous access and ordinary deletes are denied. Cross-tenant access must fail closed.
+update. `public.student` policies compare `(select auth.uid())` with `tutor_id` for select, insert,
+and update. Anonymous access and ordinary deletes are denied on both tables. Cross-tenant access
+must fail closed.
 
-Any future route accepting a resource ID must verify ownership server-side and return 404 or 403
-when ownership does not match. IDOR analysis is required for every tutor-owned feature.
+Any route accepting a resource ID must verify ownership server-side and return 404 or 403 when
+ownership does not match. IDOR analysis is required for every tutor-owned feature. The student
+detail/edit page relies on RLS to fail closed: a student ID owned by another tutor resolves to no
+row and the route renders a 404, never another tutor's data. Student ownership (`tutor_id`) is
+always derived from the authenticated session server-side and is never accepted from the browser.
 
 ## Credentials and data access
 

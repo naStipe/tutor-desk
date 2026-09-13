@@ -91,14 +91,16 @@ Unchanged from TD-001S/Google OAuth/TD-002/TD-003.
 
 - `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (6 unit test files, 21 tests,
   including new `src/test/homework-schemas.test.ts`).
-- `pnpm run build`: **not re-run this session.** A prior session's `pnpm run build` run, executed
-  while a `next dev` server was also running against the same `.next` directory, corrupted that dev
-  server's cache (Windows file-locking/contention between the two processes writing `.next`
-  concurrently) and required killing the dev process and deleting `.next` to recover. To avoid
-  repeating that against the user's now-running dev server, this session intentionally skipped
-  `pnpm run build` and relied on `typecheck` (full strict compile) plus extensive manual
-  browser verification instead. **Recommend running `pnpm run build` with the dev server stopped**
-  before merging/deploying.
+- `pnpm run build`: **passed**, with the dev server stopped — verified independently by both the
+  owner and this session (both full runs printed the complete route manifest, 16/16 routes, no
+  errors). Two earlier attempts in this exchange failed for reasons unrelated to the application
+  code: (1) `output: "standalone"` in `next.config.ts` tried to symlink `node_modules` into
+  `.next/standalone`, which requires a Windows permission not granted by default (`EPERM`) — fixed by
+  removing `output: "standalone"` (it was undocumented scaffolding from TD-000, not a recorded
+  decision, and only matters for self-hosting the standalone server output; unnecessary if deploying
+  to a platform with its own build pipeline); (2) two `pnpm run build` invocations racing on the same
+  `.next` directory at the same time produced a transient `ENOENT` on `pages-manifest.json` —
+  resolved by not running builds concurrently, not a code fix.
 - Hosted migration: dry-run reviewed, then applied with `supabase db push --linked`; `list_tables`
   confirms `public.homework` with RLS enabled and the expected FK/check constraints.
 - Hosted RLS/ownership SQL test (`supabase/tests/homework_rls.sql`, transaction-rolled-back): passed
@@ -137,8 +139,6 @@ Unchanged from TD-001S/Google OAuth/TD-002/TD-003.
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
   (pre-existing, unrelated to TD-004).
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
-- **`pnpm run build` was not verified this session** — see Verification State above. Run it with the
-  dev server stopped before relying on a production build.
 - The week calendar view is visually cramped on narrow (≤375px) mobile viewports — day/time labels
   truncate. It remains functional (horizontal scroll, drag/click still work), and day view is clean
   at that width; a dedicated mobile week layout is future work.

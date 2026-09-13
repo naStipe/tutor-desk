@@ -1,100 +1,63 @@
 # TutorDesk
 
 TutorDesk is a responsive business-management SaaS for independent private tutors. It is a
-TypeScript modular monolith built with Next.js App Router, React, PostgreSQL, Drizzle ORM, Better
-Auth, Zod, Tailwind CSS, Vitest, and Playwright. It is not a tutor marketplace.
-
-The repository currently contains project and authentication infrastructure only. See
-`docs/PROJECT_STATE.md` for the verified implementation state and `docs/MVP.md` for intended V1
-scope.
+TypeScript modular monolith built with Next.js App Router, Supabase Auth, hosted Supabase
+PostgreSQL, Zod, Tailwind CSS, Vitest, and Playwright.
 
 ## Prerequisites
 
 - Node.js 22 or newer
-- Corepack (included with supported Node.js 22 installations)
-- Docker Desktop with the Linux container engine running
+- Corepack
+- Access to the hosted TutorDesk Supabase development project
 
-## Clean-clone setup (PowerShell)
+Docker and a local Supabase stack are not part of the current workflow.
 
-1. Enable the package manager declared in `package.json` and install dependencies:
+## Setup
 
-   ```powershell
-   corepack enable
-   pnpm install --frozen-lockfile
-   ```
+```powershell
+corepack enable
+pnpm install --frozen-lockfile
+Copy-Item .env.example .env.local
+pnpm exec supabase login
+pnpm exec supabase link --project-ref cmlvtnjoynffrznyelym
+pnpm run dev
+```
 
-2. Create a local environment file:
+Set the hosted project's public URL and publishable key in `.env.local`. Never use a Supabase
+secret or service-role key in a `NEXT_PUBLIC_*` variable. Add local and deployed
+`/auth/confirm` URLs to the hosted Auth redirect allow list when configuring a new environment.
 
-   ```powershell
-   Copy-Item .env.example .env.local
-   ```
+## Database workflow
 
-   Replace `BETTER_AUTH_SECRET` with a high-entropy value of at least 32 characters. The example
-   database credentials are development-only and match `compose.yaml`. Local environment files are
-   ignored by Git.
+`supabase/migrations/` is the schema source of truth. Review and dry-run each migration before
+applying it to the hosted development project:
 
-3. Start PostgreSQL and wait for it to become healthy:
+```powershell
+pnpm run db:migrations
+pnpm run db:push:dry
+pnpm run db:push
+pnpm run db:test:hosted
+pnpm run db:types | Set-Content src/lib/supabase/database.types.ts
+```
 
-   ```powershell
-   docker compose up -d
-   docker compose ps
-   ```
-
-4. Apply the committed migrations and verify the connection and Better Auth tables:
-
-   ```powershell
-   pnpm run db:migrate
-   pnpm run db:check
-   ```
-
-5. Start TutorDesk:
-
-   ```powershell
-   pnpm run dev
-   ```
-
-   Open `http://localhost:3000`. Stop PostgreSQL later with `docker compose down`; the named volume
-   preserves local data.
+The hosted RLS check uses two existing Auth identities inside a transaction and always rolls back.
+It must only be run against the linked TutorDesk development project. Generated types reflect the
+linked hosted schema and are committed. Ordinary CI uses no hosted credentials; hosted schema and
+type-drift checks are deliberate developer/release checks.
 
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm run dev` | Start the Next.js development server on port 3000 |
-| `pnpm run build` | Create the production build |
-| `pnpm run start` | Run the production build on port 3000 |
-| `pnpm run format` | Format supported repository files with Biome |
-| `pnpm run format:check` | Check formatting without modifying files |
-| `pnpm run lint` | Run Biome static analysis |
-| `pnpm run typecheck` | Run TypeScript type checking |
-| `pnpm run test` | Run Vitest unit tests |
-| `pnpm run test:watch` | Run Vitest in watch mode |
-| `pnpm run test:e2e:install` | Install Playwright's Chromium headless shell |
-| `pnpm run test:e2e` | Start the app as needed and run headless Chromium E2E tests |
-| `pnpm run db:generate` | Generate a migration after an intentional schema change |
-| `pnpm run db:migrate` | Apply committed Drizzle migrations |
-| `pnpm run db:check` | Execute a real query and verify Better Auth tables |
-| `pnpm run db:studio` | Open Drizzle Studio |
+| `pnpm run dev` | Start Next.js on port 3000 |
 | `pnpm run verify` | Run format, lint, typecheck, unit tests, and build |
+| `pnpm run test:e2e` | Run Playwright browser tests |
+| `pnpm run db:migrations` | Compare local and hosted migration history |
+| `pnpm run db:push:dry` | Preview hosted pending migrations |
+| `pnpm run db:push` | Apply reviewed migrations to the linked hosted project |
+| `pnpm run db:test:hosted` | Run rollback-only hosted schema/RLS verification |
+| `pnpm run db:types` | Print types generated from project `cmlvtnjoynffrznyelym` |
+| `pnpm run db:types:check` | Compare committed types with the hosted schema |
+| `pnpm run test:auth:hosted` | Exercise hosted signup/login/profile flow with cleanup |
 
-`pnpm run test:e2e`, `pnpm run db:migrate`, and `pnpm run db:check` require the local environment
-file and healthy PostgreSQL service. E2E is intentionally not in CI during the foundation milestone;
-CI does validate formatting, linting, types, unit tests, migrations, a real database query, and the
-production build. If the managed Chromium download is unavailable and Microsoft Edge is installed,
-set `$env:PLAYWRIGHT_CHANNEL = "msedge"` for that PowerShell session before running E2E.
-
-## Repository layout
-
-```text
-src/app/             Next.js routes and layouts
-src/components/      Shared UI components
-src/features/        Feature-oriented modules (future tickets)
-src/db/              Drizzle client, schemas, and migrations
-src/lib/             Shared environment and authentication infrastructure
-src/test/            Vitest tests
-e2e/                 Playwright tests
-docs/                Product, architecture, security, decisions, and project state
-.agents/skills/      Repository-local Codex workflows
-```
-
-Read `AGENTS.md` before making changes.
+Read `AGENTS.md` and `docs/PROJECT_STATE.md` before contributing.

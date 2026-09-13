@@ -7,13 +7,13 @@
 ## Anticipated High-Level Domains
 
 ### 1. User
-* Identity entity managed via authentication infrastructure (Better Auth).
+* Identity entity managed by Supabase Auth in `auth.users`.
 * Represents an authenticated human interacting with the system (primarily tutors; secondarily students when invited).
-* Attributes: id, email, name, emailVerified, createdAt, updatedAt.
+* Authentication attributes remain owned by Supabase Auth and are not duplicated in application tables.
 
 ### 2. TutorProfile
-* Business profile associated 1-to-1 with a tutor `User`.
-* Holds business metadata: display name, timezone, default currency, default hourly rate, payment instructions, contact details.
+* Application profile associated 1-to-1 with a tutor identity through `user_id uuid`.
+* TD-001S stores only `user_id`, `created_at`, and `updated_at`; business settings remain future scope.
 
 ### 3. Student (CRITICAL DOMAIN RULE)
 * Represents a tutoring client managed by a tutor.

@@ -1,48 +1,35 @@
 # TutorDesk Security Policy & Invariants
 
-## Core Security Invariant: Strict Multi-Tenant Isolation
+## Identity and sessions
 
-TutorDesk is a multi-tenant SaaS. **Every business resource belongs to an authenticated tutor.**
+Supabase Auth owns passwords, identity, email verification, and session cookies. Server Components,
+route handlers, and server actions validate the current identity with `auth.getUser()` before
+protected work. Middleware refreshes cookie-based sessions. Browser-provided user IDs and editable
+user metadata are never authorization evidence.
 
-Under no circumstances should a tutor be able to read, update, delete, or discover another tutor's data:
-* **Students**: Names, contact info, notes, and records.
-* **Lessons**: Calendars, schedules, rates, and notes.
-* **Homework**: Tasks, submissions, and feedback.
-* **Invoices**: Financial amounts, billing details, and payment statuses.
-* **Settings**: Profiles, rates, and notification preferences.
+## Tutor ownership
 
-### Authorization Directives
-1. **Server-Side Enforcement**: All authorization logic must execute on the server (Server Components, Route Handlers, Server Actions). Never rely on UI rendering states, hidden tabs, or client-side checks for access control.
-2. **Mandatory Tenant Scoping (`tutorId`)**: Every database query touching tenant resources MUST include a filter matching the current authenticated user's ID (`eq(table.tutorId, session.user.id)`).
-3. **IDOR Defense**: All routes taking entity IDs (e.g., `/api/students/[id]`, `/api/invoices/[id]`) must verify that the requested entity's `tutorId` matches the session. If it does not match, return a `404 Not Found` (to prevent resource existence enumeration) or `403 Forbidden`.
+Every tutor-owned row must be scoped to the validated tutor identity in server code. Row Level
+Security is an independent database boundary, not a substitute for server authorization.
+`public.tutor_profile` policies compare `(select auth.uid())` with `user_id` for select, insert, and
+update. Anonymous access and ordinary deletes are denied. Cross-tenant access must fail closed.
 
----
+Any future route accepting a resource ID must verify ownership server-side and return 404 or 403
+when ownership does not match. IDOR analysis is required for every tutor-owned feature.
 
-## Authentication & Session Security
+## Credentials and data access
 
-1. **Secure Session Handling**: Sessions are managed via HttpOnly, Secure, SameSite cookies managed by Better Auth.
-2. **Password Hashing**: Passwords must be hashed using state-of-the-art key derivation functions (e.g. Scrypt/Argon2) provided by Better Auth. Plaintext passwords never touch database persistence or logs.
-3. **Session Revocation**: User logouts and password changes must immediately invalidate active sessions server-side.
+Only the Supabase URL and publishable key may appear in `NEXT_PUBLIC_*`. Service-role keys, secret
+keys, access tokens, database passwords, and real `.env` files must never be committed or exposed to
+browser code. TD-001S has no service-role dependency and no in-memory or alternate persistence
+fallback.
 
----
+Database changes are committed as SQL migrations before being applied. Supabase MCP and CLI may
+inspect hosted state, but MCP is not an undocumented schema mutation path. Remote databases must
+never be reset or have unrelated data dropped without explicit authorization.
 
-## Input Validation & Boundary Defense
+## Boundary and browser protections
 
-1. **Strict Zod Schemas**: Every piece of external input (JSON bodies, URL params, query strings, headers) must be validated using strict Zod schemas before processing.
-2. **SQL Injection Defense**: All database queries must use Drizzle ORM's parameterized query builder. Raw SQL strings with interpolated user input are strictly forbidden.
-3. **Cross-Site Scripting (XSS)**: Next.js and React automatically escape JSX rendering. Dangerously setting inner HTML is prohibited.
-
----
-
-## Secret Management & Data Protection
-
-1. **Zero Committed Secrets**: Secrets (`BETTER_AUTH_SECRET`, database passwords, API tokens) must strictly live in `.env` and environment variables. Never commit `.env` or secret keys to version control.
-2. **Sensitive Data Logging Prohibited**: Loggers must never print user passwords, tokens, full credit card data, or PII.
-3. **Secure Headers**: Security headers (`Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) must be enforced on HTTP responses.
-
----
-
-## Future Capabilities Security Guidance
-
-* **Future File Uploads**: When document uploads are added in future iterations, they must strictly validate file MIME types, sanitize file names, store binaries outside the web root (e.g. private S3/GCS buckets with signed URLs), and enforce tenant-scoped authorization on every download link.
-* **Future Payment Integrations**: When card processing is introduced, cardholder data must never touch TutorDesk application servers (utilizing Stripe Elements / hosted checkout). Webhook signatures must be strictly validated before updating invoice states.
+External inputs are validated with Zod. React escaping remains the default; unsafe HTML injection
+is prohibited. The Next.js configuration preserves anti-framing, content-type, referrer, permissions,
+and Content Security Policy headers established in TD-000.

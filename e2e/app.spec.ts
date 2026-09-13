@@ -10,10 +10,10 @@ test.describe("TutorDesk Shell", () => {
     await expect(page.locator("#brand-title")).toHaveText("TutorDesk");
 
     // Verify status badge
-    await expect(page.locator("#status-badge")).toContainText("TD-000 Initialized");
+    await expect(page.locator("#status-badge")).toContainText("Supabase foundation");
 
-    // Verify health check link is present
-    await expect(page.locator("#health-check-link")).toBeVisible();
+    // Verify auth entry point is present
+    await expect(page.locator("#sign-in-link")).toBeVisible();
 
     const healthResponse = await page.request.get("/api/health");
     expect(healthResponse.status()).toBe(200);
@@ -22,8 +22,8 @@ test.describe("TutorDesk Shell", () => {
       app: "TutorDesk",
     });
 
-    const authResponse = await page.request.get("/api/auth/get-session");
-    expect(authResponse.status()).toBe(200);
-    expect(await authResponse.json()).toBeNull();
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page.getByRole("heading", { name: "Tutor sign in" })).toBeVisible();
   });
 });

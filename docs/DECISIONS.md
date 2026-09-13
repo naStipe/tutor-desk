@@ -45,7 +45,7 @@ This document records the foundational architectural decisions established for T
 * **Decision**: Use Drizzle ORM (`drizzle-orm` and `drizzle-kit`).
 * **Reasoning**: Drizzle provides high-performance, type-safe SQL-like queries without heavyweight client instantiation or hidden runtime query engines. Schema declarations are written directly in TypeScript, and migrations are generated as clean, predictable SQL files.
 * **Alternatives Considered**: Prisma, TypeORM, Kysely. Prisma has heavier runtime overhead and separate schema DSL; Drizzle is native TypeScript with zero runtime bloat.
-* **Status**: Accepted.
+* **Status**: Superseded by ADR-014 before production.
 
 ---
 
@@ -54,7 +54,7 @@ This document records the foundational architectural decisions established for T
 * **Decision**: Use Better Auth for authentication infrastructure.
 * **Reasoning**: Better Auth offers modern TypeScript support, native Drizzle adapter integration, secure session cookies, extensible plugin architecture, and eliminates external SaaS authentication lock-in (e.g. Auth0, Clerk).
 * **Alternatives Considered**: NextAuth/Auth.js, Clerk, Supabase Auth. Better Auth provides clean TypeScript-first schema generation and full local database ownership.
-* **Status**: Accepted.
+* **Status**: Superseded by ADR-014 before production.
 
 ---
 
@@ -108,7 +108,7 @@ This document records the foundational architectural decisions established for T
 * **Decision**: Use a single official PostgreSQL 17 container in `compose.yaml` for reproducible local development, with development-only credentials, a health check, localhost-only port publishing, and a persistent named volume.
 * **Reasoning**: A checked-in database runtime makes migration and integration verification repeatable across developer machines without adding unrelated infrastructure.
 * **Alternatives Considered**: Requiring an unmanaged host PostgreSQL installation or adding database administration services. Rejected because the former is less reproducible and the latter is unnecessary for the foundation.
-* **Status**: Accepted.
+* **Status**: Superseded by ADR-014. Docker is not required by the current workflow.
 
 ---
 
@@ -117,4 +117,14 @@ This document records the foundational architectural decisions established for T
 * **Decision**: Use Biome for formatting and lint/static analysis, while retaining `tsc --noEmit` as a separate typecheck.
 * **Reasoning**: One maintained tool provides fast formatting and static analysis without relying on deprecated Next.js lint commands or installing overlapping formatter/linter stacks.
 * **Alternatives Considered**: ESLint plus Prettier. Valid, but adds more configuration and dependencies than TD-000 requires.
+* **Status**: Accepted.
+
+---
+
+## ADR-014: Hosted Supabase Foundation
+
+* **Decision**: Use Supabase Auth, hosted Supabase PostgreSQL, Supabase CLI migrations, and generated TypeScript database types. Query with typed `supabase-js`; do not retain Drizzle as a parallel schema authority.
+* **Reasoning**: One hosted authentication/database platform provides consistent identity, PostgreSQL, and RLS. Repository SQL migrations remain reviewable and reproducible without requiring a broken local Docker stack.
+* **Operational model**: Project `cmlvtnjoynffrznyelym` is the hosted development environment. Migration files are authoritative; hosted state is inspected and updated only through reviewed forward migrations. MCP is for inspection and development assistance, not undocumented schema mutation.
+* **Existing state**: The project contained disposable tables from an earlier TutorHub test implementation. After the owner confirmed that data was irrelevant, TD-001S removed the legacy public schema and its global Auth trigger through an explicit migration. Existing managed Auth identities were left intact. The resulting public schema contains only `tutor_profile`.
 * **Status**: Accepted.

@@ -66,6 +66,21 @@ export async function signInAction(
   redirect("/dashboard");
 }
 
+export async function signInWithGoogleAction() {
+  const supabase = await createClient();
+  const env = getEnv();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+      skipBrowserRedirect: true,
+    },
+  });
+
+  if (error || !data.url) redirect("/sign-in?error=confirmation");
+  redirect(data.url);
+}
+
 export async function signOutAction() {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();

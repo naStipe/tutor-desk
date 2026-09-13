@@ -2,6 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureCurrentTutorProfile } from "../../../features/tutor-profile/data";
+import { getEnv } from "../../../lib/env";
 import { createClient } from "../../../lib/supabase/server";
 
 const nextSchema = z.literal("/dashboard").default("/dashboard");
@@ -20,6 +21,7 @@ const codeSchema = z.object({
 export async function GET(request: NextRequest) {
   const params = Object.fromEntries(request.nextUrl.searchParams);
   const supabase = await createClient();
+  const siteUrl = getEnv().NEXT_PUBLIC_SITE_URL;
 
   const tokenHashParsed = tokenHashSchema.safeParse(params);
   const codeParsed = codeSchema.safeParse(params);
@@ -30,20 +32,20 @@ export async function GET(request: NextRequest) {
       token_hash: tokenHashParsed.data.token_hash,
       type: tokenHashParsed.data.type as EmailOtpType,
     });
-    if (error) return NextResponse.redirect(new URL("/sign-in?error=confirmation", request.url));
+    if (error) return NextResponse.redirect(new URL("/sign-in?error=confirmation", siteUrl));
     next = tokenHashParsed.data.next;
   } else if (codeParsed.success) {
     const { error } = await supabase.auth.exchangeCodeForSession(codeParsed.data.code);
-    if (error) return NextResponse.redirect(new URL("/sign-in?error=confirmation", request.url));
+    if (error) return NextResponse.redirect(new URL("/sign-in?error=confirmation", siteUrl));
     next = codeParsed.data.next;
   } else {
-    return NextResponse.redirect(new URL("/sign-in?error=confirmation", request.url));
+    return NextResponse.redirect(new URL("/sign-in?error=confirmation", siteUrl));
   }
 
   try {
     await ensureCurrentTutorProfile(supabase);
   } catch {
-    return NextResponse.redirect(new URL("/sign-in?error=profile", request.url));
+    return NextResponse.redirect(new URL("/sign-in?error=profile", siteUrl));
   }
-  return NextResponse.redirect(new URL(next, request.url));
+  return NextResponse.redirect(new URL(next, siteUrl));
 }

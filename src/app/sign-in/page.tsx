@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "../../features/auth/components/AuthForm";
-import { signInAction } from "../../features/auth/actions";
+import { signInAction, signInWithGoogleAction } from "../../features/auth/actions";
 import { createClient } from "../../lib/supabase/server";
 
 export default async function SignInPage({
@@ -24,6 +24,7 @@ export default async function SignInPage({
     <main className="flex min-h-screen items-center justify-center p-6">
       <AuthForm
         action={signInAction}
+        googleAction={signInWithGoogleAction}
         heading="Tutor sign in"
         description="Access your TutorDesk workspace."
         submitLabel="Sign in"

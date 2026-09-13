@@ -32,6 +32,63 @@ export async function countHomeworkToReview(supabase: SupabaseClient<Database>) 
   return count ?? 0;
 }
 
+/** Submitted work waiting for feedback, plus assigned work already past its due date. */
+export async function countHomeworkNeedingAttention(supabase: SupabaseClient<Database>) {
+  const nowIso = new Date().toISOString();
+  const [submitted, overdue] = await Promise.all([
+    supabase
+      .from("homework")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "submitted"),
+    supabase
+      .from("homework")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "assigned")
+      .lt("due_date", nowIso),
+  ]);
+
+  if (submitted.error)
+    throw new Error(`Unable to count homework to review: ${submitted.error.message}`);
+  if (overdue.error) throw new Error(`Unable to count overdue homework: ${overdue.error.message}`);
+  return (submitted.count ?? 0) + (overdue.count ?? 0);
+}
+
+/** The rows that power the Today dashboard's "Needs review" card. */
+export async function listHomeworkNeedingAttention(supabase: SupabaseClient<Database>, limit = 5) {
+  const nowIso = new Date().toISOString();
+  const [submitted, overdue] = await Promise.all([
+    supabase
+      .from("homework")
+      .select(HOMEWORK_COLUMNS)
+      .eq("status", "submitted")
+      .order("submitted_at", { ascending: true })
+      .limit(limit),
+    supabase
+      .from("homework")
+      .select(HOMEWORK_COLUMNS)
+      .eq("status", "assigned")
+      .lt("due_date", nowIso)
+      .order("due_date", { ascending: true })
+      .limit(limit),
+  ]);
+
+  if (submitted.error)
+    throw new Error(`Unable to load homework to review: ${submitted.error.message}`);
+  if (overdue.error) throw new Error(`Unable to load overdue homework: ${overdue.error.message}`);
+
+  const rows = [
+    ...(submitted.data as unknown as HomeworkWithStudent[]).map((row) => ({
+      homework: row,
+      overdue: false as const,
+    })),
+    ...(overdue.data as unknown as HomeworkWithStudent[]).map((row) => ({
+      homework: row,
+      overdue: true as const,
+    })),
+  ];
+  return rows.slice(0, limit);
+}
+
 export async function getHomework(supabase: SupabaseClient<Database>, id: string) {
   const { data, error } = await supabase
     .from("homework")

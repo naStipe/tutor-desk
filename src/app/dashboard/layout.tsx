@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "../../components/AppShell";
+import { countHomeworkNeedingAttention } from "../../features/homework/data";
 import { ensureCurrentTutorProfile } from "../../features/tutor-profile/data";
 import { createClient } from "../../lib/supabase/server";
 
@@ -11,6 +12,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) redirect("/sign-in");
   await ensureCurrentTutorProfile(supabase);
+  const homeworkCount = await countHomeworkNeedingAttention(supabase);
 
-  return <AppShell email={data.user.email ?? ""}>{children}</AppShell>;
+  return (
+    <AppShell email={data.user.email ?? ""} homeworkCount={homeworkCount}>
+      {children}
+    </AppShell>
+  );
 }

@@ -5,119 +5,156 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { signOutAction } from "../features/auth/actions";
+import { displayNameFromEmail, initialsFromEmail } from "../lib/display-name";
 import { ThemeToggle } from "./ThemeToggle";
-import { BookIcon, CalendarIcon, HomeIcon, ReceiptIcon, UsersIcon } from "./icons";
 
 const NAV_ITEMS = [
-  { href: "/dashboard/students", label: "Students", icon: UsersIcon },
-  { href: "/dashboard/lessons", label: "Lessons", icon: CalendarIcon },
-  { href: "/dashboard/homework", label: "Homework", icon: BookIcon },
+  { href: "/dashboard", label: "Today", exact: true },
+  { href: "/dashboard/students", label: "Students", exact: false },
+  { href: "/dashboard/lessons", label: "Lessons", exact: false },
+  { href: "/dashboard/homework", label: "Homework", exact: false },
 ];
 
-const COMING_LATER = [{ label: "Invoices", icon: ReceiptIcon }];
-
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
-  const isDashboard = pathname === "/dashboard";
+function NavPill({
+  active,
+  count,
+  children,
+}: {
+  active: boolean;
+  count?: number;
+  children: ReactNode;
+}) {
   return (
-    <nav className="flex flex-col gap-0.5">
-      <Link
-        href="/dashboard"
-        onClick={onNavigate}
-        className={`group flex items-center gap-2.5 rounded-lg border-l-2 px-2.5 py-2 text-sm font-medium transition-colors ${
-          isDashboard
-            ? "border-brand bg-brand/10 text-brand"
-            : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"
-        }`}
-      >
-        <HomeIcon
-          className={`h-4.5 w-4.5 ${isDashboard ? "text-brand" : "text-ink-subtle group-hover:text-ink-muted"}`}
+    <span
+      className={`group flex items-center gap-2.5 rounded-[11px] border px-3 py-2.5 text-sm transition-colors ${
+        active
+          ? "border-[var(--td2-border-strong)] bg-[var(--td2-bg-inset)] font-medium text-[var(--td2-text-primary)]"
+          : "border-transparent text-[var(--td2-text-muted)] hover:bg-[var(--td2-bg-inset-2)] hover:text-[var(--td2-text-primary)]"
+      }`}
+    >
+      <span className="flex-1">{children}</span>
+      {typeof count === "number" && count > 0 && (
+        <span className="rounded-[20px] bg-[var(--td2-attention)] px-1.5 py-px font-mono text-[11px] font-medium text-[var(--td2-attention-ink)]">
+          {count}
+        </span>
+      )}
+      {active && (
+        <span
+          aria-hidden="true"
+          className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--td2-accent-dot)]"
         />
-        Dashboard
-      </Link>
+      )}
+    </span>
+  );
+}
+
+function NavLinks({
+  pathname,
+  homeworkCount,
+  onNavigate,
+}: {
+  pathname: string;
+  homeworkCount: number;
+  onNavigate?: () => void;
+}) {
+  return (
+    <nav className="flex flex-col gap-1">
       {NAV_ITEMS.map((item) => {
-        const active = pathname.startsWith(item.href);
-        const Icon = item.icon;
+        const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={`group flex items-center gap-2.5 rounded-lg border-l-2 px-2.5 py-2 text-sm font-medium transition-colors ${
-              active
-                ? "border-brand bg-brand/10 text-brand"
-                : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"
-            }`}
-          >
-            <Icon
-              className={`h-4.5 w-4.5 ${active ? "text-brand" : "text-ink-subtle group-hover:text-ink-muted"}`}
-            />
-            {item.label}
+          <Link key={item.href} href={item.href} onClick={onNavigate}>
+            <NavPill active={active} count={item.label === "Homework" ? homeworkCount : undefined}>
+              {item.label}
+            </NavPill>
           </Link>
         );
       })}
-      <p className="mt-5 px-2.5 text-xs font-semibold uppercase tracking-wide text-ink-subtle">
+
+      <p className="mt-6 px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--td2-text-disabled)]">
         Coming later
       </p>
-      {COMING_LATER.map(({ label, icon: Icon }) => (
-        <span
-          key={label}
-          aria-disabled="true"
-          className="flex items-center gap-2.5 rounded-lg border-l-2 border-transparent px-2.5 py-2 text-sm text-ink-subtle"
-        >
-          <Icon className="h-4.5 w-4.5 text-ink-subtle" />
-          <span className="flex-1">{label}</span>
-          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-medium text-ink-subtle">
-            Soon
-          </span>
+      <span
+        aria-disabled="true"
+        className="flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-sm text-[var(--td2-text-disabled)]"
+      >
+        <span className="flex-1">Invoices</span>
+        <span className="rounded-[20px] border border-[var(--td2-border-chip)] bg-[var(--td2-bg-inset)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--td2-text-disabled)]">
+          SOON
         </span>
-      ))}
+      </span>
     </nav>
   );
 }
 
 function Brand() {
   return (
-    <span className="flex items-center gap-2 text-lg font-bold tracking-tight text-ink">
-      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-cyan text-sm font-bold text-on-brand">
+    <span className="flex items-center gap-2.5 px-1.5">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-[var(--td2-accent-ink)] font-mono text-[15px] font-bold text-[var(--td2-accent)] dark:bg-[var(--td2-accent)] dark:text-[var(--td2-accent-ink)]">
         T
       </span>
-      TutorDesk
+      <span className="text-[17px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+        tutor<span className="text-[var(--td2-text-faint)]">desk</span>
+      </span>
     </span>
   );
 }
 
-export function AppShell({ email, children }: { email: string; children: ReactNode }) {
+function Footer({ email }: { email: string }) {
+  return (
+    <div className="mt-auto flex items-center gap-2.5 border-t border-[var(--td2-border-rail)] pt-4">
+      <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-[var(--td2-border-card)] bg-[var(--td2-bg-inset)] text-[12px] font-medium text-[var(--td2-text-secondary)]">
+        {initialsFromEmail(email)}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-medium text-[var(--td2-text-primary)]">
+          {displayNameFromEmail(email) || "Tutor"}
+        </p>
+        <p className="truncate font-mono text-[10px] text-[var(--td2-text-faint)]">{email}</p>
+      </div>
+      <form action={signOutAction}>
+        <button
+          type="submit"
+          title="Sign out"
+          aria-label="Sign out"
+          className="rounded-lg px-2 py-1.5 text-[11px] font-medium text-[var(--td2-text-muted)] hover:bg-[var(--td2-bg-inset-2)] hover:text-[var(--td2-text-primary)]"
+        >
+          Sign out
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export function AppShell({
+  email,
+  homeworkCount = 0,
+  children,
+}: {
+  email: string;
+  homeworkCount?: number;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-[var(--td2-bg-page)]">
       <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface px-4 py-6 lg:flex">
-          <div className="flex items-center justify-between px-1">
+        <aside className="hidden w-[232px] shrink-0 flex-col gap-[34px] border-r border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-[18px] py-[26px] lg:flex">
+          <div className="flex items-center justify-between">
             <Link href="/dashboard">
               <Brand />
             </Link>
             <ThemeToggle />
           </div>
-          <div className="mt-8 flex-1">
-            <NavLinks pathname={pathname} />
+          <div className="flex-1">
+            <NavLinks pathname={pathname} homeworkCount={homeworkCount} />
           </div>
-          <div className="border-t border-border pt-4">
-            <p className="truncate px-2.5 text-xs text-ink-subtle">{email}</p>
-            <form action={signOutAction} className="mt-2">
-              <button
-                type="submit"
-                className="w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium text-ink-muted hover:bg-surface-muted hover:text-ink"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+          <Footer email={email} />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 lg:hidden">
+          <header className="flex items-center justify-between border-b border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-4 py-3 lg:hidden">
             <Link href="/dashboard">
               <Brand />
             </Link>
@@ -128,7 +165,7 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
                 onClick={() => setMobileNavOpen((open) => !open)}
                 aria-expanded={mobileNavOpen}
                 aria-label="Toggle navigation"
-                className="rounded-lg border border-border p-2 text-ink-muted hover:bg-surface-muted"
+                className="rounded-lg border border-[var(--td2-border-card)] p-2 text-[var(--td2-text-muted)] hover:bg-[var(--td2-bg-inset-2)]"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -153,24 +190,28 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
           </header>
 
           {mobileNavOpen && (
-            <div className="border-b border-border bg-surface px-4 py-4 lg:hidden">
-              <NavLinks pathname={pathname} onNavigate={() => setMobileNavOpen(false)} />
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="px-2.5 text-xs text-ink-subtle">{email}</p>
-                <form action={signOutAction} className="mt-2">
-                  <button
-                    type="submit"
-                    className="w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium text-ink-muted hover:bg-surface-muted hover:text-ink"
-                  >
-                    Sign out
-                  </button>
-                </form>
+            <div className="border-b border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-4 py-4 lg:hidden">
+              <NavLinks
+                pathname={pathname}
+                homeworkCount={homeworkCount}
+                onNavigate={() => setMobileNavOpen(false)}
+              />
+              <div className="mt-4 border-t border-[var(--td2-border-rail)] pt-4">
+                <Footer email={email} />
               </div>
             </div>
           )}
 
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
-            <div className="mx-auto max-w-6xl">{children}</div>
+          <main
+            className={
+              pathname === "/dashboard" ? "flex-1" : "flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10"
+            }
+          >
+            {pathname === "/dashboard" ? (
+              children
+            ) : (
+              <div className="mx-auto max-w-6xl">{children}</div>
+            )}
           </main>
         </div>
       </div>

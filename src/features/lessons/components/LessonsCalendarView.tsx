@@ -12,14 +12,16 @@ import type { PickerLesson } from "./LessonDateTimePicker";
 import { createLessonAction } from "../actions";
 import { toDateParam } from "../date-utils";
 import { LessonCalendar, type CalendarLesson } from "./LessonCalendar";
+import { MonthCalendar } from "./MonthCalendar";
 
 const navLinkClass =
   "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
 const toggleActiveClass = "rounded-md bg-brand px-3 py-1 text-sm font-medium text-on-brand";
 const toggleInactiveClass =
-  "rounded-md px-3 py-1 text-sm font-medium text-ink-muted hover:bg-surface-muted";
+  "rounded-md px-3 py-1 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
 
 type Prefill = { dateParam: string; minutes: number; durationMinutes: number };
+type View = "day" | "week" | "month";
 
 export function LessonsCalendarView({
   title,
@@ -29,6 +31,7 @@ export function LessonsCalendarView({
   nextHref,
   dayHref,
   weekHref,
+  monthHref,
   view,
   dayStartValues,
   lessons,
@@ -38,6 +41,8 @@ export function LessonsCalendarView({
   pickerLessons,
   initialCreate,
   highlightLessonId,
+  monthCountByDate,
+  monthAnchorValue,
 }: {
   title: string;
   description: string;
@@ -46,7 +51,8 @@ export function LessonsCalendarView({
   nextHref: string;
   dayHref: string;
   weekHref: string;
-  view: "day" | "week";
+  monthHref: string;
+  view: View;
   dayStartValues: string[];
   lessons: CalendarLesson[];
   students: { id: string; name: string }[];
@@ -55,6 +61,8 @@ export function LessonsCalendarView({
   pickerLessons: PickerLesson[];
   initialCreate: boolean;
   highlightLessonId: string | null;
+  monthCountByDate: Record<string, number>;
+  monthAnchorValue: string;
 }) {
   const router = useRouter();
   const [createPrefill, setCreatePrefill] = useState<Prefill | null>(
@@ -93,17 +101,23 @@ export function LessonsCalendarView({
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Link href={prevHref} className={navLinkClass}>
-            &larr; Prev
-          </Link>
+        {view === "month" ? (
           <Link href={todayHref} className={navLinkClass}>
             Today
           </Link>
-          <Link href={nextHref} className={navLinkClass}>
-            Next &rarr;
-          </Link>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Link href={prevHref} className={navLinkClass}>
+              &larr; Prev
+            </Link>
+            <Link href={todayHref} className={navLinkClass}>
+              Today
+            </Link>
+            <Link href={nextHref} className={navLinkClass}>
+              Next &rarr;
+            </Link>
+          </div>
+        )}
         <div className="flex items-center gap-1 rounded-lg border border-border bg-surface p-1">
           <Link href={dayHref} className={view === "day" ? toggleActiveClass : toggleInactiveClass}>
             Day
@@ -114,35 +128,55 @@ export function LessonsCalendarView({
           >
             Week
           </Link>
+          <Link
+            href={monthHref}
+            className={view === "month" ? toggleActiveClass : toggleInactiveClass}
+          >
+            Month
+          </Link>
         </div>
       </div>
 
-      {students.length === 0 ? (
-        <p className="text-xs text-ink-subtle">Add a student before you can schedule a lesson.</p>
+      {view === "month" ? (
+        <Card>
+          <MonthCalendar
+            month={new Date(monthAnchorValue)}
+            onMonthChange={(month) => router.push(`/dashboard/schedule?view=month&date=${toDateParam(month)}`)}
+            selectedDate={null}
+            onSelectDate={(dateParam) => router.push(`/dashboard/schedule?view=day&date=${dateParam}`)}
+            countByDate={monthCountByDate}
+          />
+        </Card>
       ) : (
-        <p className="text-xs text-ink-subtle">
-          Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
-        </p>
-      )}
+        <>
+          {students.length === 0 ? (
+            <p className="text-xs text-ink-subtle">Add a student before you can schedule a lesson.</p>
+          ) : (
+            <p className="text-xs text-ink-subtle">
+              Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
+            </p>
+          )}
 
-      <LessonCalendar
-        dayStartValues={dayStartValues}
-        lessons={lessons}
-        students={students}
-        highlightLessonId={highlightLessonId}
-        onSlotClick={(dayIndex, startMinutes, endMinutes) => {
-          const day = new Date(dayStartValues[dayIndex]);
-          setCreatePrefill({
-            dateParam: toDateParam(day),
-            minutes: startMinutes,
-            durationMinutes: Math.max(15, endMinutes - startMinutes),
-          });
-        }}
-      />
+          <LessonCalendar
+            dayStartValues={dayStartValues}
+            lessons={lessons}
+            students={students}
+            highlightLessonId={highlightLessonId}
+            onSlotClick={(dayIndex, startMinutes, endMinutes) => {
+              const day = new Date(dayStartValues[dayIndex]);
+              setCreatePrefill({
+                dateParam: toDateParam(day),
+                minutes: startMinutes,
+                durationMinutes: Math.max(15, endMinutes - startMinutes),
+              });
+            }}
+          />
+        </>
+      )}
 
       {createPrefill && students.length > 0 && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4 backdrop-blur-[2px]">
-          <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto">
+          <Card className="td-modal-pop max-h-[90vh] w-full max-w-lg overflow-y-auto">
             <h3 className="mb-4 text-sm font-semibold text-ink">Schedule lesson</h3>
             <LessonForm
               action={createLessonAction}

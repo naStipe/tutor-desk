@@ -98,6 +98,7 @@ export async function archiveStudentAction(formData: FormData) {
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard/students/archived");
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath("/dashboard");
   redirect("/dashboard/students");
 }
@@ -117,6 +118,7 @@ export async function deleteStudentAction(formData: FormData) {
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard/students/archived");
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath("/dashboard");
   redirect(redirectTo);
 }

@@ -11,6 +11,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Today", exact: true },
+  { href: "/dashboard/schedule", label: "Schedule", exact: false },
   { href: "/dashboard/students", label: "Students", exact: false },
   { href: "/dashboard/lessons", label: "Lessons", exact: false },
   { href: "/dashboard/homework", label: "Homework", exact: false },

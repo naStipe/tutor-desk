@@ -59,7 +59,7 @@ async function requireTutorId() {
 /** Where the calendar should land, with the given lesson highlighted. */
 function calendarHref(startTimeIso: string, lessonId: string) {
   const date = toDateParam(new Date(startTimeIso));
-  return `/dashboard/lessons?view=day&date=${date}&highlight=${lessonId}`;
+  return `/dashboard/schedule?view=day&date=${date}&highlight=${lessonId}`;
 }
 
 export async function createLessonAction(
@@ -95,7 +95,7 @@ export async function createLessonAction(
       const firstLesson = await getFirstLessonForSeries(supabase, series.id);
       href = firstLesson
         ? calendarHref(firstLesson.start_time, firstLesson.id)
-        : `/dashboard/lessons?view=day&date=${parsed.data.startTime.slice(0, 10)}`;
+        : `/dashboard/schedule?view=day&date=${parsed.data.startTime.slice(0, 10)}`;
     } else {
       const lesson = await createLesson(supabase, tutorId, parsed.data);
       href = calendarHref(lesson.start_time, lesson.id);
@@ -106,6 +106,7 @@ export async function createLessonAction(
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath("/dashboard");
   redirect(href);
 }
@@ -130,6 +131,7 @@ export async function updateLessonAction(
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath(`/dashboard/lessons/${id}`);
   redirect(`/dashboard/lessons/${id}`);
 }
@@ -156,26 +158,37 @@ export async function moveLessonAction(
     const lesson = await updateLessonTime(supabase, id, startTime, endTime);
     revalidateTag(tutorTag("lessons", tutorId));
     revalidatePath("/dashboard/lessons");
+    revalidatePath("/dashboard/schedule");
     return { id: lesson.id };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to move lesson." };
   }
 }
 
-export async function setLessonStatusAction(formData: FormData) {
-  const id = formData.get("id");
-  const status = lessonStatusSchema.safeParse(formData.get("status"));
-  if (typeof id !== "string" || id === "" || !status.success) {
+export async function updateLessonStatusAction(id: string, status: string) {
+  const parsedStatus = lessonStatusSchema.safeParse(status);
+  if (typeof id !== "string" || id === "" || !parsedStatus.success) {
     throw new Error("Missing or invalid lesson status update.");
   }
 
   const { supabase, tutorId } = await requireTutorId();
-  await updateLessonStatus(supabase, id, status.data);
+  await updateLessonStatus(supabase, id, parsedStatus.data);
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath(`/dashboard/lessons/${id}`);
   revalidatePath("/dashboard");
+}
+
+/** @deprecated form-action wrapper kept only for any lingering non-JS form submissions. */
+export async function setLessonStatusAction(formData: FormData) {
+  const id = formData.get("id");
+  const status = formData.get("status");
+  if (typeof id !== "string" || id === "" || typeof status !== "string") {
+    throw new Error("Missing or invalid lesson status update.");
+  }
+  await updateLessonStatusAction(id, status);
   redirect(`/dashboard/lessons/${id}`);
 }
 
@@ -194,6 +207,7 @@ export async function setLessonPaymentAction(formData: FormData) {
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath(`/dashboard/lessons/${id}`);
   revalidatePath("/dashboard");
   redirect(`/dashboard/lessons/${id}`);
@@ -211,6 +225,7 @@ export async function cancelSeriesAction(formData: FormData) {
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
   revalidatePath("/dashboard");
   if (typeof lessonId === "string" && lessonId !== "") {
     revalidatePath(`/dashboard/lessons/${lessonId}`);

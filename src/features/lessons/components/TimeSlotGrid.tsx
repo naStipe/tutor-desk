@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { combineDateAndMinutes, formatMinutesOfDay } from "../date-utils";
 
 const START_MINUTES = 7 * 60;
 const END_MINUTES = 21 * 60;
-const SLOT_STEP = 30;
+const SLOT_STEP = 15;
 
 type Interval = { start: number; end: number };
 
@@ -25,6 +26,7 @@ export function TimeSlotGrid({
   selectedMinutes,
   onSelect,
 }: TimeSlotGridProps) {
+  const [hoveredMinutes, setHoveredMinutes] = useState<number | null>(null);
   const now = new Date();
   const slots: { minutes: number; reason: SlotReason }[] = [];
 
@@ -63,17 +65,35 @@ export function TimeSlotGrid({
     );
   }
 
+  const anchorMinutes = hoveredMinutes ?? selectedMinutes;
+  const durationLabel =
+    durationMinutes % 60 === 0 ? `${durationMinutes / 60}h` : `${durationMinutes}m`;
+
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+      <p className="text-[11px] text-ink-subtle">
+        Each lesson takes <span className="font-medium text-ink">{durationLabel}</span> — hover a
+        time to preview the window it will occupy.
+      </p>
+      <div className="grid max-h-72 grid-cols-4 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-6">
         {slots.map((slot) => {
           const isSelected = selectedMinutes === slot.minutes;
+          const isPrimaryHover = hoveredMinutes === slot.minutes;
+          const inSpan =
+            anchorMinutes !== null &&
+            slot.minutes >= anchorMinutes &&
+            slot.minutes < anchorMinutes + durationMinutes;
+
           return (
             <button
               key={slot.minutes}
               type="button"
               disabled={slot.reason !== "available"}
               onClick={() => onSelect(slot.minutes)}
+              onMouseEnter={() => slot.reason === "available" && setHoveredMinutes(slot.minutes)}
+              onMouseLeave={() => setHoveredMinutes(null)}
+              onFocus={() => slot.reason === "available" && setHoveredMinutes(slot.minutes)}
+              onBlur={() => setHoveredMinutes(null)}
               title={
                 slot.reason === "occupied"
                   ? "A lesson is already scheduled at this time"
@@ -81,7 +101,7 @@ export function TimeSlotGrid({
                     ? "Doesn't fit before the next lesson"
                     : undefined
               }
-              className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
+              className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-all duration-150 ${
                 isSelected
                   ? "border-brand bg-brand text-on-brand"
                   : slot.reason === "available"
@@ -91,6 +111,12 @@ export function TimeSlotGrid({
                       : slot.reason === "no-fit"
                         ? "cursor-not-allowed border-warning/30 bg-warning/10 text-warning"
                         : "cursor-not-allowed border-border/60 bg-surface-muted text-ink-subtle line-through"
+              } ${
+                inSpan && !isSelected
+                  ? isPrimaryHover
+                    ? "ring-2 ring-brand ring-inset"
+                    : "ring-2 ring-brand/40 ring-inset"
+                  : ""
               }`}
             >
               {formatMinutesOfDay(slot.minutes)}
@@ -110,6 +136,10 @@ export function TimeSlotGrid({
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm border border-border/60 bg-surface-muted" />
           Past
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm ring-2 ring-brand/40 ring-inset" />
+          Lesson window
         </span>
       </div>
     </div>

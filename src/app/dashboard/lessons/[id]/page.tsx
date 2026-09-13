@@ -7,12 +7,11 @@ import { PageHeader } from "../../../../components/PageHeader";
 import {
   cancelSeriesAction,
   setLessonPaymentAction,
-  setLessonStatusAction,
   updateLessonAction,
 } from "../../../../features/lessons/actions";
 import { LessonForm } from "../../../../features/lessons/components/LessonForm";
+import { LessonStatusActions } from "../../../../features/lessons/components/LessonStatusActions";
 import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
-import { StatusBadge } from "../../../../features/lessons/components/StatusBadge";
 import {
   addDays,
   formatFullDateTime,
@@ -22,24 +21,13 @@ import {
 } from "../../../../features/lessons/date-utils";
 import { getLesson, listLessonsInRange } from "../../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../../features/lessons/rates-map";
-import {
-  LESSON_STATUSES,
-  PAYMENT_METHODS,
-  type LessonStatus,
-} from "../../../../features/lessons/schemas";
+import { type LessonStatus, PAYMENT_METHODS } from "../../../../features/lessons/schemas";
 import { listRatesForTutor } from "../../../../features/rates/data";
 import { listActiveStudents } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_ACTION_LABELS: Record<LessonStatus, string> = {
-  scheduled: "Mark scheduled",
-  completed: "Mark completed",
-  cancelled: "Cancel lesson",
-  no_show: "Mark no-show",
-};
 
 const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
   online: "Online (coming soon)",
@@ -77,8 +65,6 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     ? activeStudents
     : [...(lesson.student ? [lesson.student] : []), ...activeStudents];
 
-  const otherStatuses = LESSON_STATUSES.filter((status) => status !== lesson.status);
-
   return (
     <div className="max-w-xl space-y-6">
       <PageHeader
@@ -93,10 +79,6 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
       />
 
       <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-ink-muted">Status</span>
-          <StatusBadge status={lesson.status} />
-        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-ink-muted">Payment</span>
           <PaymentBadge status={lesson.payment_status} />
@@ -132,23 +114,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         </div>
       </Card>
 
-      <Card>
-        <h2 className="text-sm font-semibold text-ink">Update status</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          Mark this lesson completed, cancelled, or no-show as its outcome becomes known.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {otherStatuses.map((status) => (
-            <form key={status} action={setLessonStatusAction}>
-              <input type="hidden" name="id" value={lesson.id} />
-              <input type="hidden" name="status" value={status} />
-              <Button type="submit" variant={status === "cancelled" ? "danger" : "secondary"}>
-                {STATUS_ACTION_LABELS[status]}
-              </Button>
-            </form>
-          ))}
-        </div>
-      </Card>
+      <LessonStatusActions lessonId={lesson.id} initialStatus={lesson.status as LessonStatus} />
 
       <Card className="space-y-4">
         <div>

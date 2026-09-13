@@ -42,6 +42,17 @@ export async function listLessonsForSelect(supabase: SupabaseClient<Database>, l
   return data as unknown as LessonWithStudent[];
 }
 
+export async function listAllLessonsForTutor(supabase: SupabaseClient<Database>, limit = 1000) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .select(LESSON_COLUMNS)
+    .order("start_time", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Unable to load lessons: ${error.message}`);
+  return data as unknown as LessonWithStudent[];
+}
+
 export async function listUpcomingLessons(supabase: SupabaseClient<Database>, limit = 5) {
   const { data, error } = await supabase
     .from("lesson")

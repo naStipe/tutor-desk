@@ -1,10 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { cancelScheduledLessonsForStudent } from "../lessons/data";
 import { createClient } from "../../lib/supabase/server";
-import { invalidateTags } from "../../lib/cache";
+import { tutorTag } from "../../lib/query-cache";
 import { archiveStudent, createStudent, deleteStudent, updateStudent } from "./data";
 import { studentInputSchema } from "./schemas";
 
@@ -52,7 +52,7 @@ export async function createStudentAction(
     return { error: error instanceof Error ? error.message : "Unable to create student." };
   }
 
-  invalidateTags([`students:${tutorId}`]);
+  revalidateTag(tutorTag("students", tutorId));
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard");
   redirect(`/dashboard/students/${student.id}`);
@@ -79,7 +79,7 @@ export async function updateStudentAction(
     return { error: error instanceof Error ? error.message : "Unable to update student." };
   }
 
-  invalidateTags([`students:${tutorId}`]);
+  revalidateTag(tutorTag("students", tutorId));
   revalidatePath("/dashboard/students");
   revalidatePath(`/dashboard/students/${id}`);
   redirect(`/dashboard/students/${id}`);
@@ -93,7 +93,8 @@ export async function archiveStudentAction(formData: FormData) {
   await cancelScheduledLessonsForStudent(supabase, id);
   await archiveStudent(supabase, id);
 
-  invalidateTags([`students:${tutorId}`, `lessons:${tutorId}`]);
+  revalidateTag(tutorTag("students", tutorId));
+  revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard/students/archived");
   revalidatePath("/dashboard/lessons");
@@ -111,7 +112,8 @@ export async function deleteStudentAction(formData: FormData) {
   await cancelScheduledLessonsForStudent(supabase, id);
   await deleteStudent(supabase, id);
 
-  invalidateTags([`students:${tutorId}`, `lessons:${tutorId}`]);
+  revalidateTag(tutorTag("students", tutorId));
+  revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard/students/archived");
   revalidatePath("/dashboard/lessons");

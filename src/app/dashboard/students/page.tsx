@@ -7,17 +7,23 @@ import { EmptyState } from "../../../components/EmptyState";
 import { UsersIcon } from "../../../components/icons";
 import { PageHeader } from "../../../components/PageHeader";
 import { listActiveStudents } from "../../../features/students/data";
-import { cached } from "../../../lib/cache";
+import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
+import { createTokenClient } from "../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function StudentsPage() {
-  const { supabase, user } = await getCurrentUser();
+  const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const students = await cached(`students-active:${user.id}`, [`students:${user.id}`], 30_000, () =>
-    listActiveStudents(supabase),
+  const client = accessToken ? createTokenClient(accessToken) : supabase;
+  const students = await cachedForTutor(
+    "students-active",
+    [user.id],
+    [tutorTag("students", user.id)],
+    30,
+    () => listActiveStudents(client),
   );
 
   return (

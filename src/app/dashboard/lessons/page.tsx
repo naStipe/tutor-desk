@@ -15,8 +15,9 @@ import {
 } from "../../../features/lessons/date-utils";
 import { listLessonsInRange } from "../../../features/lessons/data";
 import { listActiveStudents } from "../../../features/students/data";
-import { cached } from "../../../lib/cache";
+import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
+import { createTokenClient } from "../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
@@ -45,22 +46,24 @@ export default async function LessonsPage({
   const rangeDays = view === "day" ? 1 : 7;
   const rangeEnd = addDays(rangeStart, rangeDays);
 
-  const { supabase, user } = await getCurrentUser();
+  const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
+  const client = accessToken ? createTokenClient(accessToken) : supabase;
   const [lessons, students] = await Promise.all([
-    cached(
-      `lessons-range:${user.id}:${rangeStart.toISOString()}:${rangeEnd.toISOString()}`,
-      [`lessons:${user.id}`],
-      30_000,
+    cachedForTutor(
+      "lessons-range",
+      [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+      [tutorTag("lessons", user.id)],
+      30,
       () =>
-        listLessonsInRange(supabase, {
+        listLessonsInRange(client, {
           start: rangeStart.toISOString(),
           end: rangeEnd.toISOString(),
         }),
     ),
-    cached(`students-active:${user.id}`, [`students:${user.id}`], 30_000, () =>
-      listActiveStudents(supabase),
+    cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 30, () =>
+      listActiveStudents(client),
     ),
   ]);
 

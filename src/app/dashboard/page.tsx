@@ -2,20 +2,23 @@ import { redirect } from "next/navigation";
 import { TodayDashboard } from "../../features/dashboard/components/TodayDashboard";
 import { getTodayDashboardData } from "../../features/dashboard/data";
 import { firstNameFromEmail } from "../../lib/display-name";
-import { cached } from "../../lib/cache";
+import { cachedForTutor, tutorTag } from "../../lib/query-cache";
 import { getCurrentUser } from "../../lib/supabase/current-user";
+import { createTokenClient } from "../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const { supabase, user } = await getCurrentUser();
+  const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const { todaysLessons, homeworkAttention, unbilled, weekLoad } = await cached(
-    `today-dashboard:${user.id}`,
-    [`lessons:${user.id}`, `homework:${user.id}`],
-    30_000,
-    () => getTodayDashboardData(supabase),
+  const client = accessToken ? createTokenClient(accessToken) : supabase;
+  const { todaysLessons, homeworkAttention, unbilled, weekLoad } = await cachedForTutor(
+    "today-dashboard",
+    [user.id],
+    [tutorTag("lessons", user.id), tutorTag("homework", user.id)],
+    30,
+    () => getTodayDashboardData(client),
   );
 
   const lessons = todaysLessons.map((lesson) => ({

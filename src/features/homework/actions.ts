@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
-import { invalidateTags } from "../../lib/cache";
+import { tutorTag } from "../../lib/query-cache";
 import { createHomework, recordFeedback, recordSubmission, updateHomework } from "./data";
 import { feedbackInputSchema, homeworkInputSchema, submissionInputSchema } from "./schemas";
 
@@ -51,7 +51,7 @@ export async function createHomeworkAction(
     return { error: error instanceof Error ? error.message : "Unable to create homework." };
   }
 
-  invalidateTags([`homework:${tutorId}`]);
+  revalidateTag(tutorTag("homework", tutorId));
   revalidatePath("/dashboard/homework");
   revalidatePath("/dashboard");
   redirect(`/dashboard/homework/${homework.id}`);
@@ -75,7 +75,7 @@ export async function updateHomeworkAction(
     return { error: error instanceof Error ? error.message : "Unable to update homework." };
   }
 
-  invalidateTags([`homework:${tutorId}`]);
+  revalidateTag(tutorTag("homework", tutorId));
   revalidatePath("/dashboard/homework");
   revalidatePath(`/dashboard/homework/${id}`);
   redirect(`/dashboard/homework/${id}`);
@@ -101,7 +101,7 @@ export async function recordSubmissionAction(
     return { error: error instanceof Error ? error.message : "Unable to record submission." };
   }
 
-  invalidateTags([`homework:${tutorId}`]);
+  revalidateTag(tutorTag("homework", tutorId));
   revalidatePath("/dashboard/homework");
   revalidatePath(`/dashboard/homework/${id}`);
   redirect(`/dashboard/homework/${id}`);
@@ -125,7 +125,7 @@ export async function recordFeedbackAction(
     return { error: error instanceof Error ? error.message : "Unable to record feedback." };
   }
 
-  invalidateTags([`homework:${tutorId}`]);
+  revalidateTag(tutorTag("homework", tutorId));
   revalidatePath("/dashboard/homework");
   revalidatePath(`/dashboard/homework/${id}`);
   redirect(`/dashboard/homework/${id}`);

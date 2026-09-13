@@ -1,9 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
-import { invalidateTags } from "../../lib/cache";
+import { tutorTag } from "../../lib/query-cache";
 import { createLesson, updateLesson, updateLessonStatus, updateLessonTime } from "./data";
 import { lessonInputSchema, lessonStatusSchema } from "./schemas";
 
@@ -50,7 +50,7 @@ export async function createLessonAction(
     return { error: error instanceof Error ? error.message : "Unable to schedule lesson." };
   }
 
-  invalidateTags([`lessons:${tutorId}`]);
+  revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
   revalidatePath("/dashboard");
   redirect(`/dashboard/lessons/${lesson.id}`);
@@ -74,7 +74,7 @@ export async function updateLessonAction(
     return { error: error instanceof Error ? error.message : "Unable to update lesson." };
   }
 
-  invalidateTags([`lessons:${tutorId}`]);
+  revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
   revalidatePath(`/dashboard/lessons/${id}`);
   redirect(`/dashboard/lessons/${id}`);
@@ -100,7 +100,7 @@ export async function moveLessonAction(
 
   try {
     const lesson = await updateLessonTime(supabase, id, startTime, endTime);
-    invalidateTags([`lessons:${tutorId}`]);
+    revalidateTag(tutorTag("lessons", tutorId));
     revalidatePath("/dashboard/lessons");
     return { id: lesson.id };
   } catch (error) {
@@ -123,7 +123,7 @@ export async function quickCreateLessonAction(input: {
 
   try {
     const lesson = await createLesson(supabase, tutorId, parsed.data);
-    invalidateTags([`lessons:${tutorId}`]);
+    revalidateTag(tutorTag("lessons", tutorId));
     revalidatePath("/dashboard/lessons");
     revalidatePath("/dashboard");
     return { id: lesson.id };
@@ -142,7 +142,7 @@ export async function setLessonStatusAction(formData: FormData) {
   const { supabase, tutorId } = await requireTutorId();
   await updateLessonStatus(supabase, id, status.data);
 
-  invalidateTags([`lessons:${tutorId}`]);
+  revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
   revalidatePath(`/dashboard/lessons/${id}`);
   revalidatePath("/dashboard");

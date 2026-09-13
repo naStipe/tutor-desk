@@ -8,8 +8,9 @@ import { BookIcon } from "../../../components/icons";
 import { PageHeader } from "../../../components/PageHeader";
 import { HomeworkStatusBadge } from "../../../features/homework/components/HomeworkStatusBadge";
 import { listHomework } from "../../../features/homework/data";
-import { cached } from "../../../lib/cache";
+import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
+import { createTokenClient } from "../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,16 @@ function formatDueDate(value: string | null) {
 }
 
 export default async function HomeworkPage() {
-  const { supabase, user } = await getCurrentUser();
+  const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const homework = await cached(`homework-list:${user.id}`, [`homework:${user.id}`], 30_000, () =>
-    listHomework(supabase),
+  const client = accessToken ? createTokenClient(accessToken) : supabase;
+  const homework = await cachedForTutor(
+    "homework-list",
+    [user.id],
+    [tutorTag("homework", user.id)],
+    30,
+    () => listHomework(client),
   );
 
   return (

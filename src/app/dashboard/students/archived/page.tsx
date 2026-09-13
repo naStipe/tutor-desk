@@ -8,20 +8,23 @@ import { PageHeader } from "../../../../components/PageHeader";
 import { deleteStudentAction } from "../../../../features/students/actions";
 import { ConfirmDeleteForm } from "../../../../features/students/components/ConfirmDeleteForm";
 import { listArchivedStudents } from "../../../../features/students/data";
-import { cached } from "../../../../lib/cache";
+import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
 import { getCurrentUser } from "../../../../lib/supabase/current-user";
+import { createTokenClient } from "../../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArchivedStudentsPage() {
-  const { supabase, user } = await getCurrentUser();
+  const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const students = await cached(
-    `students-archived:${user.id}`,
-    [`students:${user.id}`],
-    30_000,
-    () => listArchivedStudents(supabase),
+  const client = accessToken ? createTokenClient(accessToken) : supabase;
+  const students = await cachedForTutor(
+    "students-archived",
+    [user.id],
+    [tutorTag("students", user.id)],
+    30,
+    () => listArchivedStudents(client),
   );
 
   return (

@@ -17,6 +17,7 @@ import {
   formatWeekdayShort,
   isSameDay,
   minutesSinceMidnight,
+  startOfDay,
 } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 
@@ -246,17 +247,25 @@ export function LessonCalendar({
       >
         {days.map((day) => {
           const isToday = isSameDay(day, now);
+          const isPast = startOfDay(day) < startOfDay(now);
           return (
             <div
               key={day.toISOString()}
               className={`flex-1 border-l border-border px-2 py-2.5 text-center first:border-l-0 ${
-                isToday ? "bg-brand/10" : ""
+                isToday ? "bg-brand/10" : isPast ? "bg-surface-muted/50" : ""
               }`}
             >
-              <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
+              <p
+                className={`text-xs font-medium uppercase tracking-wide ${isPast ? "text-ink-subtle/70" : "text-ink-subtle"}`}
+              >
                 {formatWeekdayShort(day)}
+                {isPast && !isToday ? " · Past" : ""}
               </p>
-              <p className={`mt-0.5 text-sm font-semibold ${isToday ? "text-brand" : "text-ink"}`}>
+              <p
+                className={`mt-0.5 text-sm font-semibold ${
+                  isToday ? "text-brand" : isPast ? "text-ink-subtle" : "text-ink"
+                }`}
+              >
                 {day.getDate()}
               </p>
             </div>
@@ -290,6 +299,13 @@ export function LessonCalendar({
 
           {days.map((day, dayIndex) => {
             const isToday = isSameDay(day, now);
+            const isPastDay = startOfDay(day) < startOfDay(now);
+            const nowLineTop = ((minutesSinceMidnight(now) - START_HOUR * 60) / 60) * PX_PER_HOUR;
+            const pastOverlayHeight = isPastDay
+              ? GRID_HEIGHT
+              : isToday
+                ? Math.min(Math.max(nowLineTop, 0), GRID_HEIGHT)
+                : 0;
             const dayLessons = lessons.filter((lesson) =>
               isSameDay(new Date(lesson.startTime), day),
             );
@@ -302,12 +318,17 @@ export function LessonCalendar({
                 className={`relative flex-1 border-l border-border first:border-l-0 ${isToday ? "bg-brand/5" : ""}`}
                 onClick={(event) => handleColumnClick(event, dayIndex)}
               >
+                {pastOverlayHeight > 0 && (
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-0 z-0 bg-surface-muted/50"
+                    style={{ height: pastOverlayHeight }}
+                  />
+                )}
+
                 {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                   <div
                     className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-danger"
-                    style={{
-                      top: ((minutesSinceMidnight(now) - START_HOUR * 60) / 60) * PX_PER_HOUR,
-                    }}
+                    style={{ top: nowLineTop }}
                   >
                     <span className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-danger" />
                   </div>

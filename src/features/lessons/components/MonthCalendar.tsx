@@ -5,6 +5,7 @@ import {
   addMonths,
   formatMonthHeading,
   isSameDay,
+  startOfDay,
   startOfMonth,
   startOfWeek,
   toDateParam,
@@ -74,6 +75,7 @@ export function MonthCalendar({
           const dateParam = toDateParam(day);
           const inMonth = day.getMonth() === month.getMonth();
           const isToday = isSameDay(day, today);
+          const isPast = startOfDay(day) < startOfDay(today) && !isToday;
           const isSelected = selectedDate === dateParam;
           const isDisabled =
             (minDate && day < minDate && !isSameDay(day, minDate)) ||
@@ -91,7 +93,9 @@ export function MonthCalendar({
                   ? "bg-brand text-on-brand font-semibold"
                   : isToday
                     ? "border border-brand/40 text-ink"
-                    : "text-ink hover:bg-surface-muted"
+                    : isPast
+                      ? "bg-surface-muted/40 text-ink-subtle hover:bg-surface-muted"
+                      : "text-ink hover:bg-surface-muted"
               } ${!inMonth ? "text-ink-subtle/50" : ""} ${isDisabled ? "cursor-not-allowed opacity-30" : ""}`}
             >
               <span>{day.getDate()}</span>

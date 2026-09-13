@@ -30,18 +30,18 @@ export default function HomePage() {
       </div>
 
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center sm:px-12">
-        <div
-          id="brand-title"
-          className="flex items-center rounded-xl bg-white px-3 py-2 shadow-sm shadow-black/[0.03]"
-        >
+        <div id="brand-title" className="flex items-center gap-2">
           <Image
-            src="/brand/tutordesk-logo-green.png"
-            alt="TutorDesk"
-            width={2172}
-            height={724}
+            src="/brand/tutordesk-icon.png"
+            alt=""
+            width={451}
+            height={362}
             priority
-            className="h-8 w-auto"
+            className="h-9 w-auto"
           />
+          <span className="text-2xl font-bold tracking-tight text-ink">
+            Tutor<span className="text-brand">Desk</span>
+          </span>
         </div>
 
         <h1 className="mt-8 text-3xl font-bold tracking-tight text-ink sm:text-4xl">

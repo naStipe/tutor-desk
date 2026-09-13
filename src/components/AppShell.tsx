@@ -90,15 +90,18 @@ function NavLinks({
 
 function Brand() {
   return (
-    <span className="flex items-center rounded-[9px] bg-white px-2 py-1">
+    <span className="flex items-center gap-1.5 px-1.5">
       <Image
-        src="/brand/tutordesk-logo-green.png"
-        alt="TutorDesk"
-        width={2172}
-        height={724}
+        src="/brand/tutordesk-icon.png"
+        alt=""
+        width={451}
+        height={362}
         priority
-        className="h-5 w-auto"
+        className="h-6 w-auto"
       />
+      <span className="text-[17px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+        Tutor<span className="text-[var(--td2-accent-text-strong)]">Desk</span>
+      </span>
     </span>
   );
 }

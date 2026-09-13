@@ -10,17 +10,13 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Button } from "../../../components/Button";
-import { inputClassName } from "../../../components/Field";
-import { moveLessonAction, quickCreateLessonAction } from "../actions";
+import { moveLessonAction } from "../actions";
 import {
   formatHourLabel,
   formatMinutesOfDay,
   formatWeekdayShort,
   isSameDay,
   minutesSinceMidnight,
-  minutesToTimeInputValue,
-  timeInputValueToMinutes,
 } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 
@@ -69,16 +65,18 @@ type DragState = {
   moved: boolean;
 };
 
-type PopoverState = { dayIndex: number; startMinutes: number; endMinutes: number };
-
 export function LessonCalendar({
   dayStartValues,
   lessons: initialLessons,
   students,
+  highlightLessonId,
+  onSlotClick,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
   students: { id: string; name: string }[];
+  highlightLessonId?: string | null;
+  onSlotClick: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -94,7 +92,6 @@ export function LessonCalendar({
     dayIndex: number;
     startMinutes: number;
   } | null>(null);
-  const [popover, setPopover] = useState<PopoverState | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -226,13 +223,7 @@ export function LessonCalendar({
     }
     const startMinutes = minutesFromClientY(event.clientY);
     const endMinutes = Math.min(startMinutes + 60, END_HOUR * 60);
-    setPopover({ dayIndex, startMinutes, endMinutes });
-  }
-
-  function handleCreated(lesson: CalendarLesson) {
-    setLessons((prev) => [...prev, lesson]);
-    setPopover(null);
-    router.refresh();
+    onSlotClick(dayIndex, startMinutes, endMinutes);
   }
 
   return (
@@ -333,6 +324,7 @@ export function LessonCalendar({
                   const top = ((startMinutes - START_HOUR * 60) / 60) * PX_PER_HOUR;
                   const height = Math.max((durationMinutes / 60) * PX_PER_HOUR, 22);
                   const compact = height < 40;
+                  const isHighlighted = highlightLessonId === lesson.id;
 
                   return (
                     <button
@@ -341,7 +333,7 @@ export function LessonCalendar({
                       onPointerDown={(event) => handleBlockPointerDown(event, lesson, dayIndex)}
                       onPointerMove={handleBlockPointerMove}
                       onPointerUp={(event) => handleBlockPointerUp(event, lesson)}
-                      className={`absolute inset-x-1 z-20 overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"}`}
+                      className={`absolute inset-x-1 z-20 overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
                       style={{ top, height }}
                     >
                       <span className="block truncate font-medium leading-tight">
@@ -358,152 +350,6 @@ export function LessonCalendar({
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {popover && (
-        <CreateLessonPopover
-          day={days[popover.dayIndex]}
-          startMinutes={popover.startMinutes}
-          endMinutes={popover.endMinutes}
-          students={students}
-          onClose={() => setPopover(null)}
-          onCreated={handleCreated}
-          onError={setError}
-        />
-      )}
-    </div>
-  );
-}
-
-function CreateLessonPopover({
-  day,
-  startMinutes,
-  endMinutes,
-  students,
-  onClose,
-  onCreated,
-  onError,
-}: {
-  day: Date;
-  startMinutes: number;
-  endMinutes: number;
-  students: { id: string; name: string }[];
-  onClose: () => void;
-  onCreated: (lesson: CalendarLesson) => void;
-  onError: (message: string) => void;
-}) {
-  const [studentId, setStudentId] = useState(students[0]?.id ?? "");
-  const [startValue, setStartValue] = useState(minutesToTimeInputValue(startMinutes));
-  const [endValue, setEndValue] = useState(minutesToTimeInputValue(endMinutes));
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
-
-  function submit() {
-    const student = students.find((item) => item.id === studentId);
-    const startMin = timeInputValueToMinutes(startValue);
-    const endMin = timeInputValueToMinutes(endValue);
-    if (!student || startMin === null || endMin === null) {
-      onError("Choose a student and valid times.");
-      return;
-    }
-    if (endMin <= startMin) {
-      onError("End time must be after start time.");
-      return;
-    }
-
-    const start = new Date(day);
-    start.setMinutes(startMin);
-    const end = new Date(day);
-    end.setMinutes(endMin);
-
-    startTransition(async () => {
-      const result = await quickCreateLessonAction({
-        studentId: student.id,
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
-      });
-      if ("error" in result) {
-        onError(result.error ?? "Unable to schedule lesson.");
-        return;
-      }
-      onCreated({
-        id: result.id,
-        studentId: student.id,
-        studentName: student.name,
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
-        status: "scheduled",
-      });
-    });
-  }
-
-  return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4 backdrop-blur-[2px]">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-xl">
-        <h3 className="text-sm font-semibold text-ink">
-          New lesson ·{" "}
-          {day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-        </h3>
-        <div className="mt-4 space-y-3">
-          <div>
-            <label htmlFor="quick-student" className="mb-1 block text-sm font-medium text-ink">
-              Student
-            </label>
-            <select
-              id="quick-student"
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
-              className={inputClassName}
-            >
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="quick-start" className="mb-1 block text-sm font-medium text-ink">
-                Start
-              </label>
-              <input
-                id="quick-start"
-                type="time"
-                value={startValue}
-                onChange={(event) => setStartValue(event.target.value)}
-                className={inputClassName}
-              />
-            </div>
-            <div>
-              <label htmlFor="quick-end" className="mb-1 block text-sm font-medium text-ink">
-                End
-              </label>
-              <input
-                id="quick-end"
-                type="time"
-                value={endValue}
-                onChange={(event) => setEndValue(event.target.value)}
-                className={inputClassName}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="mt-5 flex items-center justify-between gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={submit} disabled={isPending}>
-            {isPending ? "Scheduling…" : "Schedule"}
-          </Button>
         </div>
       </div>
     </div>

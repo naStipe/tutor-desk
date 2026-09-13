@@ -4,13 +4,32 @@ import { Avatar } from "../../../../components/Avatar";
 import { Button } from "../../../../components/Button";
 import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
-import { setLessonStatusAction, updateLessonAction } from "../../../../features/lessons/actions";
+import {
+  cancelSeriesAction,
+  setLessonPaymentAction,
+  setLessonStatusAction,
+  updateLessonAction,
+} from "../../../../features/lessons/actions";
 import { LessonForm } from "../../../../features/lessons/components/LessonForm";
+import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
 import { StatusBadge } from "../../../../features/lessons/components/StatusBadge";
-import { formatFullDateTime, toDateTimeLocalValue } from "../../../../features/lessons/date-utils";
-import { getLesson } from "../../../../features/lessons/data";
-import { LESSON_STATUSES, type LessonStatus } from "../../../../features/lessons/schemas";
+import {
+  addDays,
+  formatFullDateTime,
+  minutesSinceMidnight,
+  startOfDay,
+  toDateParam,
+} from "../../../../features/lessons/date-utils";
+import { getLesson, listLessonsInRange } from "../../../../features/lessons/data";
+import { buildRatesByStudent } from "../../../../features/lessons/rates-map";
+import {
+  LESSON_STATUSES,
+  PAYMENT_METHODS,
+  type LessonStatus,
+} from "../../../../features/lessons/schemas";
+import { listRatesForTutor } from "../../../../features/rates/data";
 import { listActiveStudents } from "../../../../features/students/data";
+import { listSubjects } from "../../../../features/subjects/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,16 +41,37 @@ const STATUS_ACTION_LABELS: Record<LessonStatus, string> = {
   no_show: "Mark no-show",
 };
 
+const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
+  online: "Online (coming soon)",
+  invoice: "Invoice",
+  sbp: "SBP transfer",
+};
+
 export default async function LessonDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const [lesson, activeStudents] = await Promise.all([
+  const [lesson, activeStudents, subjects, rates] = await Promise.all([
     getLesson(supabase, id),
     listActiveStudents(supabase),
+    listSubjects(supabase),
+    listRatesForTutor(supabase),
   ]);
   if (!lesson) notFound();
+
+  const pickerStart = addDays(startOfDay(new Date()), -7);
+  const pickerEnd = addDays(startOfDay(new Date()), 120);
+  const pickerLessonRows = await listLessonsInRange(supabase, {
+    start: pickerStart.toISOString(),
+    end: pickerEnd.toISOString(),
+  });
+  const pickerLessons = pickerLessonRows.map((row) => ({
+    id: row.id,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    status: row.status,
+  }));
 
   const students = activeStudents.some((student) => student.id === lesson.student_id)
     ? activeStudents
@@ -52,9 +92,15 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         }
       />
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-ink-muted">Status</span>
-        <StatusBadge status={lesson.status} />
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-ink-muted">Status</span>
+          <StatusBadge status={lesson.status} />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-ink-muted">Payment</span>
+          <PaymentBadge status={lesson.payment_status} />
+        </div>
       </div>
 
       <Card>
@@ -64,11 +110,21 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             action={updateLessonAction}
             lessonId={lesson.id}
             students={students}
+            subjects={subjects}
+            ratesByStudent={buildRatesByStudent(rates)}
+            pickerLessons={pickerLessons}
             defaultValues={{
               studentId: lesson.student_id,
-              startTime: toDateTimeLocalValue(lesson.start_time),
-              endTime: toDateTimeLocalValue(lesson.end_time),
+              subjectId: lesson.subject_id ?? undefined,
+              dateParam: toDateParam(new Date(lesson.start_time)),
+              minutes: minutesSinceMidnight(new Date(lesson.start_time)),
+              durationMinutes: Math.round(
+                (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) /
+                  60000,
+              ),
               notes: lesson.notes ?? "",
+              price: lesson.price !== null ? String(lesson.price) : undefined,
+              currency: lesson.currency ?? undefined,
             }}
             submitLabel="Save changes"
             pendingLabel="Saving…"
@@ -93,6 +149,63 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           ))}
         </div>
       </Card>
+
+      <Card className="space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold text-ink">Payment</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {lesson.price !== null
+              ? `${lesson.price} ${lesson.currency ?? ""}`.trim()
+              : "No price set for this lesson."}
+            {lesson.payment_method &&
+              ` · ${PAYMENT_METHOD_LABELS[lesson.payment_method as (typeof PAYMENT_METHODS)[number]]}`}
+          </p>
+        </div>
+
+        {lesson.payment_status === "paid" ? (
+          <form action={setLessonPaymentAction}>
+            <input type="hidden" name="id" value={lesson.id} />
+            <input type="hidden" name="paymentStatus" value="unpaid" />
+            <Button type="submit" variant="secondary">
+              Mark unpaid
+            </Button>
+          </form>
+        ) : (
+          <form action={setLessonPaymentAction} className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="id" value={lesson.id} />
+            <input type="hidden" name="paymentStatus" value="paid" />
+            <select
+              name="paymentMethod"
+              defaultValue={lesson.payment_method ?? "invoice"}
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink"
+            >
+              {PAYMENT_METHODS.map((method) => (
+                <option key={method} value={method}>
+                  {PAYMENT_METHOD_LABELS[method]}
+                </option>
+              ))}
+            </select>
+            <Button type="submit">Mark paid</Button>
+          </form>
+        )}
+      </Card>
+
+      {lesson.series_id && (
+        <Card className="space-y-3">
+          <h2 className="text-sm font-semibold text-ink">Recurring lesson</h2>
+          <p className="text-sm text-ink-muted">
+            This lesson is part of a weekly series. Cancelling the series stops future occurrences
+            without touching past or completed lessons.
+          </p>
+          <form action={cancelSeriesAction}>
+            <input type="hidden" name="seriesId" value={lesson.series_id} />
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            <Button type="submit" variant="danger">
+              Cancel remaining lessons in this series
+            </Button>
+          </form>
+        </Card>
+      )}
     </div>
   );
 }

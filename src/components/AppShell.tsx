@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/students", label: "Students", exact: false },
   { href: "/dashboard/lessons", label: "Lessons", exact: false },
   { href: "/dashboard/homework", label: "Homework", exact: false },
+  { href: "/dashboard/subjects", label: "Subjects", exact: false },
 ];
 
 function NavPill({

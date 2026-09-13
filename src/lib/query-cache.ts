@@ -19,6 +19,9 @@ export function cachedForTutor<T>(
   })();
 }
 
-export function tutorTag(resource: "students" | "lessons" | "homework", tutorId: string) {
+export function tutorTag(
+  resource: "students" | "lessons" | "homework" | "subjects" | "rates",
+  tutorId: string,
+) {
   return `${resource}:${tutorId}`;
 }

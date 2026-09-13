@@ -22,6 +22,20 @@ export function addDays(date: Date, days: number) {
   return result;
 }
 
+export function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+export function addMonths(date: Date, months: number) {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1);
+}
+
+/** Combines a local YYYY-MM-DD date with minutes-since-midnight into a Date. */
+export function combineDateAndMinutes(dateParam: string, minutes: number) {
+  const [year, month, day] = dateParam.split("-").map(Number);
+  return new Date(year, (month ?? 1) - 1, day ?? 1, Math.floor(minutes / 60), minutes % 60, 0, 0);
+}
+
 /** Local YYYY-MM-DD, for calendar navigation query params. */
 export function toDateParam(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -42,20 +56,6 @@ export function parseDateParam(value: string | undefined): Date {
     if (year && month && day) return new Date(year, month - 1, day);
   }
   return new Date();
-}
-
-/** Local YYYY-MM-DDTHH:mm, for <input type="datetime-local"> values. */
-export function toDateTimeLocalValue(isoOrDate: string | Date) {
-  const date = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
-  if (Number.isNaN(date.getTime())) return "";
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-/** Converts a <input type="datetime-local"> value (interpreted in the browser's local time) to ISO. */
-export function dateTimeLocalToISO(value: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
 }
 
 // A fixed locale keeps date/time text readable regardless of the server's OS locale
@@ -125,6 +125,10 @@ export function formatWeekdayShort(date: Date) {
   return date.toLocaleDateString(DISPLAY_LOCALE, { weekday: "short" });
 }
 
+export function formatMonthHeading(date: Date) {
+  return date.toLocaleDateString(DISPLAY_LOCALE, { month: "long", year: "numeric" });
+}
+
 export function formatMinutesOfDay(minutes: number) {
   const wrapped = ((minutes % 1440) + 1440) % 1440;
   const hour = Math.floor(wrapped / 60);
@@ -132,18 +136,4 @@ export function formatMinutesOfDay(minutes: number) {
   const period = hour < 12 ? "AM" : "PM";
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
   return `${displayHour}:${pad(minute)} ${period}`;
-}
-
-/** "HH:mm" (24h) for <input type="time"> values. */
-export function minutesToTimeInputValue(minutes: number) {
-  const wrapped = ((minutes % 1440) + 1440) % 1440;
-  return `${pad(Math.floor(wrapped / 60))}:${pad(wrapped % 60)}`;
-}
-
-export function timeInputValueToMinutes(value: string) {
-  const [hourStr, minuteStr] = value.split(":");
-  const hour = Number(hourStr);
-  const minute = Number(minuteStr);
-  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
-  return hour * 60 + minute;
 }

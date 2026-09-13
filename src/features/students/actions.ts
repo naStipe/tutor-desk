@@ -55,7 +55,7 @@ export async function createStudentAction(
   revalidateTag(tutorTag("students", tutorId));
   revalidatePath("/dashboard/students");
   revalidatePath("/dashboard");
-  redirect(`/dashboard/students/${student.id}`);
+  redirect(`/dashboard/students?highlight=${student.id}`);
 }
 
 export async function updateStudentAction(

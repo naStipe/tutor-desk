@@ -1,12 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/supabase/database.types";
-import type { LessonInput, LessonStatus } from "./schemas";
+import type { LessonInput, LessonStatus, PaymentMethod, PaymentStatus } from "./schemas";
 
 export type Lesson = Database["public"]["Tables"]["lesson"]["Row"];
-export type LessonWithStudent = Lesson & { student: { id: string; name: string } | null };
+export type LessonSeries = Database["public"]["Tables"]["lesson_series"]["Row"];
+export type LessonWithStudent = Lesson & {
+  student: { id: string; name: string } | null;
+  subject: { id: string; name: string } | null;
+};
 
 const LESSON_COLUMNS =
-  "id, tutor_id, student_id, start_time, end_time, status, notes, created_at, updated_at, student:student_id (id, name)";
+  "id, tutor_id, student_id, subject_id, series_id, start_time, end_time, status, notes, price, currency, payment_status, payment_method, paid_at, created_at, updated_at, student:student_id (id, name), subject:subject_id (id, name)";
+
+function addMinutes(iso: string, minutes: number) {
+  return new Date(new Date(iso).getTime() + minutes * 60000).toISOString();
+}
 
 export async function listLessonsInRange(
   supabase: SupabaseClient<Database>,
@@ -73,15 +81,23 @@ export async function createLesson(
   supabase: SupabaseClient<Database>,
   tutorId: string,
   input: LessonInput,
+  seriesId?: string,
 ) {
   const { data, error } = await supabase
     .from("lesson")
     .insert({
       tutor_id: tutorId,
       student_id: input.studentId,
+      subject_id: input.subjectId ?? null,
+      series_id: seriesId ?? null,
       start_time: input.startTime,
-      end_time: input.endTime,
+      end_time: addMinutes(input.startTime, input.durationMinutes),
       notes: input.notes ?? null,
+      price: input.price ?? null,
+      currency: input.currency ?? null,
+      payment_status: input.paymentStatus,
+      payment_method: input.paymentMethod ?? null,
+      paid_at: input.paymentStatus === "paid" ? new Date().toISOString() : null,
     })
     .select(LESSON_COLUMNS)
     .single();
@@ -99,9 +115,12 @@ export async function updateLesson(
     .from("lesson")
     .update({
       student_id: input.studentId,
+      subject_id: input.subjectId ?? null,
       start_time: input.startTime,
-      end_time: input.endTime,
+      end_time: addMinutes(input.startTime, input.durationMinutes),
       notes: input.notes ?? null,
+      price: input.price ?? null,
+      currency: input.currency ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -142,6 +161,25 @@ export async function updateLessonStatus(
   if (error) throw new Error(`Unable to update lesson status: ${error.message}`);
 }
 
+export async function updateLessonPayment(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  paymentStatus: PaymentStatus,
+  paymentMethod: PaymentMethod | null,
+) {
+  const { error } = await supabase
+    .from("lesson")
+    .update({
+      payment_status: paymentStatus,
+      payment_method: paymentMethod,
+      paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(`Unable to update lesson payment: ${error.message}`);
+}
+
 export async function cancelScheduledLessonsForStudent(
   supabase: SupabaseClient<Database>,
   studentId: string,
@@ -153,4 +191,133 @@ export async function cancelScheduledLessonsForStudent(
     .eq("status", "scheduled");
 
   if (error) throw new Error(`Unable to cancel lessons: ${error.message}`);
+}
+
+export async function createLessonSeries(
+  supabase: SupabaseClient<Database>,
+  tutorId: string,
+  input: {
+    studentId: string;
+    subjectId?: string;
+    dayOfWeek: number;
+    startMinutes: number;
+    durationMinutes: number;
+    startDate: string;
+    endDate?: string;
+    notes?: string;
+  },
+) {
+  const { data, error } = await supabase
+    .from("lesson_series")
+    .insert({
+      tutor_id: tutorId,
+      student_id: input.studentId,
+      subject_id: input.subjectId ?? null,
+      day_of_week: input.dayOfWeek,
+      start_minutes: input.startMinutes,
+      duration_minutes: input.durationMinutes,
+      start_date: input.startDate,
+      end_date: input.endDate ?? null,
+      notes: input.notes ?? null,
+    })
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Unable to schedule recurring lesson: ${error.message}`);
+  return data;
+}
+
+export async function getFirstLessonForSeries(
+  supabase: SupabaseClient<Database>,
+  seriesId: string,
+) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .select("id, start_time")
+    .eq("series_id", seriesId)
+    .order("start_time", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(`Unable to load recurring lesson: ${error.message}`);
+  return data;
+}
+
+export async function cancelLessonSeries(supabase: SupabaseClient<Database>, id: string) {
+  const { data: series, error: fetchError } = await supabase
+    .from("lesson_series")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchError) throw new Error(`Unable to load recurring lesson: ${fetchError.message}`);
+  if (!series) return;
+
+  const { error: seriesError } = await supabase
+    .from("lesson_series")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (seriesError) throw new Error(`Unable to cancel recurring lesson: ${seriesError.message}`);
+
+  const { error: lessonError } = await supabase
+    .from("lesson")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("series_id", id)
+    .eq("status", "scheduled")
+    .gte("start_time", new Date().toISOString());
+  if (lessonError) throw new Error(`Unable to cancel upcoming lessons: ${lessonError.message}`);
+}
+
+export async function listActiveLessonSeriesForGeneration(
+  supabase: SupabaseClient<Database>,
+  horizon: string,
+) {
+  const { data, error } = await supabase
+    .from("lesson_series")
+    .select("*")
+    .eq("status", "active")
+    .lt("generated_until", horizon);
+
+  if (error) throw new Error(`Unable to load recurring lessons: ${error.message}`);
+  return data;
+}
+
+export async function insertGeneratedLessons(
+  supabase: SupabaseClient<Database>,
+  rows: {
+    tutorId: string;
+    studentId: string;
+    subjectId: string | null;
+    seriesId: string;
+    startTime: string;
+    endTime: string;
+    price: number | null;
+    currency: string | null;
+  }[],
+) {
+  if (rows.length === 0) return;
+  const { error } = await supabase.from("lesson").insert(
+    rows.map((row) => ({
+      tutor_id: row.tutorId,
+      student_id: row.studentId,
+      subject_id: row.subjectId,
+      series_id: row.seriesId,
+      start_time: row.startTime,
+      end_time: row.endTime,
+      price: row.price,
+      currency: row.currency,
+    })),
+  );
+  if (error) throw new Error(`Unable to generate recurring lessons: ${error.message}`);
+}
+
+export async function updateSeriesGeneratedUntil(
+  supabase: SupabaseClient<Database>,
+  id: string,
+  generatedUntil: string,
+) {
+  const { error } = await supabase
+    .from("lesson_series")
+    .update({ generated_until: generatedUntil, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(`Unable to update recurring lesson: ${error.message}`);
 }

@@ -19,6 +19,7 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
       .from("lesson")
       .select("id, start_time")
       .eq("status", "completed")
+      .eq("payment_status", "unpaid")
       .order("start_time", { ascending: true }),
   ]);
 

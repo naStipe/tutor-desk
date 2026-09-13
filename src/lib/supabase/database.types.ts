@@ -90,38 +90,66 @@ export type Database = {
       lesson: {
         Row: {
           created_at: string
+          currency: string | null
           end_time: string
           id: string
           notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_status: string
+          price: number | null
+          series_id: string | null
           start_time: string
           status: string
           student_id: string
+          subject_id: string | null
           tutor_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          currency?: string | null
           end_time: string
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          price?: number | null
+          series_id?: string | null
           start_time: string
           status?: string
           student_id: string
+          subject_id?: string | null
           tutor_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          currency?: string | null
           end_time?: string
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          price?: number | null
+          series_id?: string | null
           start_time?: string
           status?: string
           student_id?: string
+          subject_id?: string | null
           tutor_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lesson_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_series"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lesson_student_id_fkey"
             columns: ["student_id"]
@@ -130,7 +158,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lesson_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subject"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lesson_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      lesson_series: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          duration_minutes: number
+          end_date: string | null
+          generated_until: string
+          id: string
+          notes: string | null
+          start_date: string
+          start_minutes: number
+          status: string
+          student_id: string
+          subject_id: string | null
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          duration_minutes?: number
+          end_date?: string | null
+          generated_until?: string
+          id?: string
+          notes?: string | null
+          start_date: string
+          start_minutes: number
+          status?: string
+          student_id: string
+          subject_id?: string | null
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          duration_minutes?: number
+          end_date?: string | null
+          generated_until?: string
+          id?: string
+          notes?: string | null
+          start_date?: string
+          start_minutes?: number
+          status?: string
+          student_id?: string
+          subject_id?: string | null
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_series_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_series_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subject"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_series_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profile"
@@ -178,6 +286,90 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "student_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      student_subject_rate: {
+        Row: {
+          created_at: string
+          currency: string
+          hourly_rate: number
+          id: string
+          student_id: string
+          subject_id: string
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          hourly_rate: number
+          id?: string
+          student_id: string
+          subject_id: string
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          hourly_rate?: number
+          id?: string
+          student_id?: string
+          subject_id?: string
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_subject_rate_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subject_rate_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subject"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subject_rate_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      subject: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          tutor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          tutor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profile"

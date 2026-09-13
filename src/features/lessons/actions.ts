@@ -4,8 +4,25 @@ import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
-import { createLesson, updateLesson, updateLessonStatus, updateLessonTime } from "./data";
-import { lessonInputSchema, lessonStatusSchema } from "./schemas";
+import {
+  cancelLessonSeries,
+  createLesson,
+  createLessonSeries,
+  getFirstLessonForSeries,
+  updateLesson,
+  updateLessonPayment,
+  updateLessonStatus,
+  updateLessonTime,
+} from "./data";
+import { toDateParam } from "./date-utils";
+import { ensureUpcomingLessonsGenerated } from "./recurrence";
+import {
+  lessonInputSchema,
+  lessonStatusSchema,
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+  recurrenceInputSchema,
+} from "./schemas";
 
 export type LessonActionState = {
   error?: string;
@@ -18,9 +35,14 @@ function fields(formData: FormData) {
     // placeholder) makes FormData.get return null rather than "" — normalize so validation
     // reports our friendly message instead of Zod's generic "expected string" one.
     studentId: formData.get("studentId") ?? "",
+    subjectId: formData.get("subjectId"),
     startTime: formData.get("startTime"),
-    endTime: formData.get("endTime"),
+    durationMinutes: formData.get("durationMinutes"),
     notes: formData.get("notes"),
+    price: formData.get("price"),
+    currency: formData.get("currency"),
+    paymentStatus: formData.get("paymentStatus") ?? "unpaid",
+    paymentMethod: formData.get("paymentMethod"),
   };
 }
 
@@ -34,6 +56,12 @@ async function requireTutorId() {
   return { supabase, tutorId: user.id };
 }
 
+/** Where the calendar should land, with the given lesson highlighted. */
+function calendarHref(startTimeIso: string, lessonId: string) {
+  const date = toDateParam(new Date(startTimeIso));
+  return `/dashboard/lessons?view=day&date=${date}&highlight=${lessonId}`;
+}
+
 export async function createLessonAction(
   _state: LessonActionState,
   formData: FormData,
@@ -41,11 +69,37 @@ export async function createLessonAction(
   const parsed = lessonInputSchema.safeParse(fields(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
 
+  const recurrence = recurrenceInputSchema.safeParse({
+    repeat: formData.get("repeat"),
+    repeatUntil: formData.get("repeatUntil"),
+  });
+  if (!recurrence.success) return { fieldErrors: recurrence.error.flatten().fieldErrors };
+
   const { supabase, tutorId } = await requireTutorId();
 
-  let lesson: Awaited<ReturnType<typeof createLesson>>;
+  let href: string;
   try {
-    lesson = await createLesson(supabase, tutorId, parsed.data);
+    if (recurrence.data.repeat) {
+      const start = new Date(parsed.data.startTime);
+      const series = await createLessonSeries(supabase, tutorId, {
+        studentId: parsed.data.studentId,
+        subjectId: parsed.data.subjectId,
+        dayOfWeek: start.getDay(),
+        startMinutes: start.getHours() * 60 + start.getMinutes(),
+        durationMinutes: parsed.data.durationMinutes,
+        startDate: parsed.data.startTime.slice(0, 10),
+        endDate: recurrence.data.repeatUntil,
+        notes: parsed.data.notes,
+      });
+      await ensureUpcomingLessonsGenerated(supabase, tutorId);
+      const firstLesson = await getFirstLessonForSeries(supabase, series.id);
+      href = firstLesson
+        ? calendarHref(firstLesson.start_time, firstLesson.id)
+        : `/dashboard/lessons?view=day&date=${parsed.data.startTime.slice(0, 10)}`;
+    } else {
+      const lesson = await createLesson(supabase, tutorId, parsed.data);
+      href = calendarHref(lesson.start_time, lesson.id);
+    }
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to schedule lesson." };
   }
@@ -53,7 +107,7 @@ export async function createLessonAction(
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
   revalidatePath("/dashboard");
-  redirect(`/dashboard/lessons/${lesson.id}`);
+  redirect(href);
 }
 
 export async function updateLessonAction(
@@ -108,30 +162,6 @@ export async function moveLessonAction(
   }
 }
 
-/** Creates a lesson from a calendar click, without leaving the calendar page. */
-export async function quickCreateLessonAction(input: {
-  studentId: string;
-  startTime: string;
-  endTime: string;
-}): Promise<CalendarActionResult> {
-  const parsed = lessonInputSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid lesson details." };
-  }
-
-  const { supabase, tutorId } = await requireTutorId();
-
-  try {
-    const lesson = await createLesson(supabase, tutorId, parsed.data);
-    revalidateTag(tutorTag("lessons", tutorId));
-    revalidatePath("/dashboard/lessons");
-    revalidatePath("/dashboard");
-    return { id: lesson.id };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : "Unable to schedule lesson." };
-  }
-}
-
 export async function setLessonStatusAction(formData: FormData) {
   const id = formData.get("id");
   const status = lessonStatusSchema.safeParse(formData.get("status"));
@@ -147,4 +177,44 @@ export async function setLessonStatusAction(formData: FormData) {
   revalidatePath(`/dashboard/lessons/${id}`);
   revalidatePath("/dashboard");
   redirect(`/dashboard/lessons/${id}`);
+}
+
+export async function setLessonPaymentAction(formData: FormData) {
+  const id = formData.get("id");
+  const status = PAYMENT_STATUSES.find((value) => value === formData.get("paymentStatus"));
+  const methodRaw = formData.get("paymentMethod");
+  const method = PAYMENT_METHODS.find((value) => value === methodRaw) ?? null;
+
+  if (typeof id !== "string" || id === "" || !status) {
+    throw new Error("Missing or invalid payment update.");
+  }
+
+  const { supabase, tutorId } = await requireTutorId();
+  await updateLessonPayment(supabase, id, status, method);
+
+  revalidateTag(tutorTag("lessons", tutorId));
+  revalidatePath("/dashboard/lessons");
+  revalidatePath(`/dashboard/lessons/${id}`);
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/lessons/${id}`);
+}
+
+export async function cancelSeriesAction(formData: FormData) {
+  const seriesId = formData.get("seriesId");
+  const lessonId = formData.get("lessonId");
+  if (typeof seriesId !== "string" || seriesId === "") {
+    throw new Error("Missing recurring lesson reference.");
+  }
+
+  const { supabase, tutorId } = await requireTutorId();
+  await cancelLessonSeries(supabase, seriesId);
+
+  revalidateTag(tutorTag("lessons", tutorId));
+  revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard");
+  if (typeof lessonId === "string" && lessonId !== "") {
+    revalidatePath(`/dashboard/lessons/${lessonId}`);
+    redirect(`/dashboard/lessons/${lessonId}`);
+  }
+  redirect("/dashboard/lessons");
 }

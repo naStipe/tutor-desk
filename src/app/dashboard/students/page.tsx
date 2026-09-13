@@ -13,7 +13,12 @@ import { createTokenClient } from "../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function StudentsPage() {
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ highlight?: string }>;
+}) {
+  const { highlight } = await searchParams;
   const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
@@ -57,7 +62,9 @@ export default async function StudentsPage() {
             <Link
               key={student.id}
               href={`/dashboard/students/${student.id}`}
-              className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-muted"
+              className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-muted ${
+                student.id === highlight ? "ring-2 ring-inset ring-brand bg-brand/5" : ""
+              }`}
             >
               <Avatar name={student.name} />
               <div className="min-w-0 flex-1">

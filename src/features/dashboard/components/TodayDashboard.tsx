@@ -125,7 +125,7 @@ function GreetingHeader({ now, firstName }: { now: Date; firstName: string }) {
           Search students
         </button>
         <Link
-          href="/dashboard/lessons/new"
+          href="/dashboard/lessons?create=1"
           className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110"
         >
           + New lesson
@@ -340,7 +340,7 @@ function ScheduleCard({
         <div className="flex flex-col items-center gap-3 rounded-[12px] border border-dashed border-[var(--td2-border-strong)] py-10 text-center">
           <p className="text-sm text-[var(--td2-text-muted)]">No lessons today.</p>
           <Link
-            href="/dashboard/lessons/new"
+            href="/dashboard/lessons?create=1"
             className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-4 py-2 text-[13px] font-medium text-[var(--td2-primary-fg)]"
           >
             Schedule a lesson

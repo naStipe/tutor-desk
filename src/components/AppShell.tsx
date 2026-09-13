@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -89,13 +90,15 @@ function NavLinks({
 
 function Brand() {
   return (
-    <span className="flex items-center gap-2.5 px-1.5">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-[var(--td2-accent-ink)] font-mono text-[15px] font-bold text-[var(--td2-accent)] dark:bg-[var(--td2-accent)] dark:text-[var(--td2-accent-ink)]">
-        T
-      </span>
-      <span className="text-[17px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
-        tutor<span className="text-[var(--td2-text-faint)]">desk</span>
-      </span>
+    <span className="flex items-center rounded-[9px] bg-white px-2 py-1">
+      <Image
+        src="/brand/tutordesk-logo-green.png"
+        alt="TutorDesk"
+        width={2172}
+        height={724}
+        priority
+        className="h-5 w-auto"
+      />
     </span>
   );
 }

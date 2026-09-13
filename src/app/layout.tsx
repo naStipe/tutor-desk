@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     description:
       "Management SaaS for independent private tutors to manage students, schedules, lessons, homework, and invoicing.",
     type: "website",
+    images: ["/brand/tutordesk-logo-green.png"],
   },
 };
 

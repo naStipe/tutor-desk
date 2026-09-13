@@ -16,6 +16,8 @@ type TimeSlotGridProps = {
   onSelect: (minutes: number) => void;
 };
 
+type SlotReason = "available" | "past" | "occupied" | "no-fit";
+
 export function TimeSlotGrid({
   dateParam,
   durationMinutes,
@@ -24,7 +26,7 @@ export function TimeSlotGrid({
   onSelect,
 }: TimeSlotGridProps) {
   const now = new Date();
-  const slots: { minutes: number; available: boolean }[] = [];
+  const slots: { minutes: number; reason: SlotReason }[] = [];
 
   for (
     let minutes = START_MINUTES;
@@ -34,10 +36,23 @@ export function TimeSlotGrid({
     const slotStart = combineDateAndMinutes(dateParam, minutes);
     const slotEnd = combineDateAndMinutes(dateParam, minutes + durationMinutes);
     const isPast = slotStart < now;
-    const conflicts = busyIntervals.some(
-      (busy) => slotStart.getTime() < busy.end && slotEnd.getTime() > busy.start,
+    // "occupied": a lesson is already happening at the slot's start time.
+    // "no-fit": the slot starts free, but the requested duration runs into a later lesson.
+    const occupied = busyIntervals.some(
+      (busy) => slotStart.getTime() < busy.end && slotStart.getTime() >= busy.start,
     );
-    slots.push({ minutes, available: !isPast && !conflicts });
+    const noFit =
+      !occupied &&
+      busyIntervals.some((busy) => slotStart.getTime() < busy.end && slotEnd.getTime() > busy.start);
+
+    const reason: SlotReason = isPast
+      ? "past"
+      : occupied
+        ? "occupied"
+        : noFit
+          ? "no-fit"
+          : "available";
+    slots.push({ minutes, reason });
   }
 
   if (slots.length === 0) {
@@ -49,27 +64,54 @@ export function TimeSlotGrid({
   }
 
   return (
-    <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-      {slots.map((slot) => {
-        const isSelected = selectedMinutes === slot.minutes;
-        return (
-          <button
-            key={slot.minutes}
-            type="button"
-            disabled={!slot.available}
-            onClick={() => onSelect(slot.minutes)}
-            className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
-              isSelected
-                ? "border-brand bg-brand text-on-brand"
-                : slot.available
-                  ? "border-border bg-surface text-ink hover:bg-surface-muted"
-                  : "border-border/60 bg-surface-muted text-ink-subtle line-through cursor-not-allowed"
-            }`}
-          >
-            {formatMinutesOfDay(slot.minutes)}
-          </button>
-        );
-      })}
+    <div className="space-y-2">
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+        {slots.map((slot) => {
+          const isSelected = selectedMinutes === slot.minutes;
+          return (
+            <button
+              key={slot.minutes}
+              type="button"
+              disabled={slot.reason !== "available"}
+              onClick={() => onSelect(slot.minutes)}
+              title={
+                slot.reason === "occupied"
+                  ? "A lesson is already scheduled at this time"
+                  : slot.reason === "no-fit"
+                    ? "Doesn't fit before the next lesson"
+                    : undefined
+              }
+              className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
+                isSelected
+                  ? "border-brand bg-brand text-on-brand"
+                  : slot.reason === "available"
+                    ? "border-border bg-surface text-ink hover:bg-surface-muted"
+                    : slot.reason === "occupied"
+                      ? "cursor-not-allowed border-danger/30 bg-danger/10 text-danger"
+                      : slot.reason === "no-fit"
+                        ? "cursor-not-allowed border-warning/30 bg-warning/10 text-warning"
+                        : "cursor-not-allowed border-border/60 bg-surface-muted text-ink-subtle line-through"
+              }`}
+            >
+              {formatMinutesOfDay(slot.minutes)}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-subtle">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border border-danger/30 bg-danger/10" />
+          Booked
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border border-warning/30 bg-warning/10" />
+          Too close to next lesson
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm border border-border/60 bg-surface-muted" />
+          Past
+        </span>
+      </div>
     </div>
   );
 }

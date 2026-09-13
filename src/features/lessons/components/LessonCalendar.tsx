@@ -226,8 +226,14 @@ export function LessonCalendar({
     onSlotClick(dayIndex, startMinutes, endMinutes);
   }
 
+  const isDayView = days.length === 1;
+
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-surface shadow-sm shadow-black/[0.03]">
+    <div
+      className={`relative overflow-hidden rounded-xl border border-border bg-surface shadow-sm shadow-black/[0.03] ${
+        isDayView ? "max-w-md" : ""
+      }`}
+    >
       {error && (
         <div className="border-b border-danger/25 bg-danger/10 px-4 py-2 text-sm text-danger">
           {error}

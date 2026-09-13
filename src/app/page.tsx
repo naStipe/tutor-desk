@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "../components/Button";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -29,13 +30,18 @@ export default function HomePage() {
       </div>
 
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center sm:px-12">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-cyan text-base font-bold text-on-brand">
-            T
-          </span>
-          <span id="brand-title" className="text-2xl font-bold tracking-tight text-ink">
-            TutorDesk
-          </span>
+        <div
+          id="brand-title"
+          className="flex items-center rounded-xl bg-white px-3 py-2 shadow-sm shadow-black/[0.03]"
+        >
+          <Image
+            src="/brand/tutordesk-logo-green.png"
+            alt="TutorDesk"
+            width={2172}
+            height={724}
+            priority
+            className="h-8 w-auto"
+          />
         </div>
 
         <h1 className="mt-8 text-3xl font-bold tracking-tight text-ink sm:text-4xl">

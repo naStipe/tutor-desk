@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cancelScheduledLessonsForStudent } from "../lessons/data";
 import { createClient } from "../../lib/supabase/server";
-import { archiveStudent, createStudent, updateStudent } from "./data";
+import { archiveStudent, createStudent, deleteStudent, updateStudent } from "./data";
 import { studentInputSchema } from "./schemas";
 
 export type StudentActionState = {
@@ -15,6 +16,8 @@ function fields(formData: FormData) {
   return {
     name: formData.get("name"),
     email: formData.get("email"),
+    phone: formData.get("phone"),
+    telegram: formData.get("telegram"),
     notes: formData.get("notes"),
   };
 }
@@ -34,7 +37,10 @@ export async function createStudentAction(
   formData: FormData,
 ): Promise<StudentActionState> {
   const parsed = studentInputSchema.safeParse(fields(formData));
-  if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
+  if (!parsed.success) {
+    const flat = parsed.error.flatten();
+    return { error: flat.formErrors[0], fieldErrors: flat.fieldErrors };
+  }
 
   const { supabase, tutorId } = await requireTutorId();
 
@@ -58,7 +64,10 @@ export async function updateStudentAction(
   if (typeof id !== "string" || id === "") return { error: "Missing student reference." };
 
   const parsed = studentInputSchema.safeParse(fields(formData));
-  if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
+  if (!parsed.success) {
+    const flat = parsed.error.flatten();
+    return { error: flat.formErrors[0], fieldErrors: flat.fieldErrors };
+  }
 
   const { supabase } = await requireTutorId();
 
@@ -78,9 +87,29 @@ export async function archiveStudentAction(formData: FormData) {
   if (typeof id !== "string" || id === "") throw new Error("Missing student reference.");
 
   const { supabase } = await requireTutorId();
+  await cancelScheduledLessonsForStudent(supabase, id);
   await archiveStudent(supabase, id);
 
   revalidatePath("/dashboard/students");
+  revalidatePath("/dashboard/students/archived");
+  revalidatePath("/dashboard/lessons");
   revalidatePath("/dashboard");
   redirect("/dashboard/students");
+}
+
+export async function deleteStudentAction(formData: FormData) {
+  const id = formData.get("id");
+  if (typeof id !== "string" || id === "") throw new Error("Missing student reference.");
+  const from = formData.get("from");
+  const redirectTo = typeof from === "string" && from !== "" ? from : "/dashboard/students";
+
+  const { supabase } = await requireTutorId();
+  await cancelScheduledLessonsForStudent(supabase, id);
+  await deleteStudent(supabase, id);
+
+  revalidatePath("/dashboard/students");
+  revalidatePath("/dashboard/students/archived");
+  revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard");
+  redirect(redirectTo);
 }

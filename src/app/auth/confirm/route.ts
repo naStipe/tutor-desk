@@ -27,23 +27,28 @@ export async function GET(request: NextRequest) {
   const codeParsed = codeSchema.safeParse(params);
 
   let next: string;
+  let userId: string | undefined;
   if (tokenHashParsed.success) {
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHashParsed.data.token_hash,
       type: tokenHashParsed.data.type as EmailOtpType,
     });
     if (error) return NextResponse.redirect(new URL("/sign-in?error=confirmation", siteUrl));
     next = tokenHashParsed.data.next;
+    userId = data.session?.user.id ?? data.user?.id;
   } else if (codeParsed.success) {
-    const { error } = await supabase.auth.exchangeCodeForSession(codeParsed.data.code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(codeParsed.data.code);
     if (error) return NextResponse.redirect(new URL("/sign-in?error=confirmation", siteUrl));
     next = codeParsed.data.next;
+    userId = data.session?.user.id ?? data.user?.id;
   } else {
     return NextResponse.redirect(new URL("/sign-in?error=confirmation", siteUrl));
   }
 
+  if (!userId) return NextResponse.redirect(new URL("/sign-in?error=profile", siteUrl));
+
   try {
-    await ensureCurrentTutorProfile(supabase);
+    await ensureCurrentTutorProfile(supabase, userId);
   } catch {
     return NextResponse.redirect(new URL("/sign-in?error=profile", siteUrl));
   }

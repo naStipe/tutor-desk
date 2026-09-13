@@ -3,11 +3,18 @@ import { studentInputSchema } from "../features/students/schemas";
 
 describe("student input", () => {
   it("trims name and normalizes blank optional fields to undefined", () => {
-    const parsed = studentInputSchema.parse({ name: "  Alex Student  ", email: "  ", notes: "" });
+    const parsed = studentInputSchema.parse({
+      name: "  Alex Student  ",
+      email: "  ",
+      phone: "",
+      telegram: "",
+      notes: "",
+    });
     expect(parsed).toEqual({ name: "Alex Student" });
   });
 
-  it("requires a non-empty name", () => {
+  it("requires only a non-empty name", () => {
+    expect(studentInputSchema.safeParse({ name: "Alex" }).success).toBe(true);
     expect(studentInputSchema.safeParse({ name: "  " }).success).toBe(false);
   });
 
@@ -15,6 +22,16 @@ describe("student input", () => {
     expect(studentInputSchema.safeParse({ name: "Alex", email: "not-an-email" }).success).toBe(
       false,
     );
+  });
+
+  it("accepts a student with only a phone number", () => {
+    const parsed = studentInputSchema.parse({ name: "Alex", phone: "  555-0100  " });
+    expect(parsed.phone).toBe("555-0100");
+  });
+
+  it("accepts a student with only a Telegram handle", () => {
+    const parsed = studentInputSchema.parse({ name: "Alex", telegram: "  @alex_student  " });
+    expect(parsed.telegram).toBe("@alex_student");
   });
 
   it("accepts a valid email and notes", () => {

@@ -36,7 +36,7 @@ export async function signUpAction(
   }
 
   try {
-    await ensureCurrentTutorProfile(supabase);
+    await ensureCurrentTutorProfile(supabase, data.session.user.id);
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Unable to initialize tutor profile.",
@@ -53,11 +53,11 @@ export async function signInAction(
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
 
   try {
-    await ensureCurrentTutorProfile(supabase);
+    await ensureCurrentTutorProfile(supabase, data.user.id);
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Unable to initialize tutor profile.",

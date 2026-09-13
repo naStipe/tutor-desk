@@ -4,7 +4,8 @@ import type { StudentInput } from "./schemas";
 
 export type Student = Database["public"]["Tables"]["student"]["Row"];
 
-const STUDENT_COLUMNS = "id, tutor_id, name, email, notes, archived_at, created_at, updated_at";
+const STUDENT_COLUMNS =
+  "id, tutor_id, name, email, phone, telegram, notes, archived_at, created_at, updated_at";
 
 export async function listActiveStudents(supabase: SupabaseClient<Database>) {
   const { data, error } = await supabase
@@ -14,6 +15,17 @@ export async function listActiveStudents(supabase: SupabaseClient<Database>) {
     .order("name", { ascending: true });
 
   if (error) throw new Error(`Unable to load students: ${error.message}`);
+  return data;
+}
+
+export async function listArchivedStudents(supabase: SupabaseClient<Database>) {
+  const { data, error } = await supabase
+    .from("student")
+    .select(STUDENT_COLUMNS)
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false });
+
+  if (error) throw new Error(`Unable to load archived students: ${error.message}`);
   return data;
 }
 
@@ -39,6 +51,8 @@ export async function createStudent(
       tutor_id: tutorId,
       name: input.name,
       email: input.email ?? null,
+      phone: input.phone ?? null,
+      telegram: input.telegram ?? null,
       notes: input.notes ?? null,
     })
     .select(STUDENT_COLUMNS)
@@ -58,6 +72,8 @@ export async function updateStudent(
     .update({
       name: input.name,
       email: input.email ?? null,
+      phone: input.phone ?? null,
+      telegram: input.telegram ?? null,
       notes: input.notes ?? null,
       updated_at: new Date().toISOString(),
     })
@@ -76,4 +92,10 @@ export async function archiveStudent(supabase: SupabaseClient<Database>, id: str
     .eq("id", id);
 
   if (error) throw new Error(`Unable to archive student: ${error.message}`);
+}
+
+export async function deleteStudent(supabase: SupabaseClient<Database>, id: string) {
+  const { error } = await supabase.from("student").delete().eq("id", id);
+
+  if (error) throw new Error(`Unable to delete student: ${error.message}`);
 }

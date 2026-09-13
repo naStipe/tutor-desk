@@ -11,8 +11,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) redirect("/sign-in");
-  await ensureCurrentTutorProfile(supabase);
-  const homeworkCount = await countHomeworkNeedingAttention(supabase);
+
+  const [, homeworkCount] = await Promise.all([
+    ensureCurrentTutorProfile(supabase, data.user.id),
+    countHomeworkNeedingAttention(supabase),
+  ]);
 
   return (
     <AppShell email={data.user.email ?? ""} homeworkCount={homeworkCount}>

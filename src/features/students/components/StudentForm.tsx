@@ -20,7 +20,7 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
 type StudentFormProps = {
   action: (state: StudentActionState, formData: FormData) => Promise<StudentActionState>;
   studentId?: string;
-  defaultValues?: { name: string; email: string; notes: string };
+  defaultValues?: { name: string; email: string; phone: string; telegram: string; notes: string };
   submitLabel: string;
   pendingLabel: string;
 };
@@ -58,18 +58,42 @@ export function StudentForm({
         />
       </Field>
 
-      <Field label="Email" htmlFor="email" errors={state.fieldErrors?.email}>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          defaultValue={defaultValues?.email}
-          className={inputClassName}
-        />
-      </Field>
+      <div className="space-y-4 rounded-lg border border-border p-3">
+        <Field label="Email" htmlFor="email" errors={state.fieldErrors?.email}>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            defaultValue={defaultValues?.email}
+            className={inputClassName}
+          />
+        </Field>
 
-      <Field label="Notes" htmlFor="notes" errors={state.fieldErrors?.notes}>
+        <Field label="Phone" htmlFor="phone" errors={state.fieldErrors?.phone}>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            defaultValue={defaultValues?.phone}
+            className={inputClassName}
+          />
+        </Field>
+
+        <Field label="Telegram" htmlFor="telegram" errors={state.fieldErrors?.telegram}>
+          <input
+            id="telegram"
+            name="telegram"
+            type="text"
+            placeholder="@username"
+            defaultValue={defaultValues?.telegram}
+            className={inputClassName}
+          />
+        </Field>
+      </div>
+
+      <Field label="Note" htmlFor="notes" errors={state.fieldErrors?.notes}>
         <textarea
           id="notes"
           name="notes"

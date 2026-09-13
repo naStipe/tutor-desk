@@ -80,6 +80,15 @@ begin
     raise exception 'Authenticated tutor could not archive their own student';
   end if;
 
+  delete from public.student where id = new_student_id;
+  if exists (select from public.student where id = new_student_id) then
+    raise exception 'Authenticated tutor could not delete their own student';
+  end if;
+
+  insert into public.student (tutor_id, name, email)
+  values (own_id, 'Test Student', 'student@example.com')
+  returning id into new_student_id;
+
   begin
     insert into public.student (tutor_id, name) values (other_id, 'Cross tenant insert');
     raise exception 'Authenticated tutor created a student owned by another tutor';
@@ -120,6 +129,12 @@ begin
   get diagnostics affected_rows = row_count;
   if affected_rows <> 0 then
     raise exception 'Another tutor updated a student they do not own';
+  end if;
+
+  delete from public.student where tutor_id = owner_id;
+  get diagnostics affected_rows = row_count;
+  if affected_rows <> 0 then
+    raise exception 'Another tutor deleted a student they do not own';
   end if;
 end
 $$;

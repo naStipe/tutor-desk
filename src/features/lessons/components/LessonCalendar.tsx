@@ -26,10 +26,11 @@ import type { LessonStatus } from "../schemas";
 
 const START_HOUR = 7;
 const END_HOUR = 21;
-const PX_PER_HOUR = 56;
+const PX_PER_HOUR = 44;
 const SNAP_MINUTES = 15;
 const GUTTER_PX = 52;
 const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
+const GRID_MAX_HEIGHT_PX = 560;
 
 export type CalendarLesson = {
   id: string;
@@ -96,7 +97,18 @@ export function LessonCalendar({
   const [popover, setPopover] = useState<PopoverState | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll to "now" only on initial mount
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+    const targetHour =
+      currentHour >= START_HOUR && currentHour < END_HOUR ? currentHour : START_HOUR;
+    container.scrollTop = Math.max(0, (targetHour - START_HOUR - 1) * PX_PER_HOUR);
+  }, []);
 
   useEffect(() => {
     if (!error) return;
@@ -255,7 +267,11 @@ export function LessonCalendar({
         })}
       </div>
 
-      <div className="flex overflow-x-auto">
+      <div
+        ref={scrollContainerRef}
+        className="flex overflow-x-auto overflow-y-auto"
+        style={{ maxHeight: GRID_MAX_HEIGHT_PX }}
+      >
         <div className="shrink-0 select-none" style={{ width: GUTTER_PX }}>
           {HOURS.map((hour) => (
             <div key={hour} className="relative text-right" style={{ height: PX_PER_HOUR }}>

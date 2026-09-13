@@ -141,3 +141,16 @@ export async function updateLessonStatus(
 
   if (error) throw new Error(`Unable to update lesson status: ${error.message}`);
 }
+
+export async function cancelScheduledLessonsForStudent(
+  supabase: SupabaseClient<Database>,
+  studentId: string,
+) {
+  const { error } = await supabase
+    .from("lesson")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("student_id", studentId)
+    .eq("status", "scheduled");
+
+  if (error) throw new Error(`Unable to cancel lessons: ${error.message}`);
+}

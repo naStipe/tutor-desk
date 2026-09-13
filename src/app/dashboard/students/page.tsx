@@ -19,7 +19,17 @@ export default async function StudentsPage() {
       <PageHeader
         title="Students"
         description="The people you're tutoring."
-        actions={<LinkButton href="/dashboard/students/new">Add student</LinkButton>}
+        actions={
+          <>
+            <Link
+              href="/dashboard/students/archived"
+              className="text-sm text-ink-muted hover:text-ink"
+            >
+              Archived students
+            </Link>
+            <LinkButton href="/dashboard/students/new">Add student</LinkButton>
+          </>
+        }
       />
 
       {students.length === 0 ? (
@@ -40,8 +50,10 @@ export default async function StudentsPage() {
               <Avatar name={student.name} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-ink">{student.name}</p>
-                {student.email && (
-                  <p className="truncate text-sm text-ink-muted">{student.email}</p>
+                {(student.email ?? student.phone ?? student.telegram) && (
+                  <p className="truncate text-sm text-ink-muted">
+                    {student.email ?? student.phone ?? student.telegram}
+                  </p>
                 )}
               </div>
               <span className="shrink-0 text-ink-subtle" aria-hidden="true">

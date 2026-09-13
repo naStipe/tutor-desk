@@ -12,6 +12,8 @@ export const studentInputSchema = z.object({
   email: optionalTrimmed(
     z.string().trim().email("Enter a valid email address").max(320).toLowerCase(),
   ),
+  phone: optionalTrimmed(z.string().trim().max(40, "Phone number is too long")),
+  telegram: optionalTrimmed(z.string().trim().max(100, "Telegram username is too long")),
   notes: optionalTrimmed(z.string().trim().max(4000, "Notes are too long")),
 });
 

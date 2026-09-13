@@ -146,6 +146,8 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          phone: string | null
+          telegram: string | null
           tutor_id: string
           updated_at: string
         }
@@ -156,6 +158,8 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          phone?: string | null
+          telegram?: string | null
           tutor_id: string
           updated_at?: string
         }
@@ -166,6 +170,8 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          phone?: string | null
+          telegram?: string | null
           tutor_id?: string
           updated_at?: string
         }

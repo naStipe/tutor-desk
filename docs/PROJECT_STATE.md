@@ -2,151 +2,116 @@
 
 ## Current Milestone
 
-- Milestone: **TD-004 — Homework, interactive lesson calendar, and visual redesign**
+- Milestone: **TD-005 — Full visual overhaul: design tokens, dark mode, distinctive brand identity**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
 - Last updated: 2026-09-13
 
 ## Current Reality
 
-TutorDesk is a Next.js App Router modular monolith using hosted Supabase Auth and PostgreSQL. Tutors
-sign in, manage a student roster (TD-002), schedule lessons (TD-003), and now assign homework with a
-submission/feedback lifecycle. `/dashboard/lessons` was rebuilt from a static agenda list into an
-interactive day/week calendar: click an empty slot to schedule a lesson, drag an existing lesson to
-reschedule it (day and/or time), click a lesson to open its full detail/edit page. The app received a
-visual pass (icons, avatars, stat cards, consistent nav accents) on top of the existing calm/slate
-Tailwind design language established in TD-002 — no new design system, no new dependencies.
+TutorDesk is a Next.js App Router modular monolith using hosted Supabase Auth and PostgreSQL. On top
+of the working student/lesson/homework feature set (TD-002–TD-004), the entire UI was rebuilt on a
+semantic design-token system with a light and a dark theme (toggle in the sidebar/header, persisted,
+no flash on load) and a distinctive brand identity: emerald green as the primary action color, cyan
+as a secondary/informational accent, and violet as a tertiary accent, chosen per the owner's
+direction (dark theme "black with green and cyan, maybe purple, plus white"; light theme derived from
+the same hues). Red/amber are kept for danger/warning states rather than folded into the brand
+palette, since breaking that color convention would hurt usability for its own sake. Typography moved
+to Manrope (`next/font/google`) for a distinctive but still calm, professional feel — no new npm
+dependency, no new component library, no gradients beyond one small two-color accent on the brand
+mark.
 
-The repository is linked to hosted project `cmlvtnjoynffrznyelym` (Supabase name: TutorHub).
+The repository is linked to hosted project `cmlvtnjoynffrznyelym` (Supabase name: TutorHub). No
+database schema changed in this task.
 
 ## Database and authorization
 
-- `public.tutor_profile` (TD-001S), `public.student` (TD-002), and `public.lesson` (TD-003) are
-  unchanged.
-- TD-004 adds `public.homework`: `id`, `tutor_id` (references `public.tutor_profile(user_id)`),
-  `student_id` (references `public.student(id)`), `lesson_id` (optional, references
-  `public.lesson(id)` `ON DELETE SET NULL`), `title`, `description`, `due_date`, `status` (text,
-  check-constrained to `assigned`/`submitted`/`reviewed`, defaults to `assigned`),
-  `submission_text`, `submitted_at`, `feedback_text`, `feedback_at`, `created_at`, `updated_at`.
-  Migration: `supabase/migrations/20260913150814_create_homework.sql`, applied via `supabase db
-  push`.
-- RLS mirrors `lesson`'s pattern: select/insert/update scoped to `tutor_id = auth.uid()`, with
-  insert/update additionally requiring (correlated subqueries) that `student_id` — and, when
-  present, `lesson_id` — belong to that same tutor. No ordinary delete policy.
-- `public.lesson` gained two data-access helpers used only by the calendar/homework UI —
-  `updateLessonTime` (time-only update, for drag-to-reschedule) and `listLessonsForSelect` (for the
-  homework form's "linked lesson" picker) — no schema change.
-- Generated hosted types are committed at `src/lib/supabase/database.types.ts`; `db:types:check`
-  passes.
-- Hosted RLS/ownership behavior for `homework` (own-row create/submit, cross-tenant student-linking
-  rejection, cross-tenant read/insert/update denial) is verified by
-  `supabase/tests/homework_rls.sql`, run via `pnpm run db:test:hosted:homework`.
+Unchanged from TD-004. `public.tutor_profile`, `public.student`, `public.lesson`, and
+`public.homework` and their RLS policies are untouched — this task was UI-only.
 
 ## Authentication
 
-Unchanged from TD-001S/Google OAuth/TD-002/TD-003.
+Unchanged from TD-001S/Google OAuth/TD-002/TD-003/TD-004. The sign-in/sign-up pages and `AuthForm`
+were restyled to the new tokens but their logic is untouched.
 
 ## UI
 
-- Nav: "Homework" is now a real link (promoted from "coming later"); "Calendar" was removed from
-  "coming later" since the interactive calendar *is* the Lessons page now. Only "Invoices" remains
-  as a disabled placeholder.
-- **Interactive calendar** (`/dashboard/lessons`, `LessonCalendar` client component): a day/week
-  time-grid (7 AM–9 PM, 15-minute snap). Click an empty slot to open a quick-create popover
-  (student + start/end time); click an existing lesson to open its detail page; drag a lesson
-  (pointer-down, move, pointer-up) to reschedule it to a new day and/or time, with an optimistic
-  local update reconciled by `router.refresh()` and reverted on server error. Built on native Pointer
-  Events, not a drag-and-drop library — no new dependency. Today's column is highlighted with a live
-  time indicator line.
-- `/dashboard/homework`: flat list (avatar, title, due date, status badge) with an empty state;
-  `/dashboard/homework/new`: create form (student, optional linked lesson, optional due date,
-  optional description); `/dashboard/homework/[id]`: edit form plus a submission section and (once
-  status is not `assigned`) a feedback section, each its own small form. Status moves
-  assigned → submitted → reviewed as those forms are used.
-- Dashboard: third stat card "Homework to review" (count of `status = 'submitted'`); quick actions
-  gained "Assign homework".
-- Visual redesign: new `Avatar` (deterministic color/initials), `Badge`/`StatCard` primitives, a hand
-  rolled `icons.tsx` (no icon-library dependency) used in the sidebar nav (active-item left-border
-  accent) and stat cards, and a `PageHeader` `avatar` slot used on student/lesson detail pages. Main
-  content width widened slightly (`max-w-6xl`) to give the calendar room.
-- Manual browser verification covered: create lesson via calendar click, drag a lesson to a new
-  day/time (persisted and confirmed via direct DB read), full homework lifecycle
-  (assign → submit → give feedback), dashboard counts updating correctly, and mobile viewport checks
-  (day view is clean at 375px; week view is functional via horizontal scroll but visually tight — see
-  Known Issues).
+- **Design tokens** (`src/app/globals.css`): semantic CSS custom properties (`--td-canvas`,
+  `--td-surface`, `--td-border`, `--td-ink`/`-muted`/`-subtle`, and per-hue `--td-{brand,cyan,violet,
+  danger,warning}` with `-strong` and `on-*` variants), declared on `:root` (light) and re-declared
+  under `.dark`. A Tailwind v4 `@theme` block maps each to a `--color-*` token, so ordinary utility
+  classes (`bg-canvas`, `text-brand`, `border-cyan/25`) resolve correctly in both themes with zero
+  per-component light/dark branching. Every component and page was swept to use these tokens instead
+  of raw Tailwind palette classes (`bg-white`, `text-slate-500`, `bg-blue-600`, …) — verified with a
+  repo-wide grep that now returns nothing.
+- **Dark mode**: `ThemeToggle` (`src/components/ThemeToggle.tsx`) toggles a `.dark` class on
+  `<html>` and persists the choice to `localStorage`. An inline script in the root layout's `<head>`
+  applies the stored (or OS-preferred) theme before first paint, avoiding a flash. Toggle is present
+  in the app shell (sidebar on desktop, header on mobile) and on the public home/sign-in/sign-up
+  pages.
+- **New shared primitives**: `Card` (the repeated `rounded-xl border bg-surface p-6` pattern used
+  everywhere, now one component), `Badge` (generic tone-based pill, replacing bespoke per-feature
+  badge styling), `Avatar` (deterministic initials + color from name, cycling through the brand
+  hues), `StatCard` (icon-chip stat card, now built on `Card`), and a hand-rolled `icons.tsx` (no
+  icon-library dependency — inline SVGs using `currentColor`, theme-agnostic by construction).
+  `PageHeader` gained an `avatar` slot, used on student/lesson detail pages.
+- **Status color mapping** now uses the brand hues meaningfully rather than generic
+  red/yellow/green: lesson `scheduled`=cyan, `completed`=brand(green), `cancelled`=neutral,
+  `no_show`=amber; homework `assigned`=neutral, `submitted`=cyan, `reviewed`=violet. The calendar's
+  lesson blocks use the same mapping as solid fills.
+- **Home page** (`/`) was rebuilt from a leftover "Supabase foundation" infra-status card into an
+  actual product intro matching the new brand (tagline, sign-in/sign-up CTAs, a 3-up feature strip
+  for Students/Lessons/Homework). `e2e/app.spec.ts` was updated to match (the old `#status-badge`
+  assertion no longer applies; `#brand-title`/`#sign-in-link` and the other assertions are
+  unchanged).
+- Manual browser verification covered both themes across the home page, sign-in, dashboard, students
+  list/detail, the lesson calendar (including a scheduled lesson's cyan block and the brand-colored
+  active-nav accent), and homework list/detail (including the violet "Reviewed" badge) — plus a
+  375px mobile check in dark mode.
 
 ## Not Implemented
 
-- Recurring lesson series, lesson pricing/subject fields, invoices, student portal, invitations,
-  payments.
-- A genuine student-authored homework submission (see `docs/DOMAIN_MODEL.md` — today the tutor
-  records submission text on the student's behalf, since no student portal/identity exists yet).
-- Student phone/parent contact fields, default rate, tags, billing info, custom fields.
-- Archived-student management UI, search/pagination infrastructure, password reset, account
-  settings, MFA UI, organizations, multiple tutors.
-- A dedicated mobile-optimized week calendar layout (day view is the recommended mobile experience;
-  week view works but is visually cramped below ~640px — see Known Issues).
+- Everything listed as not implemented in TD-004 remains not implemented (recurring lessons,
+  invoices, student portal, etc.) — this task was visual/theming only, no feature scope changed.
+- A dedicated mobile-optimized week calendar layout (unchanged from TD-004 — see Known Issues).
+- Per-user theme preference stored server-side; theme choice is `localStorage`-only (per browser,
+  not per account), which is consistent with this being a prototype and matches how most SaaS theme
+  toggles work before a settings page exists.
 
 ## Verification State
 
-- `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (6 unit test files, 21 tests,
-  including new `src/test/homework-schemas.test.ts`).
-- `pnpm run build`: **passed**, with the dev server stopped — verified independently by both the
-  owner and this session (both full runs printed the complete route manifest, 16/16 routes, no
-  errors). Two earlier attempts in this exchange failed for reasons unrelated to the application
-  code: (1) `output: "standalone"` in `next.config.ts` tried to symlink `node_modules` into
-  `.next/standalone`, which requires a Windows permission not granted by default (`EPERM`) — fixed by
-  removing `output: "standalone"` (it was undocumented scaffolding from TD-000, not a recorded
-  decision, and only matters for self-hosting the standalone server output; unnecessary if deploying
-  to a platform with its own build pipeline); (2) two `pnpm run build` invocations racing on the same
-  `.next` directory at the same time produced a transient `ENOENT` on `pages-manifest.json` —
-  resolved by not running builds concurrently, not a code fix.
-- Hosted migration: dry-run reviewed, then applied with `supabase db push --linked`; `list_tables`
-  confirms `public.homework` with RLS enabled and the expected FK/check constraints.
-- Hosted RLS/ownership SQL test (`supabase/tests/homework_rls.sql`, transaction-rolled-back): passed
-  — own-tutor create/submit succeeded; a homework row referencing another tutor's student was
-  rejected by the insert policy even with a matching `tutor_id`; cross-tenant read/insert/update were
-  denied.
-- Generated-type drift check (`pnpm run db:types:check`): passed.
-- Manual browser walkthrough against the hosted dev project (real signed-in account): scheduled a
-  lesson by clicking an empty calendar slot; dragged that lesson to a different day/time (persistence
-  confirmed via a direct read of `public.lesson`, not just the optimistic UI); assigned homework,
-  recorded a submission, left feedback, watched status move assigned → submitted → reviewed and the
-  dashboard's "Homework to review" count update accordingly; checked the calendar and dashboard on a
-  375px mobile viewport.
-- Two genuine bugs were found and fixed during this walkthrough:
-  1. **Drag-to-reschedule not registering with the browser-automation tool's synthetic drag.**
-     Root-caused by dispatching real `PointerEvent`s at the DOM level, which worked correctly and
-     persisted to the database — confirming the app's drag logic is correct and the earlier failure
-     was a limitation of the automation tool's simulated mouse drag, not an app bug.
-  2. **A `<select>` whose current option is `disabled` is excluded from form submission entirely**
-     (a standard, easy-to-miss HTML behavior), so `FormData.get(...)` returned `null` there instead
-     of `""`, bypassing the Zod schema's custom "Choose a student" message and surfacing a raw
-     "Invalid input: expected string, received null" error when a tutor submitted the lesson/homework
-     "new" form without touching the student dropdown (only ever exercised in earlier testing because
-     a student was always explicitly selected first). Fixed in
-     `src/features/lessons/components/LessonForm.tsx` and
-     `src/features/homework/components/HomeworkForm.tsx` by defaulting the select to the first real
-     student instead of a disabled placeholder, and defensively in both `actions.ts` `fields()`
-     helpers by coalescing `formData.get("studentId") ?? ""` so any future recurrence still surfaces
-     the friendly validation message.
-- Playwright E2E: not run (same pre-existing gap noted in TD-002/TD-003 — no Chromium binary
-  installed; `e2e/auth.spec.ts` remains stale and unrelated to this task).
-- `pnpm audit`: not re-run; no new dependencies were added in this task.
+- `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (6 unit test files, 21 tests — no
+  test logic changed, this was a styling task).
+- `pnpm run build`: passed cleanly — 16/16 routes, no errors — run with the dev server stopped.
+- Repo-wide grep for legacy Tailwind palette classes (`slate-`, `blue-`, `emerald-`, `rose-`,
+  `amber-`, `bg-white`, `text-white`) across `src/app`, `src/features`, `src/components`: zero
+  matches, confirming the token sweep is complete.
+- Manual browser walkthrough (real hosted account, both themes): home page, sign-in, dashboard,
+  students list/detail, lesson calendar (day and week, a real scheduled lesson rendered as a cyan
+  block), homework list/detail (violet "Reviewed" badge), theme toggle round-trip (dark → light →
+  dark, persisted across navigation), and a 375px mobile dark-mode check. All rendered correctly with
+  legible contrast in both themes.
+- A dev-server HMR cache corruption (`__webpack_modules__[moduleId] is not a function`, a known
+  Next.js dev-mode issue after many rapid file saves — unrelated to any specific code change) was hit
+  mid-verification and resolved the same way as prior sessions' `.next` corruption: kill the dev
+  process, delete `.next`, restart.
+- Playwright E2E: not run (same pre-existing gap as TD-002–TD-004 — no Chromium binary installed in
+  this environment); `e2e/app.spec.ts` was updated for the new home page copy but not executed here.
+  `e2e/auth.spec.ts` remains stale and unrelated to this task.
+- `pnpm audit`: not re-run; no new dependencies were added (Manrope loads via `next/font/google`,
+  which ships with Next.js).
 
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
-  (pre-existing, unrelated to TD-004).
+  (pre-existing, unrelated to this task).
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
-- The week calendar view is visually cramped on narrow (≤375px) mobile viewports — day/time labels
-  truncate. It remains functional (horizontal scroll, drag/click still work), and day view is clean
-  at that width; a dedicated mobile week layout is future work.
-- Homework's `submission_text`/`feedback_text` are both tutor-authored (see Not Implemented); this is
-  correct for the current no-portal state but should be revisited when a student identity exists.
+- The week calendar view is visually cramped on narrow (≤375px) mobile viewports (pre-existing,
+  noted in TD-004; unchanged by this task's recoloring).
+- Theme preference is per-browser (`localStorage`), not per-account — see Not Implemented.
 - The dashboard's time-based greeting and the lesson calendar's "now" indicator both evaluate in the
   server/browser's own time zone rather than an explicit tutor timezone setting (pre-existing,
-  documented simplification from TD-002/TD-003, not a regression here).
+  documented simplification, not a regression here).
 
 ## Next Recommended Task
 

@@ -9,9 +9,6 @@ test.describe("TutorDesk Shell", () => {
     // Verify title and brand
     await expect(page.locator("#brand-title")).toHaveText("TutorDesk");
 
-    // Verify status badge
-    await expect(page.locator("#status-badge")).toContainText("Supabase foundation");
-
     // Verify auth entry point is present
     await expect(page.locator("#sign-in-link")).toBeVisible();
 

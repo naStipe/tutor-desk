@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
-export type BadgeTone = "blue" | "emerald" | "slate" | "amber" | "violet";
+export type BadgeTone = "brand" | "cyan" | "violet" | "warning" | "danger" | "neutral";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
-  blue: "bg-blue-50 text-blue-700 border-blue-200",
-  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  slate: "bg-slate-100 text-slate-500 border-slate-200",
-  amber: "bg-amber-50 text-amber-700 border-amber-200",
-  violet: "bg-violet-50 text-violet-700 border-violet-200",
+  brand: "bg-brand/10 text-brand border-brand/25",
+  cyan: "bg-cyan/10 text-cyan border-cyan/25",
+  violet: "bg-violet/10 text-violet border-violet/25",
+  warning: "bg-warning/10 text-warning border-warning/25",
+  danger: "bg-danger/10 text-danger border-danger/25",
+  neutral: "bg-surface-muted text-ink-muted border-border",
 };
 
 export function Badge({ tone, children }: { tone: BadgeTone; children: ReactNode }) {

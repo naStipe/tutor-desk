@@ -41,7 +41,7 @@ export function StudentForm({
       {state.error && (
         <p
           role="alert"
-          className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+          className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger"
         >
           {state.error}
         </p>

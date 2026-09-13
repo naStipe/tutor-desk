@@ -41,10 +41,10 @@ export type CalendarLesson = {
 };
 
 const STATUS_BLOCK_CLASSES: Record<LessonStatus, string> = {
-  scheduled: "bg-blue-600 hover:bg-blue-700 text-white",
-  completed: "bg-emerald-600 hover:bg-emerald-700 text-white",
-  cancelled: "bg-slate-300 hover:bg-slate-400 text-slate-600 line-through",
-  no_show: "bg-amber-500 hover:bg-amber-600 text-white",
+  scheduled: "bg-cyan hover:bg-cyan-strong text-on-cyan",
+  completed: "bg-brand hover:bg-brand-strong text-on-brand",
+  cancelled: "bg-surface-muted hover:bg-border text-ink-muted line-through",
+  no_show: "bg-warning hover:bg-warning-strong text-on-warning",
 };
 
 function clampMinutes(minutes: number) {
@@ -224,15 +224,15 @@ export function LessonCalendar({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface shadow-sm shadow-black/[0.03]">
       {error && (
-        <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+        <div className="border-b border-danger/25 bg-danger/10 px-4 py-2 text-sm text-danger">
           {error}
         </div>
       )}
 
       <div
-        className="flex border-b border-slate-200 bg-slate-50"
+        className="flex border-b border-border bg-surface-muted"
         style={{ paddingLeft: GUTTER_PX }}
       >
         {days.map((day) => {
@@ -240,16 +240,14 @@ export function LessonCalendar({
           return (
             <div
               key={day.toISOString()}
-              className={`flex-1 border-l border-slate-200 px-2 py-2.5 text-center first:border-l-0 ${
-                isToday ? "bg-blue-50/60" : ""
+              className={`flex-1 border-l border-border px-2 py-2.5 text-center first:border-l-0 ${
+                isToday ? "bg-brand/10" : ""
               }`}
             >
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
                 {formatWeekdayShort(day)}
               </p>
-              <p
-                className={`mt-0.5 text-sm font-semibold ${isToday ? "text-blue-700" : "text-slate-700"}`}
-              >
+              <p className={`mt-0.5 text-sm font-semibold ${isToday ? "text-brand" : "text-ink"}`}>
                 {day.getDate()}
               </p>
             </div>
@@ -261,7 +259,7 @@ export function LessonCalendar({
         <div className="shrink-0 select-none" style={{ width: GUTTER_PX }}>
           {HOURS.map((hour) => (
             <div key={hour} className="relative text-right" style={{ height: PX_PER_HOUR }}>
-              <span className="absolute -top-2 right-2 text-[11px] text-slate-400">
+              <span className="absolute -top-2 right-2 text-[11px] text-ink-subtle">
                 {formatHourLabel(hour)}
               </span>
             </div>
@@ -272,7 +270,7 @@ export function LessonCalendar({
           {HOURS.map((hour, index) => (
             <div
               key={hour}
-              className="pointer-events-none absolute inset-x-0 border-t border-slate-100"
+              className="pointer-events-none absolute inset-x-0 border-t border-border"
               style={{ top: index * PX_PER_HOUR }}
             />
           ))}
@@ -288,17 +286,17 @@ export function LessonCalendar({
               // biome-ignore lint/a11y/noStaticElementInteractions: a day column with a click-to-create affordance, containing focusable lesson buttons
               <div
                 key={day.toISOString()}
-                className={`relative flex-1 border-l border-slate-100 first:border-l-0 ${isToday ? "bg-blue-50/30" : ""}`}
+                className={`relative flex-1 border-l border-border first:border-l-0 ${isToday ? "bg-brand/5" : ""}`}
                 onClick={(event) => handleColumnClick(event, dayIndex)}
               >
                 {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
                   <div
-                    className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-rose-400"
+                    className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-danger"
                     style={{
                       top: ((minutesSinceMidnight(now) - START_HOUR * 60) / 60) * PX_PER_HOUR,
                     }}
                   >
-                    <span className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-rose-400" />
+                    <span className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-danger" />
                   </div>
                 )}
 
@@ -432,18 +430,15 @@ function CreateLessonPopover({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/20 p-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
-        <h3 className="text-sm font-semibold text-slate-900">
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4 backdrop-blur-[2px]">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-xl">
+        <h3 className="text-sm font-semibold text-ink">
           New lesson ·{" "}
           {day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
         </h3>
         <div className="mt-4 space-y-3">
           <div>
-            <label
-              htmlFor="quick-student"
-              className="mb-1 block text-sm font-medium text-slate-700"
-            >
+            <label htmlFor="quick-student" className="mb-1 block text-sm font-medium text-ink">
               Student
             </label>
             <select
@@ -461,10 +456,7 @@ function CreateLessonPopover({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                htmlFor="quick-start"
-                className="mb-1 block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="quick-start" className="mb-1 block text-sm font-medium text-ink">
                 Start
               </label>
               <input
@@ -476,7 +468,7 @@ function CreateLessonPopover({
               />
             </div>
             <div>
-              <label htmlFor="quick-end" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="quick-end" className="mb-1 block text-sm font-medium text-ink">
                 End
               </label>
               <input

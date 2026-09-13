@@ -2,9 +2,9 @@ import { Badge, type BadgeTone } from "../../../components/Badge";
 import type { HomeworkStatus } from "../schemas";
 
 const STATUS_TONES: Record<HomeworkStatus, BadgeTone> = {
-  assigned: "slate",
-  submitted: "amber",
-  reviewed: "emerald",
+  assigned: "neutral",
+  submitted: "cyan",
+  reviewed: "violet",
 };
 
 const STATUS_LABELS: Record<HomeworkStatus, string> = {

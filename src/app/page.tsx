@@ -1,71 +1,73 @@
 import Link from "next/link";
+import { LinkButton } from "../components/Button";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { BookIcon, CalendarIcon, UsersIcon } from "../components/icons";
+
+const FEATURES = [
+  {
+    icon: UsersIcon,
+    label: "Students",
+    description: "Keep a clean roster with notes and contact info.",
+  },
+  {
+    icon: CalendarIcon,
+    label: "Lessons",
+    description: "An interactive calendar you can click and drag.",
+  },
+  {
+    icon: BookIcon,
+    label: "Homework",
+    description: "Assign work, collect it, and leave feedback.",
+  },
+];
 
 export default function HomePage() {
   return (
-    <main
-      id="main-content"
-      className="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12"
-    >
-      <div
-        id="foundation-card"
-        className="w-full max-w-2xl bg-white border border-slate-200 rounded-xl p-8 shadow-xs"
-      >
-        <div className="flex items-center justify-between pb-6 border-b border-slate-100">
-          <div>
-            <h1 id="brand-title" className="text-2xl font-bold tracking-tight text-slate-900">
-              TutorDesk
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Management SaaS for independent private tutors
-            </p>
-          </div>
-          <span
-            id="status-badge"
-            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
-          >
-            Supabase foundation
+    <main id="main-content" className="relative min-h-screen bg-canvas">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
+
+      <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center sm:px-12">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-cyan text-base font-bold text-on-brand">
+            T
+          </span>
+          <span id="brand-title" className="text-2xl font-bold tracking-tight text-ink">
+            TutorDesk
           </span>
         </div>
 
-        <div className="py-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-800">
-            Run your tutoring business from one place
-          </h2>
-          <p className="text-sm leading-relaxed text-slate-600">
-            Secure tutor authentication and an isolated workspace are ready for the TutorDesk beta.
-          </p>
+        <h1 className="mt-8 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          Run your tutoring business from one place
+        </h1>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-muted">
+          Students, lessons, and homework in a single calm workspace — built for independent tutors,
+          not agencies.
+        </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-              <span className="font-semibold text-slate-700 block mb-1">Architecture</span>
-              <span className="text-slate-500">TypeScript Modular Monolith</span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-              <span className="font-semibold text-slate-700 block mb-1">Persistence</span>
-              <span className="text-slate-500">Hosted Supabase PostgreSQL</span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-              <span className="font-semibold text-slate-700 block mb-1">Authentication</span>
-              <span className="text-slate-500">Supabase Auth</span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-              <span className="font-semibold text-slate-700 block mb-1">Tenant isolation</span>
-              <span className="text-slate-500">Server authorization + RLS</span>
-            </div>
-          </div>
+        <div className="mt-8 flex items-center gap-3">
+          <LinkButton id="sign-in-link" href="/sign-in">
+            Sign in
+          </LinkButton>
+          <Link href="/sign-up" className="text-sm font-medium text-ink-muted hover:text-ink">
+            Create account &rarr;
+          </Link>
         </div>
 
-        <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
-          <Link
-            id="sign-in-link"
-            href="/sign-in"
-            className="text-xs text-blue-600 hover:text-blue-800 font-medium underline underline-offset-4"
-          >
-            Sign in &rarr;
-          </Link>
-          <Link href="/sign-up" className="text-xs text-slate-500 hover:text-slate-700">
-            Create account
-          </Link>
+        <div className="mt-16 grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+          {FEATURES.map(({ icon: Icon, label, description }) => (
+            <div
+              key={label}
+              className="rounded-xl border border-border bg-surface p-5 text-left shadow-sm shadow-black/[0.03]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                <Icon className="h-5 w-5" />
+              </span>
+              <p className="mt-3 text-sm font-semibold text-ink">{label}</p>
+              <p className="mt-1 text-sm text-ink-muted">{description}</p>
+            </div>
+          ))}
         </div>
       </div>
     </main>

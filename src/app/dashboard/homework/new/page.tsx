@@ -1,4 +1,5 @@
 import { LinkButton } from "../../../../components/Button";
+import { Card } from "../../../../components/Card";
 import { EmptyState } from "../../../../components/EmptyState";
 import { PageHeader } from "../../../../components/PageHeader";
 import { createHomeworkAction } from "../../../../features/homework/actions";
@@ -33,7 +34,7 @@ export default async function NewHomeworkPage() {
           action={<LinkButton href="/dashboard/students/new">Add student</LinkButton>}
         />
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        <Card>
           <HomeworkForm
             action={createHomeworkAction}
             students={students}
@@ -41,7 +42,7 @@ export default async function NewHomeworkPage() {
             submitLabel="Add homework"
             pendingLabel="Adding…"
           />
-        </div>
+        </Card>
       )}
     </div>
   );

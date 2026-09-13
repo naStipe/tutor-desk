@@ -10,19 +10,19 @@ interface FieldProps {
 }
 
 export const inputClassName =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-2 focus:outline-offset-1 focus:outline-blue-100";
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25";
 
 export function Field({ label, htmlFor, required, errors, hint, children }: FieldProps) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="mb-1 block text-sm font-medium text-slate-700">
+      <label htmlFor={htmlFor} className="mb-1 block text-sm font-medium text-ink">
         {label}
-        {required && <span className="text-rose-500"> *</span>}
+        {required && <span className="text-danger"> *</span>}
       </label>
       {children}
-      {hint && !errors?.length && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
+      {hint && !errors?.length && <p className="mt-1 text-xs text-ink-subtle">{hint}</p>}
       {errors?.map((error) => (
-        <p key={error} className="mt-1 text-xs text-rose-600">
+        <p key={error} className="mt-1 text-xs text-danger">
           {error}
         </p>
       ))}

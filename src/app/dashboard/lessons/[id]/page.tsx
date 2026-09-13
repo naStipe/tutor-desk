@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "../../../../components/Avatar";
 import { Button } from "../../../../components/Button";
+import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
 import { setLessonStatusAction, updateLessonAction } from "../../../../features/lessons/actions";
 import { LessonForm } from "../../../../features/lessons/components/LessonForm";
@@ -45,19 +46,19 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         description={formatFullDateTime(lesson.start_time)}
         avatar={<Avatar name={lesson.student?.name ?? "?"} />}
         actions={
-          <Link href="/dashboard/lessons" className="text-sm text-slate-500 hover:text-slate-700">
+          <Link href="/dashboard/lessons" className="text-sm text-ink-muted hover:text-ink">
             &larr; Back to lessons
           </Link>
         }
       />
 
       <div className="flex items-center gap-2">
-        <span className="text-sm text-slate-500">Status</span>
+        <span className="text-sm text-ink-muted">Status</span>
         <StatusBadge status={lesson.status} />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-900">Edit details</h2>
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Edit details</h2>
         <div className="mt-4">
           <LessonForm
             action={updateLessonAction}
@@ -73,11 +74,11 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             pendingLabel="Saving…"
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-900">Update status</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Update status</h2>
+        <p className="mt-1 text-sm text-ink-muted">
           Mark this lesson completed, cancelled, or no-show as its outcome becomes known.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -91,7 +92,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             </form>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -13,10 +13,8 @@ export function PageHeader({ title, description, actions, avatar }: PageHeaderPr
       <div className="flex items-center gap-3">
         {avatar}
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-            {title}
-          </h1>
-          {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">{title}</h1>
+          {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
         </div>
       </div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

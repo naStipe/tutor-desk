@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Avatar } from "../../../components/Avatar";
 import { LinkButton } from "../../../components/Button";
+import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
+import { BookIcon } from "../../../components/icons";
 import { PageHeader } from "../../../components/PageHeader";
 import { HomeworkStatusBadge } from "../../../features/homework/components/HomeworkStatusBadge";
 import { listHomework } from "../../../features/homework/data";
@@ -33,28 +35,28 @@ export default async function HomeworkPage() {
         <EmptyState
           title="No homework yet"
           description="Assign your first piece of homework to a student."
+          icon={<BookIcon className="h-6 w-6" />}
           action={<LinkButton href="/dashboard/homework/new">Add homework</LinkButton>}
         />
       ) : (
-        <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <Card className="divide-y divide-border overflow-hidden p-0">
           {homework.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={`/dashboard/homework/${item.id}`}
-                className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-slate-50"
-              >
-                <Avatar name={item.student?.name ?? "?"} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-900">{item.title}</p>
-                  <p className="truncate text-sm text-slate-500">
-                    {item.student?.name ?? "Unknown student"} · {formatDueDate(item.due_date)}
-                  </p>
-                </div>
-                <HomeworkStatusBadge status={item.status} />
-              </Link>
-            </li>
+            <Link
+              key={item.id}
+              href={`/dashboard/homework/${item.id}`}
+              className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-muted"
+            >
+              <Avatar name={item.student?.name ?? "?"} size="sm" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-ink">{item.title}</p>
+                <p className="truncate text-sm text-ink-muted">
+                  {item.student?.name ?? "Unknown student"} · {formatDueDate(item.due_date)}
+                </p>
+              </div>
+              <HomeworkStatusBadge status={item.status} />
+            </Link>
           ))}
-        </ul>
+        </Card>
       )}
     </div>
   );

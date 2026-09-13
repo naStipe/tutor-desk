@@ -9,7 +9,10 @@ TutorDesk is a TypeScript modular monolith deployed as one Next.js App Router ap
 - Hosted Supabase PostgreSQL queried directly with typed `supabase-js`
 - SQL migrations in `supabase/migrations/` as the schema source of truth
 - Types generated from the linked hosted project in `src/lib/supabase/database.types.ts`
-- Zod boundary validation, Tailwind CSS, Biome, Vitest, and Playwright
+- Zod boundary validation, Tailwind CSS (v4, CSS-variable-driven design tokens, light/dark theming),
+  Biome, Vitest, and Playwright
+- `next/font/google` (Manrope) for the app's typeface — bundled with Next.js, not an added
+  dependency
 
 Docker and local Supabase are not part of the current development architecture. The linked hosted
 development project is `cmlvtnjoynffrznyelym`.
@@ -63,7 +66,28 @@ point into the same validated, ownership-checked data layer, not a parallel path
 calendar optimistically updates its local state on drag/create and reconciles with `router.refresh()`
 once the server call resolves, reverting on error.
 
-## Repository boundaries
+## Design tokens and theming
+
+`src/app/globals.css` defines a semantic color-token system as CSS custom properties (`--td-canvas`,
+`--td-surface`, `--td-ink`, `--td-brand`/`--td-cyan`/`--td-violet`/`--td-danger`/`--td-warning`,
+each with a `-strong` hover/emphasis variant and an `on-*` foreground-text variant), declared once on
+`:root` (light) and re-declared under a `.dark` class (dark). A Tailwind v4 `@theme` block maps each
+onto a `--color-*` token, which is how plain utility classes like `bg-canvas`, `text-brand`, or
+`border-cyan/25` (opacity modifiers work on every token via Tailwind's built-in `color-mix()`
+support) resolve to the right value in both themes without any per-component light/dark branching.
+Components must use these tokens (`bg-surface`, `text-ink`, `text-ink-muted`, `border-border`, …) —
+never a raw Tailwind palette class like `bg-white` or `text-slate-500` — so the whole app stays
+theme-correct automatically. `src/components/{Card,Button,Field,Badge,Avatar,StatCard,EmptyState}.tsx`
+are the shared primitives built on these tokens; most pages compose them rather than repeating card/
+button/input markup inline.
+
+Dark mode is a `.dark` class on `<html>`, toggled by `src/components/ThemeToggle.tsx` and persisted
+to `localStorage` (`td-theme`). An inline, non-deferred script in the root layout's `<head>`
+(`src/app/layout.tsx`) applies that class — or falls back to `prefers-color-scheme` when nothing is
+stored — before first paint, avoiding a light/dark flash on load; `<html suppressHydrationWarning>`
+is required because that script mutates the DOM before React hydrates.
+
+## Interactive calendar
 
 - `src/app/`: routes, layouts, Server Components, and route handlers
 - `src/features/`: authentication and domain behavior

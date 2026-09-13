@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import { AuthForm } from "../../features/auth/components/AuthForm";
 import { signInAction, signInWithGoogleAction } from "../../features/auth/actions";
 import { createClient } from "../../lib/supabase/server";
@@ -21,7 +22,10 @@ export default async function SignInPage({
         : undefined;
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="relative flex min-h-screen items-center justify-center p-6">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       <AuthForm
         action={signInAction}
         googleAction={signInWithGoogleAction}

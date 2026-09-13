@@ -1,10 +1,8 @@
 const PALETTE = [
-  "bg-blue-100 text-blue-700",
-  "bg-violet-100 text-violet-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-cyan-100 text-cyan-700",
+  "bg-brand/15 text-brand",
+  "bg-cyan/15 text-cyan",
+  "bg-violet/15 text-violet",
+  "bg-warning/15 text-warning",
 ];
 
 function hashName(name: string) {

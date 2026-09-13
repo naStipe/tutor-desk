@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Card } from "../../components/Card";
 import { EmptyState } from "../../components/EmptyState";
 import { LinkButton } from "../../components/Button";
 import { PageHeader } from "../../components/PageHeader";
@@ -37,18 +38,18 @@ export default async function DashboardPage() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Active students" value={students.length} icon={UsersIcon} tone="blue" />
+        <StatCard label="Active students" value={students.length} icon={UsersIcon} tone="brand" />
         <StatCard
           label="Upcoming lessons"
           value={upcomingLessonCount}
           icon={CalendarIcon}
-          tone="violet"
+          tone="cyan"
         />
         <StatCard
           label="Homework to review"
           value={homeworkToReviewCount}
           icon={BookIcon}
-          tone="amber"
+          tone="violet"
         />
       </div>
 
@@ -59,11 +60,9 @@ export default async function DashboardPage() {
           action={<LinkButton href="/dashboard/students/new">Add student</LinkButton>}
         />
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Quick actions</h2>
-          </div>
-          <p className="mt-1 text-sm text-slate-500">
+        <Card className="p-5">
+          <h2 className="text-sm font-semibold text-ink">Quick actions</h2>
+          <p className="mt-1 text-sm text-ink-muted">
             Add a student, schedule a lesson, or assign homework.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -75,7 +74,7 @@ export default async function DashboardPage() {
               Assign homework
             </LinkButton>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

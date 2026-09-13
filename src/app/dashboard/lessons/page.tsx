@@ -25,10 +25,10 @@ function buildHref(view: View, date: Date) {
 }
 
 const navLinkClass =
-  "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50";
-const toggleActiveClass = "rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white";
+  "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
+const toggleActiveClass = "rounded-md bg-brand px-3 py-1 text-sm font-medium text-on-brand";
 const toggleInactiveClass =
-  "rounded-md px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-100";
+  "rounded-md px-3 py-1 text-sm font-medium text-ink-muted hover:bg-surface-muted";
 
 export default async function LessonsPage({
   searchParams,
@@ -87,7 +87,7 @@ export default async function LessonsPage({
             Next &rarr;
           </Link>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-surface p-1">
           <Link
             href={buildHref("day", anchor)}
             className={view === "day" ? toggleActiveClass : toggleInactiveClass}
@@ -103,7 +103,7 @@ export default async function LessonsPage({
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-ink-subtle">
         Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
       </p>
 

@@ -1,17 +1,124 @@
 @import "tailwindcss";
 
+/*
+ * TutorDesk design tokens.
+ *
+ * Tailwind color utilities (bg-canvas, text-brand, border-cyan/25, ...) are generated from the
+ * `--color-*` variables below. Each references a `--td-*` raw value so the same utility class
+ * resolves to a different color under `:root` (light) vs `.dark` (dark) without touching any
+ * component — see https://tailwindcss.com/docs/theme for the pattern.
+ */
+@theme {
+  --color-canvas: var(--td-canvas);
+  --color-surface: var(--td-surface);
+  --color-surface-muted: var(--td-surface-muted);
+  --color-border: var(--td-border);
+  --color-border-strong: var(--td-border-strong);
+
+  --color-ink: var(--td-ink);
+  --color-ink-muted: var(--td-ink-muted);
+  --color-ink-subtle: var(--td-ink-subtle);
+
+  --color-brand: var(--td-brand);
+  --color-brand-strong: var(--td-brand-strong);
+  --color-on-brand: var(--td-on-brand);
+
+  --color-cyan: var(--td-cyan);
+  --color-cyan-strong: var(--td-cyan-strong);
+  --color-on-cyan: var(--td-on-cyan);
+
+  --color-violet: var(--td-violet);
+  --color-violet-strong: var(--td-violet-strong);
+  --color-on-violet: var(--td-on-violet);
+
+  --color-danger: var(--td-danger);
+  --color-danger-strong: var(--td-danger-strong);
+  --color-on-danger: var(--td-on-danger);
+
+  --color-warning: var(--td-warning);
+  --color-warning-strong: var(--td-warning-strong);
+  --color-on-warning: var(--td-on-warning);
+
+  --font-sans: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --td-canvas: #f6f8f7;
+  --td-surface: #ffffff;
+  --td-surface-muted: #eef1ef;
+  --td-border: #e1e7e4;
+  --td-border-strong: #c9d2ce;
+
+  --td-ink: #101715;
+  --td-ink-muted: #56655f;
+  --td-ink-subtle: #8a9791;
+
+  --td-brand: #059669;
+  --td-brand-strong: #047857;
+  --td-on-brand: #ffffff;
+
+  --td-cyan: #0891b2;
+  --td-cyan-strong: #0e7490;
+  --td-on-cyan: #ffffff;
+
+  --td-violet: #7c3aed;
+  --td-violet-strong: #6d28d9;
+  --td-on-violet: #ffffff;
+
+  --td-danger: #dc2626;
+  --td-danger-strong: #b91c1c;
+  --td-on-danger: #ffffff;
+
+  --td-warning: #b45309;
+  --td-warning-strong: #92400e;
+  --td-on-warning: #ffffff;
+
+  color-scheme: light;
+}
+
+.dark {
+  --td-canvas: #0a0f0d;
+  --td-surface: #121917;
+  --td-surface-muted: #1a2320;
+  --td-border: #223029;
+  --td-border-strong: #304039;
+
+  --td-ink: #f2f6f4;
+  --td-ink-muted: #93a8a1;
+  --td-ink-subtle: #62766f;
+
+  --td-brand: #34d399;
+  --td-brand-strong: #6ee7b7;
+  --td-on-brand: #052e1f;
+
+  --td-cyan: #22d3ee;
+  --td-cyan-strong: #67e8f9;
+  --td-on-cyan: #042f2e;
+
+  --td-violet: #a78bfa;
+  --td-violet-strong: #c4b5fd;
+  --td-on-violet: #1e1147;
+
+  --td-danger: #f87171;
+  --td-danger-strong: #fca5a5;
+  --td-on-danger: #2a0a0a;
+
+  --td-warning: #fbbf24;
+  --td-warning-strong: #fde047;
+  --td-on-warning: #2c1a02;
+
+  color-scheme: dark;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family:
-    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-    "Open Sans", "Helvetica Neue", sans-serif;
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font-family: var(--font-sans);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+* {
+  border-color: var(--color-border);
 }

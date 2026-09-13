@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "../../../../components/Avatar";
 import { Button } from "../../../../components/Button";
+import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
 import { archiveStudentAction, updateStudentAction } from "../../../../features/students/actions";
 import { StudentForm } from "../../../../features/students/components/StudentForm";
@@ -34,14 +35,14 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         description={`Added ${formatDate(student.created_at)}`}
         avatar={<Avatar name={student.name} />}
         actions={
-          <Link href="/dashboard/students" className="text-sm text-slate-500 hover:text-slate-700">
+          <Link href="/dashboard/students" className="text-sm text-ink-muted hover:text-ink">
             &larr; Back to students
           </Link>
         }
       />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-900">Edit details</h2>
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Edit details</h2>
         <div className="mt-4">
           <StudentForm
             action={updateStudentAction}
@@ -55,11 +56,11 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             pendingLabel="Saving…"
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-900">Archive student</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Archive student</h2>
+        <p className="mt-1 text-sm text-ink-muted">
           Archived students are hidden from your active roster. This does not delete their data.
         </p>
         <form action={archiveStudentAction} className="mt-4">
@@ -68,7 +69,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             Archive student
           </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

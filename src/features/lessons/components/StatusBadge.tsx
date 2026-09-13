@@ -2,10 +2,10 @@ import { Badge, type BadgeTone } from "../../../components/Badge";
 import type { LessonStatus } from "../schemas";
 
 const STATUS_TONES: Record<LessonStatus, BadgeTone> = {
-  scheduled: "blue",
-  completed: "emerald",
-  cancelled: "slate",
-  no_show: "amber",
+  scheduled: "cyan",
+  completed: "brand",
+  cancelled: "neutral",
+  no_show: "warning",
 };
 
 const STATUS_LABELS: Record<LessonStatus, string> = {

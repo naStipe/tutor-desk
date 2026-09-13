@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import { inputClassName } from "../../../components/Field";
 import type { AuthActionState } from "../actions";
 
 const initialState: AuthActionState = {};
@@ -13,7 +14,7 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+      className="w-full rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
     >
       {pending ? pendingLabel : label}
     </button>
@@ -37,14 +38,14 @@ export function AuthForm(props: AuthFormProps) {
   const [state, formAction] = useActionState(props.action, initialState);
 
   return (
-    <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8">
-      <h1 className="text-xl font-bold tracking-tight text-slate-900">{props.heading}</h1>
-      <p className="mt-1 text-sm text-slate-500">{props.description}</p>
+    <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-sm shadow-black/[0.03] sm:p-8">
+      <h1 className="text-xl font-bold tracking-tight text-ink">{props.heading}</h1>
+      <p className="mt-1 text-sm text-ink-muted">{props.description}</p>
 
       {state.error && (
         <p
           role="alert"
-          className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+          className="mt-5 rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger"
         >
           {state.error}
         </p>
@@ -52,7 +53,7 @@ export function AuthForm(props: AuthFormProps) {
       {props.notice && !state.error && (
         <p
           role="alert"
-          className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+          className="mt-5 rounded-lg border border-warning/25 bg-warning/10 p-3 text-sm text-warning"
         >
           {props.notice}
         </p>
@@ -60,7 +61,7 @@ export function AuthForm(props: AuthFormProps) {
       {state.message && (
         <p
           role="status"
-          className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700"
+          className="mt-5 rounded-lg border border-brand/25 bg-brand/10 p-3 text-sm text-brand"
         >
           {state.message}
         </p>
@@ -68,7 +69,7 @@ export function AuthForm(props: AuthFormProps) {
 
       <form action={formAction} className="mt-6 space-y-4" noValidate>
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink">
             Email address
           </label>
           <input
@@ -76,16 +77,16 @@ export function AuthForm(props: AuthFormProps) {
             name="email"
             type="email"
             autoComplete="email"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className={inputClassName}
           />
           {state.fieldErrors?.email?.map((error) => (
-            <p key={error} className="mt-1 text-xs text-rose-600">
+            <p key={error} className="mt-1 text-xs text-danger">
               {error}
             </p>
           ))}
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink">
             Password
           </label>
           <input
@@ -95,10 +96,10 @@ export function AuthForm(props: AuthFormProps) {
             autoComplete={
               props.submitLabel === "Create account" ? "new-password" : "current-password"
             }
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className={inputClassName}
           />
           {state.fieldErrors?.password?.map((error) => (
-            <p key={error} className="mt-1 text-xs text-rose-600">
+            <p key={error} className="mt-1 text-xs text-danger">
               {error}
             </p>
           ))}
@@ -106,16 +107,16 @@ export function AuthForm(props: AuthFormProps) {
         <SubmitButton label={props.submitLabel} pendingLabel={props.pendingLabel} />
       </form>
 
-      <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
-        <div className="h-px flex-1 bg-slate-200" />
+      <div className="mt-4 flex items-center gap-3 text-xs text-ink-subtle">
+        <div className="h-px flex-1 bg-border" />
         or
-        <div className="h-px flex-1 bg-slate-200" />
+        <div className="h-px flex-1 bg-border" />
       </div>
 
       <form action={props.googleAction} className="mt-4">
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-muted"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
             <path
@@ -139,11 +140,11 @@ export function AuthForm(props: AuthFormProps) {
         </button>
       </form>
 
-      <p className="mt-6 border-t border-slate-100 pt-5 text-center text-xs text-slate-500">
+      <p className="mt-6 border-t border-border pt-5 text-center text-xs text-ink-muted">
         {props.alternateText}{" "}
         <Link
           href={props.alternateHref}
-          className="font-medium text-blue-600 underline underline-offset-2"
+          className="font-medium text-brand underline underline-offset-2"
         >
           {props.alternateLabel}
         </Link>

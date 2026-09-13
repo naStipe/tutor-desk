@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "../../../../components/Avatar";
+import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
 import { updateHomeworkAction } from "../../../../features/homework/actions";
 import { FeedbackForm } from "../../../../features/homework/components/FeedbackForm";
@@ -53,7 +54,7 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
         title={homework.title}
         description={dueLabel ?? "No due date"}
         actions={
-          <Link href="/dashboard/homework" className="text-sm text-slate-500 hover:text-slate-700">
+          <Link href="/dashboard/homework" className="text-sm text-ink-muted hover:text-ink">
             &larr; Back to homework
           </Link>
         }
@@ -61,22 +62,22 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
 
       <div className="flex items-center gap-3">
         <Avatar name={homework.student?.name ?? "?"} size="sm" />
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-ink-muted">
           {homework.student?.name ?? "Unknown student"}
         </span>
         <HomeworkStatusBadge status={homework.status} />
         {homework.lesson && (
           <Link
             href={`/dashboard/lessons/${homework.lesson.id}`}
-            className="text-sm text-blue-600 hover:text-blue-800"
+            className="text-sm text-brand hover:text-brand-strong"
           >
             View linked lesson &rarr;
           </Link>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-900">Edit details</h2>
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Edit details</h2>
         <div className="mt-4">
           <HomeworkForm
             action={updateHomeworkAction}
@@ -94,31 +95,31 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
             pendingLabel="Saving…"
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-        <h2 className="text-sm font-semibold text-slate-900">Submission</h2>
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Submission</h2>
         {homework.submission_text ? (
-          <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+          <p className="mt-2 whitespace-pre-wrap text-sm text-ink-muted">
             {homework.submission_text}
           </p>
         ) : (
-          <p className="mt-1 text-sm text-slate-500">Not submitted yet.</p>
+          <p className="mt-1 text-sm text-ink-subtle">Not submitted yet.</p>
         )}
         <div className="mt-4">
           <SubmissionForm homeworkId={homework.id} />
         </div>
-      </div>
+      </Card>
 
       {homework.status !== "assigned" && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
-          <h2 className="text-sm font-semibold text-slate-900">Feedback</h2>
+        <Card>
+          <h2 className="text-sm font-semibold text-ink">Feedback</h2>
           {homework.feedback_text ? (
-            <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+            <p className="mt-2 whitespace-pre-wrap text-sm text-ink-muted">
               {homework.feedback_text}
             </p>
           ) : (
-            <p className="mt-1 text-sm text-slate-500">No feedback yet.</p>
+            <p className="mt-1 text-sm text-ink-subtle">No feedback yet.</p>
           )}
           <div className="mt-4">
             <FeedbackForm
@@ -127,7 +128,7 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
               label={homework.feedback_text ? "Update feedback" : "Leave feedback"}
             />
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

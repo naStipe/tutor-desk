@@ -1,4 +1,5 @@
 import { LinkButton } from "../../../../components/Button";
+import { Card } from "../../../../components/Card";
 import { EmptyState } from "../../../../components/EmptyState";
 import { PageHeader } from "../../../../components/PageHeader";
 import { createLessonAction } from "../../../../features/lessons/actions";
@@ -23,14 +24,14 @@ export default async function NewLessonPage() {
           action={<LinkButton href="/dashboard/students/new">Add student</LinkButton>}
         />
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        <Card>
           <LessonForm
             action={createLessonAction}
             students={students}
             submitLabel="Schedule lesson"
             pendingLabel="Scheduling…"
           />
-        </div>
+        </Card>
       )}
     </div>
   );

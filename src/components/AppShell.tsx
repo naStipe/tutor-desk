@@ -2,21 +2,56 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { signOutAction } from "../features/auth/actions";
 import { displayNameFromEmail, initialsFromEmail } from "../lib/display-name";
+import { Select } from "./Select";
 import { ThemeToggle } from "./ThemeToggle";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Today", exact: true },
-  { href: "/dashboard/schedule", label: "Schedule", exact: false },
-  { href: "/dashboard/students", label: "Students", exact: false },
-  { href: "/dashboard/lessons", label: "Lessons", exact: false },
-  { href: "/dashboard/homework", label: "Homework", exact: false },
-  { href: "/dashboard/subjects", label: "Subjects", exact: false },
+type NavItem = { href: string; label: string; match: string; exact: boolean };
+
+const STUDENT_VIEW_PREFIX = "/dashboard/student-view";
+
+const TUTOR_NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "Today", match: "/dashboard", exact: true },
+  { href: "/dashboard/schedule", label: "Schedule", match: "/dashboard/schedule", exact: false },
+  { href: "/dashboard/students", label: "Students", match: "/dashboard/students", exact: false },
+  { href: "/dashboard/lessons", label: "Lessons", match: "/dashboard/lessons", exact: false },
+  { href: "/dashboard/homework", label: "Homework", match: "/dashboard/homework", exact: false },
+  { href: "/dashboard/subjects", label: "Subjects", match: "/dashboard/subjects", exact: false },
 ];
+
+function studentNavItems(studentId: string | null): NavItem[] {
+  const suffix = studentId ? `?student=${studentId}` : "";
+  return [
+    {
+      href: `${STUDENT_VIEW_PREFIX}/schedule${suffix}`,
+      label: "Schedule",
+      match: `${STUDENT_VIEW_PREFIX}/schedule`,
+      exact: false,
+    },
+    {
+      href: `${STUDENT_VIEW_PREFIX}/lessons${suffix}`,
+      label: "Lessons",
+      match: `${STUDENT_VIEW_PREFIX}/lessons`,
+      exact: false,
+    },
+    {
+      href: `${STUDENT_VIEW_PREFIX}/homework${suffix}`,
+      label: "Homework",
+      match: `${STUDENT_VIEW_PREFIX}/homework`,
+      exact: false,
+    },
+    {
+      href: `${STUDENT_VIEW_PREFIX}/teacher${suffix}`,
+      label: "Teacher",
+      match: `${STUDENT_VIEW_PREFIX}/teacher`,
+      exact: false,
+    },
+  ];
+}
 
 function NavPill({
   active,
@@ -52,20 +87,22 @@ function NavPill({
 }
 
 function NavLinks({
+  items,
   pathname,
   homeworkCount,
   onNavigate,
 }: {
+  items: NavItem[];
   pathname: string;
   homeworkCount: number;
   onNavigate?: () => void;
 }) {
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
-        const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+      {items.map((item) => {
+        const active = item.exact ? pathname === item.match : pathname.startsWith(item.match);
         return (
-          <Link key={item.href} href={item.href} onClick={onNavigate}>
+          <Link key={item.match} href={item.href} onClick={onNavigate}>
             <NavPill active={active} count={item.label === "Homework" ? homeworkCount : undefined}>
               {item.label}
             </NavPill>
@@ -73,19 +110,70 @@ function NavLinks({
         );
       })}
 
-      <p className="mt-6 px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--td2-text-disabled)]">
-        Coming later
-      </p>
-      <span
-        aria-disabled="true"
-        className="flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-sm text-[var(--td2-text-disabled)]"
-      >
-        <span className="flex-1">Invoices</span>
-        <span className="rounded-[20px] border border-[var(--td2-border-chip)] bg-[var(--td2-bg-inset)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--td2-text-disabled)]">
-          SOON
-        </span>
-      </span>
+      {items === TUTOR_NAV_ITEMS && (
+        <>
+          <p className="mt-6 px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--td2-text-disabled)]">
+            Coming later
+          </p>
+          <span
+            aria-disabled="true"
+            className="flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-sm text-[var(--td2-text-disabled)]"
+          >
+            <span className="flex-1">Invoices</span>
+            <span className="rounded-[20px] border border-[var(--td2-border-chip)] bg-[var(--td2-bg-inset)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--td2-text-disabled)]">
+              SOON
+            </span>
+          </span>
+        </>
+      )}
     </nav>
+  );
+}
+
+function ViewSwitcher({ mode, studentHref }: { mode: "tutor" | "student"; studentHref: string }) {
+  return (
+    <div className="flex rounded-[10px] border border-[var(--td2-border-rail)] bg-[var(--td2-bg-inset)] p-0.5 text-[13px] font-medium">
+      <Link
+        href="/dashboard"
+        className={`flex-1 rounded-[8px] px-2.5 py-1.5 text-center transition-colors ${
+          mode === "tutor"
+            ? "bg-[var(--td2-bg-page)] text-[var(--td2-text-primary)] shadow-sm"
+            : "text-[var(--td2-text-muted)] hover:text-[var(--td2-text-primary)]"
+        }`}
+      >
+        Tutor
+      </Link>
+      <Link
+        href={studentHref}
+        className={`flex-1 rounded-[8px] px-2.5 py-1.5 text-center transition-colors ${
+          mode === "student"
+            ? "bg-[var(--td2-bg-page)] text-[var(--td2-text-primary)] shadow-sm"
+            : "text-[var(--td2-text-muted)] hover:text-[var(--td2-text-primary)]"
+        }`}
+      >
+        Student
+      </Link>
+    </div>
+  );
+}
+
+function StudentPicker({
+  students,
+  selectedId,
+  basePath,
+}: {
+  students: { id: string; name: string }[];
+  selectedId: string;
+  basePath: string;
+}) {
+  const router = useRouter();
+  return (
+    <Select
+      value={selectedId}
+      onChange={(value) => router.push(`${basePath}?student=${value}`)}
+      options={students.map((student) => ({ value: student.id, label: student.name }))}
+      aria-label="Previewing as student"
+    />
   );
 }
 
@@ -136,27 +224,53 @@ function Footer({ email }: { email: string }) {
 export function AppShell({
   email,
   homeworkCount = 0,
+  students = [],
   children,
 }: {
   email: string;
   homeworkCount?: number;
+  students?: { id: string; name: string }[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const mode: "tutor" | "student" = pathname.startsWith(STUDENT_VIEW_PREFIX) ? "student" : "tutor";
+  const requestedStudentId = searchParams.get("student");
+  const selectedStudentId =
+    (requestedStudentId && students.some((student) => student.id === requestedStudentId)
+      ? requestedStudentId
+      : students[0]?.id) ?? null;
+  const studentBasePath = mode === "student" ? pathname : `${STUDENT_VIEW_PREFIX}/schedule`;
+  const studentHref = `${STUDENT_VIEW_PREFIX}/schedule${selectedStudentId ? `?student=${selectedStudentId}` : ""}`;
+  const navItems = mode === "tutor" ? TUTOR_NAV_ITEMS : studentNavItems(selectedStudentId);
+  const showSwitcher = students.length > 0;
 
   return (
     <div className="min-h-screen bg-[var(--td2-bg-page)]">
       <div className="flex min-h-screen">
-        <aside className="hidden w-[232px] shrink-0 flex-col gap-[34px] border-r border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-[18px] py-[26px] lg:flex">
+        <aside className="hidden w-[232px] shrink-0 flex-col gap-[26px] border-r border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-[18px] py-[26px] lg:flex">
           <div className="flex items-center justify-between">
             <Link href="/dashboard">
               <Brand />
             </Link>
             <ThemeToggle />
           </div>
+          {showSwitcher && (
+            <div className="flex flex-col gap-2">
+              <ViewSwitcher mode={mode} studentHref={studentHref} />
+              {mode === "student" && selectedStudentId && (
+                <StudentPicker
+                  students={students}
+                  selectedId={selectedStudentId}
+                  basePath={studentBasePath}
+                />
+              )}
+            </div>
+          )}
           <div className="flex-1">
-            <NavLinks pathname={pathname} homeworkCount={homeworkCount} />
+            <NavLinks items={navItems} pathname={pathname} homeworkCount={homeworkCount} />
           </div>
           <Footer email={email} />
         </aside>
@@ -199,7 +313,20 @@ export function AppShell({
 
           {mobileNavOpen && (
             <div className="border-b border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-4 py-4 lg:hidden">
+              {showSwitcher && (
+                <div className="mb-4 flex flex-col gap-2">
+                  <ViewSwitcher mode={mode} studentHref={studentHref} />
+                  {mode === "student" && selectedStudentId && (
+                    <StudentPicker
+                      students={students}
+                      selectedId={selectedStudentId}
+                      basePath={studentBasePath}
+                    />
+                  )}
+                </div>
+              )}
               <NavLinks
+                items={navItems}
                 pathname={pathname}
                 homeworkCount={homeworkCount}
                 onNavigate={() => setMobileNavOpen(false)}

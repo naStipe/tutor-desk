@@ -24,12 +24,15 @@ type HomeworkFormProps = {
   homeworkId?: string;
   students: { id: string; name: string }[];
   lessons: LessonOption[];
+  subjects: { id: string; name: string }[];
   defaultValues?: {
     studentId: string;
     lessonId: string;
+    subjectId: string;
     title: string;
     description: string;
     dueDate: string;
+    links: string;
   };
   submitLabel: string;
   pendingLabel: string;
@@ -40,6 +43,7 @@ export function HomeworkForm({
   homeworkId,
   students,
   lessons,
+  subjects,
   defaultValues,
   submitLabel,
   pendingLabel,
@@ -90,6 +94,27 @@ export function HomeworkForm({
       </Field>
 
       <Field
+        label="Subject"
+        htmlFor="subjectId"
+        hint="Optional"
+        errors={state.fieldErrors?.subjectId}
+      >
+        <select
+          id="subjectId"
+          name="subjectId"
+          defaultValue={defaultValues?.subjectId ?? ""}
+          className={inputClassName}
+        >
+          <option value="">No subject</option>
+          {subjects.map((subject) => (
+            <option key={subject.id} value={subject.id}>
+              {subject.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field
         label="Linked lesson"
         htmlFor="lessonId"
         hint="Optional"
@@ -121,7 +146,7 @@ export function HomeworkForm({
       </Field>
 
       <Field
-        label="Description"
+        label="Notes"
         htmlFor="description"
         hint="Optional"
         errors={state.fieldErrors?.description}
@@ -131,6 +156,22 @@ export function HomeworkForm({
           name="description"
           rows={3}
           defaultValue={defaultValues?.description}
+          className={inputClassName}
+        />
+      </Field>
+
+      <Field
+        label="Links"
+        htmlFor="links"
+        hint="Optional — one per line, e.g. Worksheet | https://example.com/file.pdf"
+        errors={state.fieldErrors?.links}
+      >
+        <textarea
+          id="links"
+          name="links"
+          rows={3}
+          placeholder={"Worksheet | https://example.com/worksheet.pdf\nhttps://example.com/video"}
+          defaultValue={defaultValues?.links}
           className={inputClassName}
         />
       </Field>

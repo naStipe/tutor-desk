@@ -16,6 +16,7 @@ import {
 import { listLessonsInRange } from "../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../features/lessons/rates-map";
 import { ensureUpcomingLessonsGenerated } from "../../../features/lessons/recurrence";
+import { listHomeworkDueInRange } from "../../../features/homework/data";
 import { listRatesForTutor } from "../../../features/rates/data";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
@@ -27,9 +28,10 @@ export const dynamic = "force-dynamic";
 
 type View = "day" | "week" | "month";
 
-function buildHref(view: View, date: Date, highlight?: string) {
+function buildHref(view: View, date: Date, highlight?: string, showHomework?: boolean) {
   const highlightParam = highlight ? `&highlight=${highlight}` : "";
-  return `/dashboard/schedule?view=${view}&date=${toDateParam(date)}${highlightParam}`;
+  const homeworkParam = showHomework ? "&homework=1" : "";
+  return `/dashboard/schedule?view=${view}&date=${toDateParam(date)}${highlightParam}${homeworkParam}`;
 }
 
 const PICKER_WINDOW_PAST_DAYS = 7;
@@ -38,14 +40,22 @@ const PICKER_WINDOW_FUTURE_DAYS = 120;
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string; create?: string; highlight?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    date?: string;
+    create?: string;
+    highlight?: string;
+    homework?: string;
+  }>;
 }) {
   const {
     view: viewParam,
     date: dateParam,
     create: createParam,
     highlight: highlightParam,
+    homework: homeworkParam,
   } = await searchParams;
+  const showHomework = homeworkParam === "1";
   const view: View = viewParam === "day" ? "day" : viewParam === "month" ? "month" : "week";
   const anchor = parseDateParam(dateParam);
 
@@ -85,7 +95,7 @@ export default async function SchedulePage({
       end: pickerEnd.toISOString(),
     });
 
-  const [lessons, students, subjects, rates, pickerLessons] = await Promise.all([
+  const [lessons, students, subjects, rates, pickerLessons, homeworkDue] = await Promise.all([
     generatedNewLessons
       ? fetchLessonsForRange()
       : cachedForTutor(
@@ -113,6 +123,17 @@ export default async function SchedulePage({
           30,
           fetchPickerLessons,
         ),
+    cachedForTutor(
+      "homework-due-range",
+      [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+      [tutorTag("homework", user.id)],
+      30,
+      () =>
+        listHomeworkDueInRange(client, {
+          start: rangeStart.toISOString(),
+          end: rangeEnd.toISOString(),
+        }),
+    ),
   ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
@@ -138,12 +159,12 @@ export default async function SchedulePage({
   const monthAnchor = startOfMonth(anchor);
   const prevHref =
     view === "month"
-      ? buildHref("month", addMonths(monthAnchor, -1))
-      : buildHref(view, addDays(rangeStart, -step));
+      ? buildHref("month", addMonths(monthAnchor, -1), undefined, showHomework)
+      : buildHref(view, addDays(rangeStart, -step), undefined, showHomework);
   const nextHref =
     view === "month"
-      ? buildHref("month", addMonths(monthAnchor, 1))
-      : buildHref(view, addDays(rangeStart, step));
+      ? buildHref("month", addMonths(monthAnchor, 1), undefined, showHomework)
+      : buildHref(view, addDays(rangeStart, step), undefined, showHomework);
 
   const description =
     view === "day"
@@ -152,16 +173,22 @@ export default async function SchedulePage({
         ? formatMonthHeading(anchor)
         : formatWeekRange(rangeStart);
 
+  const homeworkCountByDate: Record<string, number> = {};
+  for (const item of homeworkDue) {
+    if (!item.due_date) continue;
+    homeworkCountByDate[item.due_date] = (homeworkCountByDate[item.due_date] ?? 0) + 1;
+  }
+
   return (
     <LessonsCalendarView
       title="Schedule"
       description={description}
       prevHref={prevHref}
       nextHref={nextHref}
-      todayHref={buildHref(view === "month" ? "month" : view, new Date())}
-      dayHref={buildHref("day", anchor)}
-      weekHref={buildHref("week", anchor)}
-      monthHref={buildHref("month", anchor)}
+      todayHref={buildHref(view === "month" ? "month" : view, new Date(), undefined, showHomework)}
+      dayHref={buildHref("day", anchor, undefined, showHomework)}
+      weekHref={buildHref("week", anchor, undefined, showHomework)}
+      monthHref={buildHref("month", anchor, undefined, showHomework)}
       view={view}
       dayStartValues={days.map(toLocalMidnightValue)}
       lessons={calendarLessons}
@@ -178,6 +205,15 @@ export default async function SchedulePage({
       highlightLessonId={highlightParam ?? null}
       monthCountByDate={countByDate}
       monthAnchorValue={toLocalMidnightValue(anchor)}
+      showHomework={showHomework}
+      homeworkCountByDate={homeworkCountByDate}
+      homeworkItems={homeworkDue.map((item) => ({
+        id: item.id,
+        title: item.title,
+        studentName: item.student?.name ?? "Unknown student",
+        dueDate: item.due_date as string,
+        status: item.status,
+      }))}
     />
   );
 }

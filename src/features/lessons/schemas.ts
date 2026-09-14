@@ -40,7 +40,7 @@ const optionalPaymentMethod = z.preprocess(emptyToUndefined, z.enum(PAYMENT_METH
 const optionalPrice = z.preprocess((value) => {
   if (value === "" || value === null || value === undefined) return undefined;
   return value;
-}, z.coerce.number().min(0, "Price can't be negative").optional());
+}, z.coerce.number().int("Price must be a whole number").min(0, "Price can't be negative").optional());
 
 export const lessonInputSchema = z.object({
   studentId: uuid,

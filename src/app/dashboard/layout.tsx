@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   const client = accessToken ? createTokenClient(accessToken) : supabase;
 
-  const [, homeworkCount] = await Promise.all([
+  const [, homeworkCountResult] = await Promise.allSettled([
     cachedForTutor("tutor-profile", [user.id], [`tutor-profile:${user.id}`], 5 * 60, () =>
       ensureCurrentTutorProfile(client, user.id),
     ),
@@ -23,6 +23,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       countHomeworkNeedingAttention(client),
     ),
   ]);
+  const homeworkCount =
+    homeworkCountResult.status === "fulfilled" ? homeworkCountResult.value : 0;
 
   return (
     <AppShell email={user.email ?? ""} homeworkCount={homeworkCount}>

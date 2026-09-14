@@ -19,6 +19,7 @@ type MonthCalendarProps = {
   selectedDate: string | null;
   onSelectDate: (dateParam: string) => void;
   countByDate: Record<string, number>;
+  homeworkCountByDate?: Record<string, number>;
   minDate?: Date;
   maxDate?: Date;
 };
@@ -29,6 +30,7 @@ export function MonthCalendar({
   selectedDate,
   onSelectDate,
   countByDate,
+  homeworkCountByDate,
   minDate,
   maxDate,
 }: MonthCalendarProps) {
@@ -81,6 +83,7 @@ export function MonthCalendar({
             (minDate && day < minDate && !isSameDay(day, minDate)) ||
             (maxDate && day > maxDate && !isSameDay(day, maxDate));
           const count = countByDate[dateParam] ?? 0;
+          const homeworkCount = homeworkCountByDate?.[dateParam] ?? 0;
 
           return (
             <button
@@ -88,7 +91,7 @@ export function MonthCalendar({
               type="button"
               disabled={Boolean(isDisabled)}
               onClick={() => onSelectDate(dateParam)}
-              className={`relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition-colors ${
+              className={`relative flex h-12 flex-col items-center justify-center rounded-lg text-sm transition-colors sm:h-16 ${
                 isSelected
                   ? "bg-brand text-on-brand font-semibold"
                   : isToday
@@ -99,13 +102,24 @@ export function MonthCalendar({
               } ${!inMonth ? "text-ink-subtle/50" : ""} ${isDisabled ? "cursor-not-allowed opacity-30" : ""}`}
             >
               <span>{day.getDate()}</span>
-              {count > 0 && (
-                <span
-                  className={`mt-0.5 rounded-full px-1 text-[10px] leading-tight ${
-                    isSelected ? "bg-on-brand/20 text-on-brand" : "bg-brand/15 text-brand"
-                  }`}
-                >
-                  {count}
+              {(count > 0 || homeworkCount > 0) && (
+                <span className="mt-0.5 flex items-center gap-1">
+                  {count > 0 && (
+                    <span
+                      className={`rounded-full px-1 text-[10px] leading-tight ${
+                        isSelected ? "bg-on-brand/20 text-on-brand" : "bg-brand/15 text-brand"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                  {homeworkCount > 0 && (
+                    <span
+                      role="img"
+                      aria-label={`${homeworkCount} homework due`}
+                      className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-on-brand" : "bg-warning"}`}
+                    />
+                  )}
                 </span>
               )}
             </button>

@@ -4,13 +4,23 @@ import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
-import { createHomework, recordFeedback, recordSubmission, updateHomework } from "./data";
+import {
+  createAttachment,
+  createHomework,
+  deleteAttachment,
+  HOMEWORK_ATTACHMENTS_BUCKET,
+  recordFeedback,
+  recordSubmission,
+  updateHomework,
+} from "./data";
 import { feedbackInputSchema, homeworkInputSchema, submissionInputSchema } from "./schemas";
 
 export type HomeworkActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+export type AttachmentActionState = { error?: string };
 
 function fields(formData: FormData) {
   return {
@@ -19,9 +29,11 @@ function fields(formData: FormData) {
     // reports our friendly message instead of Zod's generic "expected string" one.
     studentId: formData.get("studentId") ?? "",
     lessonId: formData.get("lessonId"),
+    subjectId: formData.get("subjectId"),
     title: formData.get("title"),
     description: formData.get("description"),
     dueDate: formData.get("dueDate"),
+    links: formData.get("links") ?? "",
   };
 }
 
@@ -105,6 +117,66 @@ export async function recordSubmissionAction(
   revalidatePath("/dashboard/homework");
   revalidatePath(`/dashboard/homework/${id}`);
   redirect(`/dashboard/homework/${id}`);
+}
+
+const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
+
+export async function uploadHomeworkAttachmentAction(
+  _state: AttachmentActionState,
+  formData: FormData,
+): Promise<AttachmentActionState> {
+  const homeworkId = formData.get("homeworkId");
+  const file = formData.get("file");
+  if (typeof homeworkId !== "string" || homeworkId === "") {
+    return { error: "Missing homework reference." };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a file to upload." };
+  }
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    return { error: "Files must be 15MB or smaller." };
+  }
+
+  const { supabase, tutorId } = await requireTutorId();
+  const storagePath = `${tutorId}/${homeworkId}/${crypto.randomUUID()}-${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(HOMEWORK_ATTACHMENTS_BUCKET)
+    .upload(storagePath, file, { contentType: file.type || undefined });
+  if (uploadError) return { error: `Unable to upload file: ${uploadError.message}` };
+
+  try {
+    await createAttachment(supabase, {
+      tutorId,
+      homeworkId,
+      storagePath,
+      fileName: file.name,
+      contentType: file.type || null,
+      sizeBytes: file.size,
+    });
+  } catch (error) {
+    await supabase.storage.from(HOMEWORK_ATTACHMENTS_BUCKET).remove([storagePath]);
+    return { error: error instanceof Error ? error.message : "Unable to save attachment." };
+  }
+
+  revalidatePath(`/dashboard/homework/${homeworkId}`);
+  return {};
+}
+
+export async function deleteHomeworkAttachmentAction(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+  const homeworkId = formData.get("homeworkId");
+  if (typeof id !== "string" || id === "") return;
+
+  const { supabase } = await requireTutorId();
+  const deleted = await deleteAttachment(supabase, id);
+  if (deleted?.storage_path) {
+    await supabase.storage.from(HOMEWORK_ATTACHMENTS_BUCKET).remove([deleted.storage_path]);
+  }
+
+  if (typeof homeworkId === "string" && homeworkId !== "") {
+    revalidatePath(`/dashboard/homework/${homeworkId}`);
+  }
 }
 
 export async function recordFeedbackAction(

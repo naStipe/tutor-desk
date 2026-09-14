@@ -43,6 +43,9 @@ export function LessonsCalendarView({
   highlightLessonId,
   monthCountByDate,
   monthAnchorValue,
+  showHomework,
+  homeworkCountByDate,
+  homeworkItems,
 }: {
   title: string;
   description: string;
@@ -63,6 +66,9 @@ export function LessonsCalendarView({
   highlightLessonId: string | null;
   monthCountByDate: Record<string, number>;
   monthAnchorValue: string;
+  showHomework: boolean;
+  homeworkCountByDate: Record<string, number>;
+  homeworkItems: { id: string; title: string; studentName: string; dueDate: string; status: string }[];
 }) {
   const router = useRouter();
   const [createPrefill, setCreatePrefill] = useState<Prefill | null>(
@@ -74,6 +80,16 @@ export function LessonsCalendarView({
   function closeModal() {
     setCreatePrefill(null);
     router.refresh();
+  }
+
+  function toggleHomework(checked: boolean) {
+    const url = new URL(window.location.href);
+    if (checked) {
+      url.searchParams.set("homework", "1");
+    } else {
+      url.searchParams.delete("homework");
+    }
+    router.push(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
   return (
@@ -137,14 +153,33 @@ export function LessonsCalendarView({
         </div>
       </div>
 
+      <label className="flex w-fit items-center gap-2 text-sm text-ink-muted">
+        <input
+          type="checkbox"
+          checked={showHomework}
+          onChange={(event) => toggleHomework(event.target.checked)}
+          className="h-4 w-4 rounded border-border text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        />
+        Show homework due dates
+      </label>
+
       {view === "month" ? (
         <Card>
           <MonthCalendar
             month={new Date(monthAnchorValue)}
-            onMonthChange={(month) => router.push(`/dashboard/schedule?view=month&date=${toDateParam(month)}`)}
+            onMonthChange={(month) =>
+              router.push(
+                `/dashboard/schedule?view=month&date=${toDateParam(month)}${showHomework ? "&homework=1" : ""}`,
+              )
+            }
             selectedDate={null}
-            onSelectDate={(dateParam) => router.push(`/dashboard/schedule?view=day&date=${dateParam}`)}
+            onSelectDate={(dateParam) =>
+              router.push(
+                `/dashboard/schedule?view=day&date=${dateParam}${showHomework ? "&homework=1" : ""}`,
+              )
+            }
             countByDate={monthCountByDate}
+            homeworkCountByDate={showHomework ? homeworkCountByDate : undefined}
           />
         </Card>
       ) : (
@@ -155,6 +190,29 @@ export function LessonsCalendarView({
             <p className="text-xs text-ink-subtle">
               Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
             </p>
+          )}
+
+          {showHomework && homeworkItems.length > 0 && (
+            <Card className="space-y-2">
+              <h3 className="text-sm font-semibold text-ink">Homework due</h3>
+              <ul className="space-y-1">
+                {homeworkItems.map((item) => (
+                  <li key={item.id} className="text-sm text-ink-muted">
+                    <Link
+                      href={`/dashboard/homework/${item.id}`}
+                      className="text-ink hover:text-brand hover:underline"
+                    >
+                      {item.title}
+                    </Link>{" "}
+                    — {item.studentName} · due{" "}
+                    {new Date(`${item.dueDate}T00:00:00`).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </li>
+                ))}
+              </ul>
+            </Card>
           )}
 
           <LessonCalendar

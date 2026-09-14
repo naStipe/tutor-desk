@@ -7,15 +7,22 @@ import { HomeworkForm } from "../../../../features/homework/components/HomeworkF
 import { listLessonsForSelect } from "../../../../features/lessons/data";
 import { formatTimeRange } from "../../../../features/lessons/date-utils";
 import { listActiveStudents } from "../../../../features/students/data";
+import { listSubjects } from "../../../../features/subjects/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewHomeworkPage() {
+export default async function NewHomeworkPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ studentId?: string; lessonId?: string }>;
+}) {
+  const { studentId, lessonId } = await searchParams;
   const supabase = await createClient();
-  const [students, lessons] = await Promise.all([
+  const [students, lessons, subjects] = await Promise.all([
     listActiveStudents(supabase),
     listLessonsForSelect(supabase),
+    listSubjects(supabase),
   ]);
 
   const lessonOptions = lessons.map((lesson) => ({
@@ -39,6 +46,20 @@ export default async function NewHomeworkPage() {
             action={createHomeworkAction}
             students={students}
             lessons={lessonOptions}
+            subjects={subjects}
+            defaultValues={
+              studentId || lessonId
+                ? {
+                    studentId: studentId ?? students[0]?.id ?? "",
+                    lessonId: lessonId ?? "",
+                    subjectId: "",
+                    title: "",
+                    description: "",
+                    dueDate: "",
+                    links: "",
+                  }
+                : undefined
+            }
             submitLabel="Add homework"
             pendingLabel="Adding…"
           />

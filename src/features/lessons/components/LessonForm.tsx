@@ -77,8 +77,8 @@ export function LessonForm({
 
   useEffect(() => {
     if (priceTouched || !rate) return;
-    const computed = (rate.hourlyRate * durationMinutes) / 60;
-    setPrice(computed.toFixed(2));
+    const computed = Math.round((rate.hourlyRate * durationMinutes) / 60);
+    setPrice(String(computed));
     setCurrency(rate.currency);
   }, [rate, durationMinutes, priceTouched]);
 
@@ -163,11 +163,12 @@ export function LessonForm({
             name="price"
             type="number"
             min={0}
-            step="0.01"
+            step={1}
+            inputMode="numeric"
             value={price}
             onChange={(event) => {
               setPriceTouched(true);
-              setPrice(event.target.value);
+              setPrice(event.target.value.replace(/[^0-9]/g, ""));
             }}
             className={inputClassName}
           />

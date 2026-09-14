@@ -28,15 +28,34 @@ const optionalDate = z.preprocess(
     .optional(),
 );
 
+const linkListSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value === undefined || value === null ? [] : value;
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const separatorIndex = line.indexOf("|");
+      if (separatorIndex === -1) return { label: null, url: line.trim() };
+      return {
+        label: line.slice(0, separatorIndex).trim() || null,
+        url: line.slice(separatorIndex + 1).trim(),
+      };
+    });
+}, z.array(z.object({ label: z.string().nullable(), url: z.string().url("Enter a valid URL") })).max(20, "Too many links"));
+
 export const homeworkInputSchema = z.object({
   studentId: z.string().uuid("Choose a student"),
   lessonId: optionalUuid,
+  subjectId: optionalUuid,
   title: z.string().trim().min(1, "Title is required").max(200, "Title is too long"),
   description: optionalTrimmed(4000, "Description is too long"),
   dueDate: optionalDate,
+  links: linkListSchema,
 });
 
 export type HomeworkInput = z.infer<typeof homeworkInputSchema>;
+export type HomeworkLink = { label: string | null; url: string };
 
 export const submissionInputSchema = z.object({
   submissionText: z.string().trim().min(1, "Enter what the student submitted").max(4000),

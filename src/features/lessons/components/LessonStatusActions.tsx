@@ -39,36 +39,28 @@ export function LessonStatusActions({
     });
   }
 
-  const otherStatuses = LESSON_STATUSES.filter((value) => value !== optimisticStatus);
-
   return (
-    <>
+    <Card className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-ink-muted">Status</span>
+        <span className="text-sm font-semibold text-ink">Status</span>
         <span className={`transition-opacity duration-150 ${isPending ? "opacity-60" : ""}`}>
           <StatusBadge status={optimisticStatus} />
         </span>
       </div>
-      <Card>
-        <h2 className="text-sm font-semibold text-ink">Update status</h2>
-        <p className="mt-1 text-sm text-ink-muted">
-          Mark this lesson completed, cancelled, or no-show as its outcome becomes known.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {otherStatuses.map((value) => (
-            <Button
-              key={value}
-              type="button"
-              variant={value === "cancelled" ? "danger" : "secondary"}
-              disabled={isPending}
-              onClick={() => applyStatus(value)}
-              className={pendingStatus === value ? "opacity-70" : ""}
-            >
-              {pendingStatus === value ? "Updating…" : STATUS_ACTION_LABELS[value]}
-            </Button>
-          ))}
-        </div>
-      </Card>
-    </>
+      <div className="flex flex-wrap gap-2">
+        {LESSON_STATUSES.filter((value) => value !== optimisticStatus).map((value) => (
+          <Button
+            key={value}
+            type="button"
+            variant={value === "cancelled" ? "danger" : "secondary"}
+            disabled={isPending}
+            onClick={() => applyStatus(value)}
+            className={pendingStatus === value ? "opacity-70" : ""}
+          >
+            {pendingStatus === value ? "Updating…" : STATUS_ACTION_LABELS[value]}
+          </Button>
+        ))}
+      </div>
+    </Card>
   );
 }

@@ -9,7 +9,8 @@ import {
   setLessonPaymentAction,
   updateLessonAction,
 } from "../../../../features/lessons/actions";
-import { LessonForm } from "../../../../features/lessons/components/LessonForm";
+import { LessonDetailsCard } from "../../../../features/lessons/components/LessonDetailsCard";
+import { LessonHomeworkCard } from "../../../../features/lessons/components/LessonHomeworkCard";
 import { LessonStatusActions } from "../../../../features/lessons/components/LessonStatusActions";
 import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
 import {
@@ -22,6 +23,7 @@ import {
 import { getLesson, listLessonsInRange } from "../../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../../features/lessons/rates-map";
 import { type LessonStatus, PAYMENT_METHODS } from "../../../../features/lessons/schemas";
+import { listHomeworkForLesson } from "../../../../features/homework/data";
 import { listRatesForTutor } from "../../../../features/rates/data";
 import { listActiveStudents } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
@@ -40,20 +42,23 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const [lesson, activeStudents, subjects, rates] = await Promise.all([
-    getLesson(supabase, id),
-    listActiveStudents(supabase),
-    listSubjects(supabase),
-    listRatesForTutor(supabase),
-  ]);
-  if (!lesson) notFound();
-
   const pickerStart = addDays(startOfDay(new Date()), -7);
   const pickerEnd = addDays(startOfDay(new Date()), 120);
-  const pickerLessonRows = await listLessonsInRange(supabase, {
-    start: pickerStart.toISOString(),
-    end: pickerEnd.toISOString(),
-  });
+
+  const [lesson, activeStudents, subjects, rates, pickerLessonRows, lessonHomework] =
+    await Promise.all([
+      getLesson(supabase, id),
+      listActiveStudents(supabase),
+      listSubjects(supabase),
+      listRatesForTutor(supabase),
+      listLessonsInRange(supabase, {
+        start: pickerStart.toISOString(),
+        end: pickerEnd.toISOString(),
+      }),
+      listHomeworkForLesson(supabase, id),
+    ]);
+  if (!lesson) notFound();
+
   const pickerLessons = pickerLessonRows.map((row) => ({
     id: row.id,
     startTime: row.start_time,
@@ -85,36 +90,37 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
+      <LessonStatusActions lessonId={lesson.id} initialStatus={lesson.status as LessonStatus} />
+
       <Card>
-        <h2 className="text-sm font-semibold text-ink">Edit details</h2>
-        <div className="mt-4">
-          <LessonForm
-            action={updateLessonAction}
-            lessonId={lesson.id}
-            students={students}
-            subjects={subjects}
-            ratesByStudent={buildRatesByStudent(rates)}
-            pickerLessons={pickerLessons}
-            defaultValues={{
-              studentId: lesson.student_id,
-              subjectId: lesson.subject_id ?? undefined,
-              dateParam: toDateParam(new Date(lesson.start_time)),
-              minutes: minutesSinceMidnight(new Date(lesson.start_time)),
-              durationMinutes: Math.round(
-                (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) /
-                  60000,
-              ),
-              notes: lesson.notes ?? "",
-              price: lesson.price !== null ? String(lesson.price) : undefined,
-              currency: lesson.currency ?? undefined,
-            }}
-            submitLabel="Save changes"
-            pendingLabel="Saving…"
-          />
-        </div>
+        <LessonDetailsCard
+          action={updateLessonAction}
+          lessonId={lesson.id}
+          students={students}
+          subjects={subjects}
+          ratesByStudent={buildRatesByStudent(rates)}
+          pickerLessons={pickerLessons}
+          studentName={lesson.student?.name ?? "Unknown student"}
+          subjectName={subjects.find((subject) => subject.id === lesson.subject_id)?.name ?? null}
+          defaultValues={{
+            studentId: lesson.student_id,
+            subjectId: lesson.subject_id ?? undefined,
+            dateParam: toDateParam(new Date(lesson.start_time)),
+            minutes: minutesSinceMidnight(new Date(lesson.start_time)),
+            durationMinutes: Math.round(
+              (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) /
+                60000,
+            ),
+            notes: lesson.notes ?? "",
+            price: lesson.price !== null ? String(lesson.price) : undefined,
+            currency: lesson.currency ?? undefined,
+          }}
+        />
       </Card>
 
-      <LessonStatusActions lessonId={lesson.id} initialStatus={lesson.status as LessonStatus} />
+      <Card>
+        <LessonHomeworkCard lessonId={lesson.id} studentId={lesson.student_id} homework={lessonHomework} />
+      </Card>
 
       <Card className="space-y-4">
         <div>

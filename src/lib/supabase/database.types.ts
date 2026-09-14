@@ -23,8 +23,10 @@ export type Database = {
           feedback_text: string | null
           id: string
           lesson_id: string | null
+          links: Json
           status: string
           student_id: string
+          subject_id: string | null
           submission_text: string | null
           submitted_at: string | null
           title: string
@@ -39,8 +41,10 @@ export type Database = {
           feedback_text?: string | null
           id?: string
           lesson_id?: string | null
+          links?: Json
           status?: string
           student_id: string
+          subject_id?: string | null
           submission_text?: string | null
           submitted_at?: string | null
           title: string
@@ -55,8 +59,10 @@ export type Database = {
           feedback_text?: string | null
           id?: string
           lesson_id?: string | null
+          links?: Json
           status?: string
           student_id?: string
+          subject_id?: string | null
           submission_text?: string | null
           submitted_at?: string | null
           title?: string
@@ -79,7 +85,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "homework_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subject"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "homework_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      homework_attachment: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          file_name: string
+          homework_id: string
+          id: string
+          size_bytes: number | null
+          storage_path: string
+          tutor_id: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          file_name: string
+          homework_id: string
+          id?: string
+          size_bytes?: number | null
+          storage_path: string
+          tutor_id: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          file_name?: string
+          homework_id?: string
+          id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_attachment_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homework"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_attachment_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profile"

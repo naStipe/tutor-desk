@@ -4,14 +4,16 @@ import { Avatar } from "../../../../components/Avatar";
 import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
 import { updateHomeworkAction } from "../../../../features/homework/actions";
+import { AttachmentsCard } from "../../../../features/homework/components/AttachmentsCard";
 import { FeedbackForm } from "../../../../features/homework/components/FeedbackForm";
 import { HomeworkForm } from "../../../../features/homework/components/HomeworkForm";
 import { HomeworkStatusBadge } from "../../../../features/homework/components/HomeworkStatusBadge";
 import { SubmissionForm } from "../../../../features/homework/components/SubmissionForm";
-import { getHomework } from "../../../../features/homework/data";
+import { getHomework, getSignedAttachmentUrl, listAttachments } from "../../../../features/homework/data";
 import { formatTimeRange } from "../../../../features/lessons/date-utils";
 import { listLessonsForSelect } from "../../../../features/lessons/data";
 import { listActiveStudents } from "../../../../features/students/data";
+import { listSubjects } from "../../../../features/subjects/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +32,24 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const [homework, activeStudents, lessons] = await Promise.all([
+  const [homework, activeStudents, lessons, subjects] = await Promise.all([
     getHomework(supabase, id),
     listActiveStudents(supabase),
     listLessonsForSelect(supabase),
+    listSubjects(supabase),
   ]);
   if (!homework) notFound();
+
+  const attachmentRows = await listAttachments(supabase, homework.id);
+  const attachments = await Promise.all(
+    attachmentRows.map(async (attachment) => ({
+      id: attachment.id,
+      file_name: attachment.file_name,
+      size_bytes: attachment.size_bytes,
+      content_type: attachment.content_type,
+      url: await getSignedAttachmentUrl(supabase, attachment.storage_path).catch(() => null),
+    })),
+  );
 
   const students = activeStudents.some((student) => student.id === homework.student_id)
     ? activeStudents
@@ -45,6 +59,9 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
     id: lesson.id,
     label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${formatTimeRange(lesson.start_time, lesson.end_time)}`,
   }));
+
+  const links = (homework.links as { label: string | null; url: string }[] | null) ?? [];
+  const linksText = links.map((link) => (link.label ? `${link.label} | ${link.url}` : link.url)).join("\n");
 
   const dueLabel = formatDueDate(homework.due_date);
 
@@ -66,6 +83,11 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
           {homework.student?.name ?? "Unknown student"}
         </span>
         <HomeworkStatusBadge status={homework.status} />
+        {homework.subject && (
+          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-ink-muted">
+            {homework.subject.name}
+          </span>
+        )}
         {homework.lesson && (
           <Link
             href={`/dashboard/lessons/${homework.lesson.id}`}
@@ -84,16 +106,26 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
             homeworkId={homework.id}
             students={students}
             lessons={lessonOptions}
+            subjects={subjects}
             defaultValues={{
               studentId: homework.student_id,
               lessonId: homework.lesson_id ?? "",
+              subjectId: homework.subject_id ?? "",
               title: homework.title,
               description: homework.description ?? "",
               dueDate: homework.due_date ?? "",
+              links: linksText,
             }}
             submitLabel="Save changes"
             pendingLabel="Saving…"
           />
+        </div>
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Files</h2>
+        <div className="mt-4">
+          <AttachmentsCard homeworkId={homework.id} attachments={attachments} />
         </div>
       </Card>
 

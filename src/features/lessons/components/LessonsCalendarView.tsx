@@ -44,8 +44,8 @@ export function LessonsCalendarView({
   highlightLessonId,
   monthCountByDate,
   monthAnchorValue,
-  homeworkCountByDate,
-  homeworkItems,
+  homeworkDueCountByDate,
+  homeworkReviewCountByDate,
 }: {
   title: string;
   description: string;
@@ -66,8 +66,8 @@ export function LessonsCalendarView({
   highlightLessonId: string | null;
   monthCountByDate: Record<string, number>;
   monthAnchorValue: string;
-  homeworkCountByDate: Record<string, number>;
-  homeworkItems: { id: string; title: string; studentName: string; dueDate: string; status: string }[];
+  homeworkDueCountByDate: Record<string, number>;
+  homeworkReviewCountByDate: Record<string, number>;
 }) {
   const router = useRouter();
   const [createPrefill, setCreatePrefill] = useState<Prefill | null>(
@@ -154,7 +154,8 @@ export function LessonsCalendarView({
               router.push(`/dashboard/schedule?view=day&date=${dateParam}`)
             }
             countByDate={monthCountByDate}
-            homeworkCountByDate={homeworkCountByDate}
+            homeworkCountByDate={homeworkDueCountByDate}
+            reviewCountByDate={homeworkReviewCountByDate}
           />
         </Card>
       ) : (
@@ -172,7 +173,8 @@ export function LessonsCalendarView({
             lessons={lessons}
             students={students}
             highlightLessonId={highlightLessonId}
-            homeworkItems={homeworkItems}
+            homeworkDueCountByDate={homeworkDueCountByDate}
+            homeworkReviewCountByDate={homeworkReviewCountByDate}
             onSlotClick={(dayIndex, startMinutes, endMinutes) => {
               const day = new Date(dayStartValues[dayIndex]);
               setCreatePrefill({

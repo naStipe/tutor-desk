@@ -15,7 +15,10 @@ import {
 } from "../../../../features/lessons/date-utils";
 import { listLessonsInRange } from "../../../../features/lessons/data";
 import { StudentScheduleView } from "../../../../features/lessons/components/StudentScheduleView";
-import { listHomeworkDueInRange } from "../../../../features/homework/data";
+import {
+  listHomeworkAwaitingReviewInRange,
+  listHomeworkDueInRange,
+} from "../../../../features/homework/data";
 import { resolveViewedStudent } from "../../../../features/student-view/resolve";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
 import { getCurrentUser } from "../../../../lib/supabase/current-user";
@@ -66,7 +69,7 @@ export default async function StudentViewSchedulePage({
     );
   }
 
-  const [lessons, homeworkDue] = await Promise.all([
+  const [lessons, homeworkDue, homeworkAwaitingReview] = await Promise.all([
     cachedForTutor(
       "student-view-lessons-range",
       [user.id, selected.id, rangeStart.toISOString(), rangeEnd.toISOString()],
@@ -86,6 +89,18 @@ export default async function StudentViewSchedulePage({
       30,
       () =>
         listHomeworkDueInRange(
+          client,
+          { start: rangeStart.toISOString(), end: rangeEnd.toISOString() },
+          { studentId: selected.id },
+        ),
+    ),
+    cachedForTutor(
+      "student-view-homework-awaiting-review-range",
+      [user.id, selected.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+      [tutorTag("homework", user.id)],
+      30,
+      () =>
+        listHomeworkAwaitingReviewInRange(
           client,
           { start: rangeStart.toISOString(), end: rangeEnd.toISOString() },
           { studentId: selected.id },
@@ -130,10 +145,17 @@ export default async function StudentViewSchedulePage({
         ? formatMonthHeading(anchor)
         : formatWeekRange(rangeStart);
 
-  const homeworkCountByDate: Record<string, number> = {};
+  const homeworkDueCountByDate: Record<string, number> = {};
   for (const item of homeworkDue) {
     if (!item.due_date) continue;
-    homeworkCountByDate[item.due_date] = (homeworkCountByDate[item.due_date] ?? 0) + 1;
+    homeworkDueCountByDate[item.due_date] = (homeworkDueCountByDate[item.due_date] ?? 0) + 1;
+  }
+
+  const homeworkReviewCountByDate: Record<string, number> = {};
+  for (const item of homeworkAwaitingReview) {
+    if (!item.submitted_at) continue;
+    const key = toDateParam(new Date(item.submitted_at));
+    homeworkReviewCountByDate[key] = (homeworkReviewCountByDate[key] ?? 0) + 1;
   }
 
   return (
@@ -153,14 +175,8 @@ export default async function StudentViewSchedulePage({
       lessons={calendarLessons}
       monthCountByDate={countByDate}
       monthAnchorValue={toLocalMidnightValue(anchor)}
-      homeworkCountByDate={homeworkCountByDate}
-      homeworkItems={homeworkDue.map((item) => ({
-        id: item.id,
-        title: item.title,
-        studentName: item.student?.name ?? "Unknown student",
-        dueDate: item.due_date as string,
-        status: item.status,
-      }))}
+      homeworkDueCountByDate={homeworkDueCountByDate}
+      homeworkReviewCountByDate={homeworkReviewCountByDate}
     />
   );
 }

@@ -16,7 +16,10 @@ import {
 import { listLessonsInRange } from "../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../features/lessons/rates-map";
 import { ensureUpcomingLessonsGenerated } from "../../../features/lessons/recurrence";
-import { listHomeworkDueInRange } from "../../../features/homework/data";
+import {
+  listHomeworkAwaitingReviewInRange,
+  listHomeworkDueInRange,
+} from "../../../features/homework/data";
 import { listRatesForTutor } from "../../../features/rates/data";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
@@ -91,46 +94,58 @@ export default async function SchedulePage({
       end: pickerEnd.toISOString(),
     });
 
-  const [lessons, students, subjects, rates, pickerLessons, homeworkDue] = await Promise.all([
-    generatedNewLessons
-      ? fetchLessonsForRange()
-      : cachedForTutor(
-          "lessons-range",
-          [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
-          [tutorTag("lessons", user.id)],
-          30,
-          fetchLessonsForRange,
-        ),
-    cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 120, () =>
-      listActiveStudents(client),
-    ),
-    cachedForTutor("subjects", [user.id], [tutorTag("subjects", user.id)], 120, () =>
-      listSubjects(client),
-    ),
-    cachedForTutor("rates", [user.id], [tutorTag("rates", user.id)], 120, () =>
-      listRatesForTutor(client),
-    ),
-    generatedNewLessons
-      ? fetchPickerLessons()
-      : cachedForTutor(
-          "lessons-picker",
-          [user.id, pickerStart.toISOString(), pickerEnd.toISOString()],
-          [tutorTag("lessons", user.id)],
-          30,
-          fetchPickerLessons,
-        ),
-    cachedForTutor(
-      "homework-due-range",
-      [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
-      [tutorTag("homework", user.id)],
-      30,
-      () =>
-        listHomeworkDueInRange(client, {
-          start: rangeStart.toISOString(),
-          end: rangeEnd.toISOString(),
-        }),
-    ),
-  ]);
+  const [lessons, students, subjects, rates, pickerLessons, homeworkDue, homeworkAwaitingReview] =
+    await Promise.all([
+      generatedNewLessons
+        ? fetchLessonsForRange()
+        : cachedForTutor(
+            "lessons-range",
+            [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+            [tutorTag("lessons", user.id)],
+            30,
+            fetchLessonsForRange,
+          ),
+      cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 120, () =>
+        listActiveStudents(client),
+      ),
+      cachedForTutor("subjects", [user.id], [tutorTag("subjects", user.id)], 120, () =>
+        listSubjects(client),
+      ),
+      cachedForTutor("rates", [user.id], [tutorTag("rates", user.id)], 120, () =>
+        listRatesForTutor(client),
+      ),
+      generatedNewLessons
+        ? fetchPickerLessons()
+        : cachedForTutor(
+            "lessons-picker",
+            [user.id, pickerStart.toISOString(), pickerEnd.toISOString()],
+            [tutorTag("lessons", user.id)],
+            30,
+            fetchPickerLessons,
+          ),
+      cachedForTutor(
+        "homework-due-range",
+        [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+        [tutorTag("homework", user.id)],
+        30,
+        () =>
+          listHomeworkDueInRange(client, {
+            start: rangeStart.toISOString(),
+            end: rangeEnd.toISOString(),
+          }),
+      ),
+      cachedForTutor(
+        "homework-awaiting-review-range",
+        [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+        [tutorTag("homework", user.id)],
+        30,
+        () =>
+          listHomeworkAwaitingReviewInRange(client, {
+            start: rangeStart.toISOString(),
+            end: rangeEnd.toISOString(),
+          }),
+      ),
+    ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
   const calendarLessons = lessons.map((lesson) => ({
@@ -169,10 +184,17 @@ export default async function SchedulePage({
         ? formatMonthHeading(anchor)
         : formatWeekRange(rangeStart);
 
-  const homeworkCountByDate: Record<string, number> = {};
+  const homeworkDueCountByDate: Record<string, number> = {};
   for (const item of homeworkDue) {
     if (!item.due_date) continue;
-    homeworkCountByDate[item.due_date] = (homeworkCountByDate[item.due_date] ?? 0) + 1;
+    homeworkDueCountByDate[item.due_date] = (homeworkDueCountByDate[item.due_date] ?? 0) + 1;
+  }
+
+  const homeworkReviewCountByDate: Record<string, number> = {};
+  for (const item of homeworkAwaitingReview) {
+    if (!item.submitted_at) continue;
+    const key = toDateParam(new Date(item.submitted_at));
+    homeworkReviewCountByDate[key] = (homeworkReviewCountByDate[key] ?? 0) + 1;
   }
 
   return (
@@ -201,14 +223,8 @@ export default async function SchedulePage({
       highlightLessonId={highlightParam ?? null}
       monthCountByDate={countByDate}
       monthAnchorValue={toLocalMidnightValue(anchor)}
-      homeworkCountByDate={homeworkCountByDate}
-      homeworkItems={homeworkDue.map((item) => ({
-        id: item.id,
-        title: item.title,
-        studentName: item.student?.name ?? "Unknown student",
-        dueDate: item.due_date as string,
-        status: item.status,
-      }))}
+      homeworkDueCountByDate={homeworkDueCountByDate}
+      homeworkReviewCountByDate={homeworkReviewCountByDate}
     />
   );
 }

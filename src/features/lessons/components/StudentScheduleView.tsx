@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { PageHeader } from "../../../components/PageHeader";
 import { toDateParam } from "../date-utils";
-import type { CalendarHomeworkItem, CalendarLesson } from "./LessonCalendar";
+import type { CalendarLesson } from "./LessonCalendar";
 import { MonthCalendar } from "./MonthCalendar";
 import { StudentLessonCalendar } from "./StudentLessonCalendar";
 
@@ -33,8 +33,8 @@ export function StudentScheduleView({
   lessons,
   monthCountByDate,
   monthAnchorValue,
-  homeworkCountByDate,
-  homeworkItems,
+  homeworkDueCountByDate,
+  homeworkReviewCountByDate,
 }: {
   studentName: string;
   description: string;
@@ -53,8 +53,8 @@ export function StudentScheduleView({
   lessons: CalendarLesson[];
   monthCountByDate: Record<string, number>;
   monthAnchorValue: string;
-  homeworkCountByDate: Record<string, number>;
-  homeworkItems: CalendarHomeworkItem[];
+  homeworkDueCountByDate: Record<string, number>;
+  homeworkReviewCountByDate: Record<string, number>;
 }) {
   const router = useRouter();
 
@@ -109,14 +109,17 @@ export function StudentScheduleView({
             selectedDate={null}
             onSelectDate={(dateParam) => router.push(`${dayBaseHref}&date=${dateParam}`)}
             countByDate={monthCountByDate}
-            homeworkCountByDate={homeworkCountByDate}
+            homeworkCountByDate={homeworkDueCountByDate}
+            reviewCountByDate={homeworkReviewCountByDate}
+            reviewLabel="awaiting feedback"
           />
         </Card>
       ) : (
         <StudentLessonCalendar
           dayStartValues={dayStartValues}
           lessons={lessons}
-          homeworkItems={homeworkItems}
+          homeworkDueCountByDate={homeworkDueCountByDate}
+          homeworkAwaitingFeedbackCountByDate={homeworkReviewCountByDate}
         />
       )}
     </div>

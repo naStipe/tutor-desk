@@ -52,6 +52,28 @@ export async function listHomeworkDueInRange(
   return data as unknown as HomeworkWithStudent[];
 }
 
+/** Submitted work, not yet reviewed, grouped by the day it was submitted. */
+export async function listHomeworkAwaitingReviewInRange(
+  supabase: SupabaseClient<Database>,
+  range: { start: string; end: string },
+  filters?: { studentId?: string },
+) {
+  let query = supabase
+    .from("homework")
+    .select(HOMEWORK_COLUMNS)
+    .eq("status", "submitted")
+    .gte("submitted_at", range.start)
+    .lt("submitted_at", range.end)
+    .order("submitted_at", { ascending: true });
+
+  if (filters?.studentId) query = query.eq("student_id", filters.studentId);
+
+  const { data, error } = await query;
+
+  if (error) throw new Error(`Unable to load homework awaiting review: ${error.message}`);
+  return data as unknown as HomeworkWithStudent[];
+}
+
 export async function listHomeworkForLesson(supabase: SupabaseClient<Database>, lessonId: string) {
   const { data, error } = await supabase
     .from("homework")

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   type MouseEvent as ReactMouseEvent,
@@ -40,14 +39,6 @@ export type CalendarLesson = {
   status: LessonStatus;
 };
 
-export type CalendarHomeworkItem = {
-  id: string;
-  title: string;
-  studentName: string;
-  dueDate: string;
-  status: string;
-};
-
 const STATUS_BLOCK_CLASSES: Record<LessonStatus, string> = {
   scheduled: "bg-cyan hover:bg-cyan-strong text-on-cyan",
   completed: "bg-brand hover:bg-brand-strong text-on-brand",
@@ -81,14 +72,16 @@ export function LessonCalendar({
   lessons: initialLessons,
   students,
   highlightLessonId,
-  homeworkItems,
+  homeworkDueCountByDate,
+  homeworkReviewCountByDate,
   onSlotClick,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
   students: { id: string; name: string }[];
   highlightLessonId?: string | null;
-  homeworkItems?: CalendarHomeworkItem[];
+  homeworkDueCountByDate?: Record<string, number>;
+  homeworkReviewCountByDate?: Record<string, number>;
   onSlotClick: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 }) {
   const router = useRouter();
@@ -260,6 +253,9 @@ export function LessonCalendar({
         {days.map((day) => {
           const isToday = isSameDay(day, now);
           const isPast = startOfDay(day) < startOfDay(now);
+          const dateParam = toDateParam(day);
+          const dueCount = homeworkDueCountByDate?.[dateParam] ?? 0;
+          const reviewCount = homeworkReviewCountByDate?.[dateParam] ?? 0;
           return (
             <div
               key={day.toISOString()}
@@ -280,36 +276,30 @@ export function LessonCalendar({
               >
                 {day.getDate()}
               </p>
+              {(dueCount > 0 || reviewCount > 0) && (
+                <p className="mt-1 flex items-center justify-center gap-1">
+                  {dueCount > 0 && (
+                    <span
+                      title={`${dueCount} homework due`}
+                      className="rounded-full bg-warning/20 px-1.5 text-[10px] font-medium leading-tight text-warning"
+                    >
+                      {dueCount}
+                    </span>
+                  )}
+                  {reviewCount > 0 && (
+                    <span
+                      title={`${reviewCount} ready for review`}
+                      className="rounded-full bg-cyan/20 px-1.5 text-[10px] font-medium leading-tight text-cyan"
+                    >
+                      {reviewCount}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           );
         })}
       </div>
-
-      {homeworkItems && homeworkItems.length > 0 && (
-        <div className="flex border-b border-border bg-warning/5" style={{ paddingLeft: GUTTER_PX }}>
-          {days.map((day) => {
-            const dateParam = toDateParam(day);
-            const dayHomework = homeworkItems.filter((item) => item.dueDate === dateParam);
-            return (
-              <div
-                key={day.toISOString()}
-                className="flex-1 space-y-1 border-l border-border px-1.5 py-1.5 first:border-l-0"
-              >
-                {dayHomework.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/dashboard/homework/${item.id}`}
-                    title={`Review due — ${item.title} (${item.studentName})`}
-                    className="block truncate rounded-md bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning transition-colors hover:bg-warning/25"
-                  >
-                    Review · {item.title}
-                  </Link>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       <div
         ref={scrollContainerRef}

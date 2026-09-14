@@ -20,6 +20,9 @@ type MonthCalendarProps = {
   onSelectDate: (dateParam: string) => void;
   countByDate: Record<string, number>;
   homeworkCountByDate?: Record<string, number>;
+  homeworkDueLabel?: string;
+  reviewCountByDate?: Record<string, number>;
+  reviewLabel?: string;
   minDate?: Date;
   maxDate?: Date;
 };
@@ -31,6 +34,9 @@ export function MonthCalendar({
   onSelectDate,
   countByDate,
   homeworkCountByDate,
+  homeworkDueLabel = "homework due",
+  reviewCountByDate,
+  reviewLabel = "ready for review",
   minDate,
   maxDate,
 }: MonthCalendarProps) {
@@ -84,6 +90,7 @@ export function MonthCalendar({
             (maxDate && day > maxDate && !isSameDay(day, maxDate));
           const count = countByDate[dateParam] ?? 0;
           const homeworkCount = homeworkCountByDate?.[dateParam] ?? 0;
+          const reviewCount = reviewCountByDate?.[dateParam] ?? 0;
 
           return (
             <button
@@ -102,7 +109,7 @@ export function MonthCalendar({
               } ${!inMonth ? "text-ink-subtle/40" : ""} ${isDisabled ? "cursor-not-allowed opacity-30 hover:scale-100" : ""}`}
             >
               <span>{day.getDate()}</span>
-              {(count > 0 || homeworkCount > 0) && (
+              {(count > 0 || homeworkCount > 0 || reviewCount > 0) && (
                 <span className="flex items-center gap-1">
                   {count > 0 && (
                     <span
@@ -118,9 +125,19 @@ export function MonthCalendar({
                       className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
                         isSelected ? "bg-on-brand/20 text-on-brand" : "bg-warning/20 text-warning"
                       }`}
-                      title={`${homeworkCount} homework due`}
+                      title={`${homeworkCount} ${homeworkDueLabel}`}
                     >
                       {homeworkCount}
+                    </span>
+                  )}
+                  {reviewCount > 0 && (
+                    <span
+                      className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
+                        isSelected ? "bg-on-brand/20 text-on-brand" : "bg-cyan/20 text-cyan"
+                      }`}
+                      title={`${reviewCount} ${reviewLabel}`}
+                    >
+                      {reviewCount}
                     </span>
                   )}
                 </span>

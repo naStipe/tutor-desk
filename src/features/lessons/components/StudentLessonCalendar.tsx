@@ -10,7 +10,7 @@ import {
   startOfDay,
   toDateParam,
 } from "../date-utils";
-import type { CalendarHomeworkItem, CalendarLesson } from "./LessonCalendar";
+import type { CalendarLesson } from "./LessonCalendar";
 
 const START_HOUR = 7;
 const END_HOUR = 21;
@@ -36,11 +36,13 @@ const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR
 export function StudentLessonCalendar({
   dayStartValues,
   lessons,
-  homeworkItems,
+  homeworkDueCountByDate,
+  homeworkAwaitingFeedbackCountByDate,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
-  homeworkItems?: CalendarHomeworkItem[];
+  homeworkDueCountByDate?: Record<string, number>;
+  homeworkAwaitingFeedbackCountByDate?: Record<string, number>;
 }) {
   const days = useMemo(() => dayStartValues.map((value) => new Date(value)), [dayStartValues]);
   const now = useMemo(() => new Date(), []);
@@ -59,6 +61,9 @@ export function StudentLessonCalendar({
         {days.map((day) => {
           const isToday = isSameDay(day, now);
           const isPast = startOfDay(day) < startOfDay(now);
+          const dateParam = toDateParam(day);
+          const dueCount = homeworkDueCountByDate?.[dateParam] ?? 0;
+          const feedbackCount = homeworkAwaitingFeedbackCountByDate?.[dateParam] ?? 0;
           return (
             <div
               key={day.toISOString()}
@@ -79,35 +84,30 @@ export function StudentLessonCalendar({
               >
                 {day.getDate()}
               </p>
+              {(dueCount > 0 || feedbackCount > 0) && (
+                <p className="mt-1 flex items-center justify-center gap-1">
+                  {dueCount > 0 && (
+                    <span
+                      title={`${dueCount} homework due`}
+                      className="rounded-full bg-warning/20 px-1.5 text-[10px] font-medium leading-tight text-warning"
+                    >
+                      {dueCount}
+                    </span>
+                  )}
+                  {feedbackCount > 0 && (
+                    <span
+                      title={`${feedbackCount} awaiting feedback`}
+                      className="rounded-full bg-cyan/20 px-1.5 text-[10px] font-medium leading-tight text-cyan"
+                    >
+                      {feedbackCount}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           );
         })}
       </div>
-
-      {homeworkItems && homeworkItems.length > 0 && (
-        <div className="flex border-b border-border bg-warning/5" style={{ paddingLeft: GUTTER_PX }}>
-          {days.map((day) => {
-            const dateParam = toDateParam(day);
-            const dayHomework = homeworkItems.filter((item) => item.dueDate === dateParam);
-            return (
-              <div
-                key={day.toISOString()}
-                className="flex-1 space-y-1 border-l border-border px-1.5 py-1.5 first:border-l-0"
-              >
-                {dayHomework.map((item) => (
-                  <span
-                    key={item.id}
-                    title={`Submit by — ${item.title}`}
-                    className="block truncate rounded-md bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning"
-                  >
-                    Submit · {item.title}
-                  </span>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       <div className="flex overflow-x-auto overflow-y-auto" style={{ maxHeight: GRID_MAX_HEIGHT_PX }}>
         <div className="shrink-0 select-none" style={{ width: GUTTER_PX }}>

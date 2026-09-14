@@ -44,7 +44,6 @@ export function LessonsCalendarView({
   highlightLessonId,
   monthCountByDate,
   monthAnchorValue,
-  showHomework,
   homeworkCountByDate,
   homeworkItems,
 }: {
@@ -67,7 +66,6 @@ export function LessonsCalendarView({
   highlightLessonId: string | null;
   monthCountByDate: Record<string, number>;
   monthAnchorValue: string;
-  showHomework: boolean;
   homeworkCountByDate: Record<string, number>;
   homeworkItems: { id: string; title: string; studentName: string; dueDate: string; status: string }[];
 }) {
@@ -81,16 +79,6 @@ export function LessonsCalendarView({
   function closeModal() {
     setCreatePrefill(null);
     router.refresh();
-  }
-
-  function toggleHomework(checked: boolean) {
-    const url = new URL(window.location.href);
-    if (checked) {
-      url.searchParams.set("homework", "1");
-    } else {
-      url.searchParams.delete("homework");
-    }
-    router.push(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
   return (
@@ -154,33 +142,19 @@ export function LessonsCalendarView({
         </div>
       </div>
 
-      <label className="flex w-fit items-center gap-2 text-sm text-ink-muted">
-        <input
-          type="checkbox"
-          checked={showHomework}
-          onChange={(event) => toggleHomework(event.target.checked)}
-          className="h-4 w-4 rounded border-border text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-        />
-        Show homework due dates
-      </label>
-
       {view === "month" ? (
         <Card>
           <MonthCalendar
             month={new Date(monthAnchorValue)}
             onMonthChange={(month) =>
-              router.push(
-                `/dashboard/schedule?view=month&date=${toDateParam(month)}${showHomework ? "&homework=1" : ""}`,
-              )
+              router.push(`/dashboard/schedule?view=month&date=${toDateParam(month)}`)
             }
             selectedDate={null}
             onSelectDate={(dateParam) =>
-              router.push(
-                `/dashboard/schedule?view=day&date=${dateParam}${showHomework ? "&homework=1" : ""}`,
-              )
+              router.push(`/dashboard/schedule?view=day&date=${dateParam}`)
             }
             countByDate={monthCountByDate}
-            homeworkCountByDate={showHomework ? homeworkCountByDate : undefined}
+            homeworkCountByDate={homeworkCountByDate}
           />
         </Card>
       ) : (
@@ -198,7 +172,7 @@ export function LessonsCalendarView({
             lessons={lessons}
             students={students}
             highlightLessonId={highlightLessonId}
-            homeworkItems={showHomework ? homeworkItems : []}
+            homeworkItems={homeworkItems}
             onSlotClick={(dayIndex, startMinutes, endMinutes) => {
               const day = new Date(dayStartValues[dayIndex]);
               setCreatePrefill({

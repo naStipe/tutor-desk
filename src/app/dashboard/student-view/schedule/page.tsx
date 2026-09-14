@@ -25,19 +25,12 @@ export const dynamic = "force-dynamic";
 
 type View = "day" | "week" | "month";
 
-function buildHref(
-  studentId: string,
-  view: View,
-  date: Date,
-  showHomework?: boolean,
-) {
-  const homeworkParam = showHomework ? "&homework=1" : "";
-  return `/dashboard/student-view/schedule?view=${view}&date=${toDateParam(date)}&student=${studentId}${homeworkParam}`;
+function buildHref(studentId: string, view: View, date: Date) {
+  return `/dashboard/student-view/schedule?view=${view}&date=${toDateParam(date)}&student=${studentId}`;
 }
 
-function buildBaseHref(studentId: string, view: View, showHomework?: boolean) {
-  const homeworkParam = showHomework ? "&homework=1" : "";
-  return `/dashboard/student-view/schedule?view=${view}&student=${studentId}${homeworkParam}`;
+function buildBaseHref(studentId: string, view: View) {
+  return `/dashboard/student-view/schedule?view=${view}&student=${studentId}`;
 }
 
 export default async function StudentViewSchedulePage({
@@ -47,16 +40,9 @@ export default async function StudentViewSchedulePage({
     student?: string;
     view?: string;
     date?: string;
-    homework?: string;
   }>;
 }) {
-  const {
-    student: studentParam,
-    view: viewParam,
-    date: dateParam,
-    homework: homeworkParam,
-  } = await searchParams;
-  const showHomework = homeworkParam === "1";
+  const { student: studentParam, view: viewParam, date: dateParam } = await searchParams;
   const view: View = viewParam === "day" ? "day" : viewParam === "month" ? "month" : "week";
   const anchor = parseDateParam(dateParam);
 
@@ -130,12 +116,12 @@ export default async function StudentViewSchedulePage({
   const monthAnchor = startOfMonth(anchor);
   const prevHref =
     view === "month"
-      ? buildHref(selected.id, "month", addMonths(monthAnchor, -1), showHomework)
-      : buildHref(selected.id, view, addDays(rangeStart, -step), showHomework);
+      ? buildHref(selected.id, "month", addMonths(monthAnchor, -1))
+      : buildHref(selected.id, view, addDays(rangeStart, -step));
   const nextHref =
     view === "month"
-      ? buildHref(selected.id, "month", addMonths(monthAnchor, 1), showHomework)
-      : buildHref(selected.id, view, addDays(rangeStart, step), showHomework);
+      ? buildHref(selected.id, "month", addMonths(monthAnchor, 1))
+      : buildHref(selected.id, view, addDays(rangeStart, step));
 
   const description =
     view === "day"
@@ -156,16 +142,15 @@ export default async function StudentViewSchedulePage({
       description={description}
       prevHref={prevHref}
       nextHref={nextHref}
-      todayHref={buildHref(selected.id, view === "month" ? "month" : view, new Date(), showHomework)}
-      dayHref={buildHref(selected.id, "day", anchor, showHomework)}
-      weekHref={buildHref(selected.id, "week", anchor, showHomework)}
-      monthHref={buildHref(selected.id, "month", anchor, showHomework)}
-      monthBaseHref={buildBaseHref(selected.id, "month", showHomework)}
-      dayBaseHref={buildBaseHref(selected.id, "day", showHomework)}
+      todayHref={buildHref(selected.id, view === "month" ? "month" : view, new Date())}
+      dayHref={buildHref(selected.id, "day", anchor)}
+      weekHref={buildHref(selected.id, "week", anchor)}
+      monthHref={buildHref(selected.id, "month", anchor)}
+      monthBaseHref={buildBaseHref(selected.id, "month")}
+      dayBaseHref={buildBaseHref(selected.id, "day")}
       view={view}
       dayStartValues={days.map(toLocalMidnightValue)}
       lessons={calendarLessons}
-      showHomework={showHomework}
       monthCountByDate={countByDate}
       monthAnchorValue={toLocalMidnightValue(anchor)}
       homeworkCountByDate={homeworkCountByDate}

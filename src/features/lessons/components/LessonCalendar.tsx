@@ -299,10 +299,10 @@ export function LessonCalendar({
                   <Link
                     key={item.id}
                     href={`/dashboard/homework/${item.id}`}
-                    title={`${item.title} — ${item.studentName}`}
+                    title={`Review due — ${item.title} (${item.studentName})`}
                     className="block truncate rounded-md bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning transition-colors hover:bg-warning/25"
                   >
-                    {item.title}
+                    Review · {item.title}
                   </Link>
                 ))}
               </div>

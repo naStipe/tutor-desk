@@ -97,10 +97,10 @@ export function StudentLessonCalendar({
                 {dayHomework.map((item) => (
                   <span
                     key={item.id}
-                    title={item.title}
+                    title={`Submit by — ${item.title}`}
                     className="block truncate rounded-md bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning"
                   >
-                    {item.title}
+                    Submit · {item.title}
                   </span>
                 ))}
               </div>

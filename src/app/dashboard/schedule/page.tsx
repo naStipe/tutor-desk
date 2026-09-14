@@ -28,10 +28,9 @@ export const dynamic = "force-dynamic";
 
 type View = "day" | "week" | "month";
 
-function buildHref(view: View, date: Date, highlight?: string, showHomework?: boolean) {
+function buildHref(view: View, date: Date, highlight?: string) {
   const highlightParam = highlight ? `&highlight=${highlight}` : "";
-  const homeworkParam = showHomework ? "&homework=1" : "";
-  return `/dashboard/schedule?view=${view}&date=${toDateParam(date)}${highlightParam}${homeworkParam}`;
+  return `/dashboard/schedule?view=${view}&date=${toDateParam(date)}${highlightParam}`;
 }
 
 const PICKER_WINDOW_PAST_DAYS = 7;
@@ -45,7 +44,6 @@ export default async function SchedulePage({
     date?: string;
     create?: string;
     highlight?: string;
-    homework?: string;
   }>;
 }) {
   const {
@@ -53,9 +51,7 @@ export default async function SchedulePage({
     date: dateParam,
     create: createParam,
     highlight: highlightParam,
-    homework: homeworkParam,
   } = await searchParams;
-  const showHomework = homeworkParam === "1";
   const view: View = viewParam === "day" ? "day" : viewParam === "month" ? "month" : "week";
   const anchor = parseDateParam(dateParam);
 
@@ -159,12 +155,12 @@ export default async function SchedulePage({
   const monthAnchor = startOfMonth(anchor);
   const prevHref =
     view === "month"
-      ? buildHref("month", addMonths(monthAnchor, -1), undefined, showHomework)
-      : buildHref(view, addDays(rangeStart, -step), undefined, showHomework);
+      ? buildHref("month", addMonths(monthAnchor, -1))
+      : buildHref(view, addDays(rangeStart, -step));
   const nextHref =
     view === "month"
-      ? buildHref("month", addMonths(monthAnchor, 1), undefined, showHomework)
-      : buildHref(view, addDays(rangeStart, step), undefined, showHomework);
+      ? buildHref("month", addMonths(monthAnchor, 1))
+      : buildHref(view, addDays(rangeStart, step));
 
   const description =
     view === "day"
@@ -185,10 +181,10 @@ export default async function SchedulePage({
       description={description}
       prevHref={prevHref}
       nextHref={nextHref}
-      todayHref={buildHref(view === "month" ? "month" : view, new Date(), undefined, showHomework)}
-      dayHref={buildHref("day", anchor, undefined, showHomework)}
-      weekHref={buildHref("week", anchor, undefined, showHomework)}
-      monthHref={buildHref("month", anchor, undefined, showHomework)}
+      todayHref={buildHref(view === "month" ? "month" : view, new Date())}
+      dayHref={buildHref("day", anchor)}
+      weekHref={buildHref("week", anchor)}
+      monthHref={buildHref("month", anchor)}
       view={view}
       dayStartValues={days.map(toLocalMidnightValue)}
       lessons={calendarLessons}
@@ -205,7 +201,6 @@ export default async function SchedulePage({
       highlightLessonId={highlightParam ?? null}
       monthCountByDate={countByDate}
       monthAnchorValue={toLocalMidnightValue(anchor)}
-      showHomework={showHomework}
       homeworkCountByDate={homeworkCountByDate}
       homeworkItems={homeworkDue.map((item) => ({
         id: item.id,

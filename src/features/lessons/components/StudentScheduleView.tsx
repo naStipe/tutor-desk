@@ -31,7 +31,6 @@ export function StudentScheduleView({
   view,
   dayStartValues,
   lessons,
-  showHomework,
   monthCountByDate,
   monthAnchorValue,
   homeworkCountByDate,
@@ -52,23 +51,12 @@ export function StudentScheduleView({
   view: View;
   dayStartValues: string[];
   lessons: CalendarLesson[];
-  showHomework: boolean;
   monthCountByDate: Record<string, number>;
   monthAnchorValue: string;
   homeworkCountByDate: Record<string, number>;
   homeworkItems: CalendarHomeworkItem[];
 }) {
   const router = useRouter();
-
-  function toggleHomework(checked: boolean) {
-    const url = new URL(window.location.href);
-    if (checked) {
-      url.searchParams.set("homework", "1");
-    } else {
-      url.searchParams.delete("homework");
-    }
-    router.push(`${url.pathname}?${url.searchParams.toString()}`);
-  }
 
   return (
     <div className="space-y-6">
@@ -111,16 +99,6 @@ export function StudentScheduleView({
         </div>
       </div>
 
-      <label className="flex w-fit items-center gap-2 text-sm text-ink-muted">
-        <input
-          type="checkbox"
-          checked={showHomework}
-          onChange={(event) => toggleHomework(event.target.checked)}
-          className="h-4 w-4 rounded border-border text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-        />
-        Show homework due dates
-      </label>
-
       {view === "month" ? (
         <Card>
           <MonthCalendar
@@ -131,14 +109,14 @@ export function StudentScheduleView({
             selectedDate={null}
             onSelectDate={(dateParam) => router.push(`${dayBaseHref}&date=${dateParam}`)}
             countByDate={monthCountByDate}
-            homeworkCountByDate={showHomework ? homeworkCountByDate : undefined}
+            homeworkCountByDate={homeworkCountByDate}
           />
         </Card>
       ) : (
         <StudentLessonCalendar
           dayStartValues={dayStartValues}
           lessons={lessons}
-          homeworkItems={showHomework ? homeworkItems : []}
+          homeworkItems={homeworkItems}
         />
       )}
     </div>

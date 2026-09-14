@@ -35,13 +35,18 @@ export async function listHomework(
 export async function listHomeworkDueInRange(
   supabase: SupabaseClient<Database>,
   range: { start: string; end: string },
+  filters?: { studentId?: string },
 ) {
-  const { data, error } = await supabase
+  let query = supabase
     .from("homework")
     .select(HOMEWORK_COLUMNS)
     .gte("due_date", range.start)
     .lt("due_date", range.end)
     .order("due_date", { ascending: true });
+
+  if (filters?.studentId) query = query.eq("student_id", filters.studentId);
+
+  const { data, error } = await query;
 
   if (error) throw new Error(`Unable to load homework: ${error.message}`);
   return data as unknown as HomeworkWithStudent[];

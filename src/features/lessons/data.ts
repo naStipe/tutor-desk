@@ -19,13 +19,18 @@ function addMinutes(iso: string, minutes: number) {
 export async function listLessonsInRange(
   supabase: SupabaseClient<Database>,
   range: { start: string; end: string },
+  filters?: { studentId?: string },
 ) {
-  const { data, error } = await supabase
+  let query = supabase
     .from("lesson")
     .select(LESSON_COLUMNS)
     .gte("start_time", range.start)
     .lt("start_time", range.end)
     .order("start_time", { ascending: true });
+
+  if (filters?.studentId) query = query.eq("student_id", filters.studentId);
+
+  const { data, error } = await query;
 
   if (error) throw new Error(`Unable to load lessons: ${error.message}`);
   return data as unknown as LessonWithStudent[];

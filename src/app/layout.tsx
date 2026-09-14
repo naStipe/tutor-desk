@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
@@ -50,7 +51,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, non-user-controlled inline script */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-screen bg-canvas text-ink antialiased">{children}</body>
+      <body className="min-h-screen bg-canvas text-ink antialiased">
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }

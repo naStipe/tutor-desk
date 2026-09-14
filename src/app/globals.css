@@ -292,6 +292,10 @@ body {
   animation: tdFadeInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.td-fade-in-up {
+  animation: tdFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .animate-td-row-in {
   animation: tdRowIn 0.24s ease-out both;
 }
@@ -311,6 +315,7 @@ button {
   .td-pulse-dot,
   .td-ring,
   .td-page-enter,
+  .td-fade-in-up,
   .animate-td-row-in,
   .td-modal-pop {
     animation: none;

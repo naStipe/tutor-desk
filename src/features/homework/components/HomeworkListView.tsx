@@ -8,6 +8,7 @@ import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
 import { BookIcon } from "../../../components/icons";
 import { PageHeader } from "../../../components/PageHeader";
+import { Select } from "../../../components/Select";
 import { HomeworkStatusBadge } from "./HomeworkStatusBadge";
 
 export type ListHomework = {
@@ -22,7 +23,7 @@ export type ListHomework = {
 };
 
 const selectClass =
-  "rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25";
 
 function formatDueDate(value: string | null) {
   if (!value) return "No due date";
@@ -62,30 +63,24 @@ export function HomeworkListView({
 
       {homework.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <select
+          <Select
             value={studentFilter}
-            onChange={(event) => setStudentFilter(event.target.value)}
+            onChange={setStudentFilter}
             className={selectClass}
-          >
-            <option value="all">All students</option>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.name}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: "all", label: "All students" },
+              ...students.map((student) => ({ value: student.id, label: student.name })),
+            ]}
+          />
+          <Select
             value={subjectFilter}
-            onChange={(event) => setSubjectFilter(event.target.value)}
+            onChange={setSubjectFilter}
             className={selectClass}
-          >
-            <option value="all">All subjects</option>
-            {subjects.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "all", label: "All subjects" },
+              ...subjects.map((subject) => ({ value: subject.id, label: subject.name })),
+            ]}
+          />
         </div>
       )}
 

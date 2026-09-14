@@ -75,6 +75,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
               phone: student.phone ?? "",
               telegram: student.telegram ?? "",
               notes: student.notes ?? "",
+              defaultHourlyRate: student.default_hourly_rate?.toString() ?? "",
+              defaultCurrency: student.default_currency ?? "RUB",
             }}
             submitLabel="Save changes"
             pendingLabel="Saving…"
@@ -86,7 +88,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         <div>
           <h2 className="text-sm font-semibold text-ink">Subjects &amp; rates</h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Hourly rates used to auto-fill lesson prices for this student.
+            Per-subject overrides. When a lesson's subject has no override here, its default price
+            above is used instead.
           </p>
         </div>
 

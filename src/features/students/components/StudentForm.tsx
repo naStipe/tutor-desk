@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../../../components/Button";
 import { Field, inputClassName } from "../../../components/Field";
+import { Select } from "../../../components/Select";
+import { CURRENCIES } from "../../rates/schemas";
 import type { StudentActionState } from "../actions";
 
 const initialState: StudentActionState = {};
@@ -20,7 +22,15 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
 type StudentFormProps = {
   action: (state: StudentActionState, formData: FormData) => Promise<StudentActionState>;
   studentId?: string;
-  defaultValues?: { name: string; email: string; phone: string; telegram: string; notes: string };
+  defaultValues?: {
+    name: string;
+    email: string;
+    phone: string;
+    telegram: string;
+    notes: string;
+    defaultHourlyRate: string;
+    defaultCurrency: string;
+  };
   submitLabel: string;
   pendingLabel: string;
 };
@@ -33,6 +43,7 @@ export function StudentForm({
   pendingLabel,
 }: StudentFormProps) {
   const [state, formAction] = useActionState(action, initialState);
+  const [defaultCurrency, setDefaultCurrency] = useState(defaultValues?.defaultCurrency ?? "RUB");
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -89,6 +100,40 @@ export function StudentForm({
             placeholder="@username"
             defaultValue={defaultValues?.telegram}
             className={inputClassName}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 rounded-lg border border-border p-3 sm:grid-cols-2">
+        <Field
+          label="Default price"
+          htmlFor="defaultHourlyRate"
+          hint="Used to prefill new lessons, unless a subject has its own rate"
+          errors={state.fieldErrors?.defaultHourlyRate}
+        >
+          <input
+            id="defaultHourlyRate"
+            name="defaultHourlyRate"
+            type="number"
+            min={0}
+            step="0.01"
+            inputMode="decimal"
+            defaultValue={defaultValues?.defaultHourlyRate}
+            className={inputClassName}
+          />
+        </Field>
+
+        <Field
+          label="Currency"
+          htmlFor="defaultCurrency"
+          errors={state.fieldErrors?.defaultCurrency}
+        >
+          <Select
+            id="defaultCurrency"
+            name="defaultCurrency"
+            value={defaultCurrency}
+            onChange={setDefaultCurrency}
+            options={CURRENCIES.map((code) => ({ value: code, label: code }))}
           />
         </Field>
       </div>

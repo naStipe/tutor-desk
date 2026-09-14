@@ -44,11 +44,17 @@ const linkListSchema = z.preprocess((value) => {
     });
 }, z.array(z.object({ label: z.string().nullable(), url: z.string().url("Enter a valid URL") })).max(20, "Too many links"));
 
+const optionalTitle = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? "Untitled homework" : trimmed;
+}, z.string().trim().max(200, "Title is too long"));
+
 export const homeworkInputSchema = z.object({
   studentId: z.string().uuid("Choose a student"),
   lessonId: optionalUuid,
   subjectId: optionalUuid,
-  title: z.string().trim().min(1, "Title is required").max(200, "Title is too long"),
+  title: optionalTitle,
   description: optionalTrimmed(4000, "Description is too long"),
   dueDate: optionalDate,
   links: linkListSchema,

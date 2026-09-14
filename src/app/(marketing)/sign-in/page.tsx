@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { ThemeToggle } from "../../components/ThemeToggle";
-import { AuthForm } from "../../features/auth/components/AuthForm";
-import { signInAction, signInWithGoogleAction } from "../../features/auth/actions";
-import { createClient } from "../../lib/supabase/server";
+import { ThemeToggle } from "../../../components/ThemeToggle";
+import { AuthForm } from "../../../features/auth/components/AuthForm";
+import { signInAction, signInWithGoogleAction } from "../../../features/auth/actions";
+import { createClient } from "../../../lib/supabase/server";
 
 export default async function SignInPage({
   searchParams,

@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../../../components/Button";
 import { inputClassName } from "../../../components/Field";
+import { Select } from "../../../components/Select";
 import type { RateActionState } from "../actions";
 import { CURRENCIES } from "../schemas";
 
@@ -38,6 +39,8 @@ export function RateForm({
   pendingLabel,
 }: RateFormProps) {
   const [state, formAction] = useActionState(action, initialState);
+  const [subjectId, setSubjectId] = useState(subjectOptions?.[0]?.id ?? "");
+  const [currency, setCurrency] = useState(defaultValues?.currency ?? "RUB");
 
   return (
     <form action={formAction} className="space-y-2" noValidate>
@@ -48,22 +51,17 @@ export function RateForm({
 
       <div className="flex flex-wrap items-end gap-2">
         {subjectOptions && (
-          <select
+          <Select
             name="subjectId"
-            defaultValue={subjectOptions[0]?.id ?? ""}
-            className={inputClassName}
-          >
-            {subjectOptions.length === 0 && (
-              <option value="" disabled>
-                No subjects left
-              </option>
-            )}
-            {subjectOptions.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
+            value={subjectId}
+            onChange={setSubjectId}
+            className="flex w-44 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25"
+            options={
+              subjectOptions.length === 0
+                ? [{ value: "", label: "No subjects left", disabled: true }]
+                : subjectOptions.map((subject) => ({ value: subject.id, label: subject.name }))
+            }
+          />
         )}
 
         <input
@@ -76,17 +74,13 @@ export function RateForm({
           className={`${inputClassName} w-32`}
         />
 
-        <select
+        <Select
           name="currency"
-          defaultValue={defaultValues?.currency ?? "RUB"}
-          className={`${inputClassName} w-24`}
-        >
-          {CURRENCIES.map((currency) => (
-            <option key={currency} value={currency}>
-              {currency}
-            </option>
-          ))}
-        </select>
+          value={currency}
+          onChange={setCurrency}
+          className="flex w-24 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25"
+          options={CURRENCIES.map((code) => ({ value: code, label: code }))}
+        />
 
         <SubmitButton label={submitLabel} pendingLabel={pendingLabel} />
       </div>

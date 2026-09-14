@@ -15,8 +15,9 @@ describe("homework input", () => {
     expect(parsed.dueDate).toBeUndefined();
   });
 
-  it("requires a non-empty title", () => {
-    expect(homeworkInputSchema.safeParse({ studentId, title: "  " }).success).toBe(false);
+  it("defaults a blank title to a placeholder", () => {
+    const parsed = homeworkInputSchema.parse({ studentId, title: "  " });
+    expect(parsed.title).toBe("Untitled homework");
   });
 
   it("requires a valid student id", () => {

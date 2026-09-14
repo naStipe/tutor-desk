@@ -101,7 +101,7 @@ export function TimeSlotGrid({
                     ? "Doesn't fit before the next lesson"
                     : undefined
               }
-              className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-all duration-150 ${
+              className={`flex h-11 items-center justify-center rounded-md border px-2 text-center text-xs font-medium leading-tight transition-all duration-150 ${
                 isSelected
                   ? "border-brand bg-brand text-on-brand"
                   : slot.reason === "available"

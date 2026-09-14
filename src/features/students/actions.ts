@@ -20,6 +20,8 @@ function fields(formData: FormData) {
     phone: formData.get("phone"),
     telegram: formData.get("telegram"),
     notes: formData.get("notes"),
+    defaultHourlyRate: formData.get("defaultHourlyRate"),
+    defaultCurrency: formData.get("defaultCurrency") ?? "RUB",
   };
 }
 

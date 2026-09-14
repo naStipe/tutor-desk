@@ -10,7 +10,7 @@ describe("student input", () => {
       telegram: "",
       notes: "",
     });
-    expect(parsed).toEqual({ name: "Alex Student" });
+    expect(parsed).toEqual({ name: "Alex Student", defaultCurrency: "RUB" });
   });
 
   it("requires only a non-empty name", () => {

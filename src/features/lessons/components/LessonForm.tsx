@@ -4,9 +4,12 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../../../components/Button";
 import { Field, inputClassName } from "../../../components/Field";
+import { DatePicker } from "../../../components/DatePicker";
+import { Select } from "../../../components/Select";
 import { CURRENCIES } from "../../rates/schemas";
 import type { LessonActionState } from "../actions";
 import { combineDateAndMinutes, startOfDay, toDateParam } from "../date-utils";
+import { DEFAULT_RATE_KEY } from "../rates-map";
 import { LessonDateTimePicker, type PickerLesson } from "./LessonDateTimePicker";
 
 const initialState: LessonActionState = {};
@@ -73,7 +76,8 @@ export function LessonForm({
   const [currency, setCurrency] = useState(defaultValues?.currency ?? "RUB");
   const [repeat, setRepeat] = useState(false);
 
-  const rate = ratesByStudent?.[studentId]?.[subjectId];
+  const rate =
+    ratesByStudent?.[studentId]?.[subjectId] ?? ratesByStudent?.[studentId]?.[DEFAULT_RATE_KEY];
 
   useEffect(() => {
     if (priceTouched || !rate) return;
@@ -100,41 +104,27 @@ export function LessonForm({
       )}
 
       <Field label="Student" htmlFor="studentId" required errors={state.fieldErrors?.studentId}>
-        <select
+        <Select
           id="studentId"
           name="studentId"
           value={studentId}
-          onChange={(event) => setStudentId(event.target.value)}
-          className={inputClassName}
-        >
-          {students.length === 0 && (
-            <option value="" disabled>
-              Select a student
-            </option>
-          )}
-          {students.map((student) => (
-            <option key={student.id} value={student.id}>
-              {student.name}
-            </option>
-          ))}
-        </select>
+          onChange={setStudentId}
+          placeholder="Select a student"
+          options={students.map((student) => ({ value: student.id, label: student.name }))}
+        />
       </Field>
 
       <Field label="Subject" htmlFor="subjectId" errors={state.fieldErrors?.subjectId}>
-        <select
+        <Select
           id="subjectId"
           name="subjectId"
           value={subjectId}
-          onChange={(event) => setSubjectId(event.target.value)}
-          className={inputClassName}
-        >
-          <option value="">No subject</option>
-          {subjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </select>
+          onChange={setSubjectId}
+          options={[
+            { value: "", label: "No subject" },
+            ...subjects.map((subject) => ({ value: subject.id, label: subject.name })),
+          ]}
+        />
       </Field>
 
       <Field
@@ -175,19 +165,13 @@ export function LessonForm({
         </Field>
 
         <Field label="Currency" htmlFor="currency" errors={state.fieldErrors?.currency}>
-          <select
+          <Select
             id="currency"
             name="currency"
             value={currency}
-            onChange={(event) => setCurrency(event.target.value)}
-            className={inputClassName}
-          >
-            {CURRENCIES.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+            onChange={setCurrency}
+            options={CURRENCIES.map((code) => ({ value: code, label: code }))}
+          />
         </Field>
       </div>
 
@@ -210,7 +194,7 @@ export function LessonForm({
               errors={state.fieldErrors?.repeatUntil}
               hint="Leave blank to keep repeating until you cancel it."
             >
-              <input id="repeatUntil" name="repeatUntil" type="date" className={inputClassName} />
+              <DatePicker id="repeatUntil" name="repeatUntil" minDate={startOfDay(new Date())} />
             </Field>
           )}
         </div>

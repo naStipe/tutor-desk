@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../../../components/Button";
+import { DatePicker } from "../../../components/DatePicker";
 import { Field, inputClassName } from "../../../components/Field";
+import { Select } from "../../../components/Select";
 import type { HomeworkActionState } from "../actions";
 
 const initialState: HomeworkActionState = {};
@@ -49,6 +51,10 @@ export function HomeworkForm({
   pendingLabel,
 }: HomeworkFormProps) {
   const [state, formAction] = useActionState(action, initialState);
+  const [studentId, setStudentId] = useState(defaultValues?.studentId ?? students[0]?.id ?? "");
+  const [subjectId, setSubjectId] = useState(defaultValues?.subjectId ?? "");
+  const [lessonId, setLessonId] = useState(defaultValues?.lessonId ?? "");
+  const [dueDate, setDueDate] = useState(defaultValues?.dueDate ?? "");
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -63,7 +69,7 @@ export function HomeworkForm({
         </p>
       )}
 
-      <Field label="Title" htmlFor="title" required errors={state.fieldErrors?.title}>
+      <Field label="Title" htmlFor="title" hint="Optional" errors={state.fieldErrors?.title}>
         <input
           id="title"
           name="title"
@@ -74,23 +80,14 @@ export function HomeworkForm({
       </Field>
 
       <Field label="Student" htmlFor="studentId" required errors={state.fieldErrors?.studentId}>
-        <select
+        <Select
           id="studentId"
           name="studentId"
-          defaultValue={defaultValues?.studentId ?? students[0]?.id ?? ""}
-          className={inputClassName}
-        >
-          {students.length === 0 && (
-            <option value="" disabled>
-              Select a student
-            </option>
-          )}
-          {students.map((student) => (
-            <option key={student.id} value={student.id}>
-              {student.name}
-            </option>
-          ))}
-        </select>
+          value={studentId}
+          onChange={setStudentId}
+          placeholder="Select a student"
+          options={students.map((student) => ({ value: student.id, label: student.name }))}
+        />
       </Field>
 
       <Field
@@ -99,19 +96,16 @@ export function HomeworkForm({
         hint="Optional"
         errors={state.fieldErrors?.subjectId}
       >
-        <select
+        <Select
           id="subjectId"
           name="subjectId"
-          defaultValue={defaultValues?.subjectId ?? ""}
-          className={inputClassName}
-        >
-          <option value="">No subject</option>
-          {subjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </select>
+          value={subjectId}
+          onChange={setSubjectId}
+          options={[
+            { value: "", label: "No subject" },
+            ...subjects.map((subject) => ({ value: subject.id, label: subject.name })),
+          ]}
+        />
       </Field>
 
       <Field
@@ -120,29 +114,20 @@ export function HomeworkForm({
         hint="Optional"
         errors={state.fieldErrors?.lessonId}
       >
-        <select
+        <Select
           id="lessonId"
           name="lessonId"
-          defaultValue={defaultValues?.lessonId ?? ""}
-          className={inputClassName}
-        >
-          <option value="">No linked lesson</option>
-          {lessons.map((lesson) => (
-            <option key={lesson.id} value={lesson.id}>
-              {lesson.label}
-            </option>
-          ))}
-        </select>
+          value={lessonId}
+          onChange={setLessonId}
+          options={[
+            { value: "", label: "No linked lesson" },
+            ...lessons.map((lesson) => ({ value: lesson.id, label: lesson.label })),
+          ]}
+        />
       </Field>
 
       <Field label="Due date" htmlFor="dueDate" hint="Optional" errors={state.fieldErrors?.dueDate}>
-        <input
-          id="dueDate"
-          name="dueDate"
-          type="date"
-          defaultValue={defaultValues?.dueDate}
-          className={inputClassName}
-        />
+        <DatePicker id="dueDate" name="dueDate" value={dueDate} onChange={setDueDate} />
       </Field>
 
       <Field

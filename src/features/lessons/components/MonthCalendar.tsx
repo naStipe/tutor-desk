@@ -43,30 +43,30 @@ export function MonthCalendar({
   const canGoNext = !maxDate || startOfMonth(addMonths(month, 1)) <= maxDate;
 
   return (
-    <div>
-      <div className="flex items-center justify-between px-1 pb-2">
+    <div className="select-none">
+      <div className="flex items-center justify-between px-1 pb-3">
         <button
           type="button"
           onClick={() => canGoPrev && onMonthChange(addMonths(month, -1))}
           disabled={!canGoPrev}
-          className="rounded-md p-1.5 text-ink-muted hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-30"
+          className="rounded-full p-1.5 text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Previous month"
         >
           &larr;
         </button>
-        <p className="text-sm font-semibold text-ink">{formatMonthHeading(month)}</p>
+        <p className="text-sm font-semibold tracking-wide text-ink">{formatMonthHeading(month)}</p>
         <button
           type="button"
           onClick={() => canGoNext && onMonthChange(addMonths(month, 1))}
           disabled={!canGoNext}
-          className="rounded-md p-1.5 text-ink-muted hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-30"
+          className="rounded-full p-1.5 text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Next month"
         >
           &rarr;
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 px-1 pb-1 text-center text-[11px] font-medium uppercase tracking-wide text-ink-subtle">
+      <div className="grid grid-cols-7 gap-1 px-1 pb-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
         {WEEKDAY_LABELS.map((label) => (
           <span key={label}>{label}</span>
         ))}
@@ -91,22 +91,22 @@ export function MonthCalendar({
               type="button"
               disabled={Boolean(isDisabled)}
               onClick={() => onSelectDate(dateParam)}
-              className={`relative flex h-12 flex-col items-center justify-center rounded-lg text-sm transition-colors sm:h-16 ${
+              className={`relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-sm transition-all duration-150 sm:h-16 ${
                 isSelected
-                  ? "bg-brand text-on-brand font-semibold"
+                  ? "bg-brand font-semibold text-on-brand shadow-sm shadow-brand/30"
                   : isToday
-                    ? "border border-brand/40 text-ink"
+                    ? "border border-brand/40 text-ink hover:bg-brand/5"
                     : isPast
-                      ? "bg-surface-muted/40 text-ink-subtle hover:bg-surface-muted"
-                      : "text-ink hover:bg-surface-muted"
-              } ${!inMonth ? "text-ink-subtle/50" : ""} ${isDisabled ? "cursor-not-allowed opacity-30" : ""}`}
+                      ? "text-ink-subtle/70 hover:bg-surface-muted"
+                      : "text-ink hover:bg-surface-muted hover:scale-[1.03]"
+              } ${!inMonth ? "text-ink-subtle/40" : ""} ${isDisabled ? "cursor-not-allowed opacity-30 hover:scale-100" : ""}`}
             >
               <span>{day.getDate()}</span>
               {(count > 0 || homeworkCount > 0) && (
-                <span className="mt-0.5 flex items-center gap-1">
+                <span className="flex items-center gap-1">
                   {count > 0 && (
                     <span
-                      className={`rounded-full px-1 text-[10px] leading-tight ${
+                      className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
                         isSelected ? "bg-on-brand/20 text-on-brand" : "bg-brand/15 text-brand"
                       }`}
                     >
@@ -115,10 +115,13 @@ export function MonthCalendar({
                   )}
                   {homeworkCount > 0 && (
                     <span
-                      role="img"
-                      aria-label={`${homeworkCount} homework due`}
-                      className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-on-brand" : "bg-warning"}`}
-                    />
+                      className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
+                        isSelected ? "bg-on-brand/20 text-on-brand" : "bg-warning/20 text-warning"
+                      }`}
+                      title={`${homeworkCount} homework due`}
+                    >
+                      {homeworkCount}
+                    </span>
                   )}
                 </span>
               )}

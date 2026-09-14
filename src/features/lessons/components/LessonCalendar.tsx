@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   type MouseEvent as ReactMouseEvent,
@@ -18,6 +19,7 @@ import {
   isSameDay,
   minutesSinceMidnight,
   startOfDay,
+  toDateParam,
 } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 
@@ -36,6 +38,14 @@ export type CalendarLesson = {
   startTime: string;
   endTime: string;
   status: LessonStatus;
+};
+
+export type CalendarHomeworkItem = {
+  id: string;
+  title: string;
+  studentName: string;
+  dueDate: string;
+  status: string;
 };
 
 const STATUS_BLOCK_CLASSES: Record<LessonStatus, string> = {
@@ -71,12 +81,14 @@ export function LessonCalendar({
   lessons: initialLessons,
   students,
   highlightLessonId,
+  homeworkItems,
   onSlotClick,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
   students: { id: string; name: string }[];
   highlightLessonId?: string | null;
+  homeworkItems?: CalendarHomeworkItem[];
   onSlotClick: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 }) {
   const router = useRouter();
@@ -272,6 +284,32 @@ export function LessonCalendar({
           );
         })}
       </div>
+
+      {homeworkItems && homeworkItems.length > 0 && (
+        <div className="flex border-b border-border bg-warning/5" style={{ paddingLeft: GUTTER_PX }}>
+          {days.map((day) => {
+            const dateParam = toDateParam(day);
+            const dayHomework = homeworkItems.filter((item) => item.dueDate === dateParam);
+            return (
+              <div
+                key={day.toISOString()}
+                className="flex-1 space-y-1 border-l border-border px-1.5 py-1.5 first:border-l-0"
+              >
+                {dayHomework.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/dashboard/homework/${item.id}`}
+                    title={`${item.title} — ${item.studentName}`}
+                    className="block truncate rounded-md bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning transition-colors hover:bg-warning/25"
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div
         ref={scrollContainerRef}

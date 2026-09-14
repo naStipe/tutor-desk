@@ -194,7 +194,7 @@ export default async function SchedulePage({
       lessons={calendarLessons}
       students={students}
       subjects={subjects.map((subject) => ({ id: subject.id, name: subject.name }))}
-      ratesByStudent={buildRatesByStudent(rates)}
+      ratesByStudent={buildRatesByStudent(rates, students)}
       pickerLessons={pickerLessons.map((lesson) => ({
         id: lesson.id,
         startTime: lesson.start_time,

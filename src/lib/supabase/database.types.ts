@@ -311,6 +311,8 @@ export type Database = {
         Row: {
           archived_at: string | null
           created_at: string
+          default_currency: string | null
+          default_hourly_rate: number | null
           email: string | null
           id: string
           name: string
@@ -323,6 +325,8 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           created_at?: string
+          default_currency?: string | null
+          default_hourly_rate?: number | null
           email?: string | null
           id?: string
           name: string
@@ -335,6 +339,8 @@ export type Database = {
         Update: {
           archived_at?: string | null
           created_at?: string
+          default_currency?: string | null
+          default_hourly_rate?: number | null
           email?: string | null
           id?: string
           name?: string

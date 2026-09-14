@@ -13,6 +13,7 @@ import { createLessonAction } from "../actions";
 import { toDateParam } from "../date-utils";
 import { LessonCalendar, type CalendarLesson } from "./LessonCalendar";
 import { MonthCalendar } from "./MonthCalendar";
+import { XIcon } from "../../../components/icons";
 
 const navLinkClass =
   "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
@@ -192,34 +193,12 @@ export function LessonsCalendarView({
             </p>
           )}
 
-          {showHomework && homeworkItems.length > 0 && (
-            <Card className="space-y-2">
-              <h3 className="text-sm font-semibold text-ink">Homework due</h3>
-              <ul className="space-y-1">
-                {homeworkItems.map((item) => (
-                  <li key={item.id} className="text-sm text-ink-muted">
-                    <Link
-                      href={`/dashboard/homework/${item.id}`}
-                      className="text-ink hover:text-brand hover:underline"
-                    >
-                      {item.title}
-                    </Link>{" "}
-                    — {item.studentName} · due{" "}
-                    {new Date(`${item.dueDate}T00:00:00`).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
           <LessonCalendar
             dayStartValues={dayStartValues}
             lessons={lessons}
             students={students}
             highlightLessonId={highlightLessonId}
+            homeworkItems={showHomework ? homeworkItems : []}
             onSlotClick={(dayIndex, startMinutes, endMinutes) => {
               const day = new Date(dayStartValues[dayIndex]);
               setCreatePrefill({
@@ -234,26 +213,38 @@ export function LessonsCalendarView({
 
       {createPrefill && students.length > 0 && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4 backdrop-blur-[2px]">
-          <Card className="td-modal-pop max-h-[90vh] w-full max-w-lg overflow-y-auto">
-            <h3 className="mb-4 text-sm font-semibold text-ink">Schedule lesson</h3>
-            <LessonForm
-              action={createLessonAction}
-              students={students}
-              subjects={subjects}
-              ratesByStudent={ratesByStudent}
-              pickerLessons={pickerLessons}
-              allowRecurrence
-              defaultValues={{
-                studentId: students[0]?.id ?? "",
-                dateParam: createPrefill.dateParam,
-                minutes: createPrefill.minutes,
-                durationMinutes: createPrefill.durationMinutes,
-                notes: "",
-              }}
-              submitLabel="Schedule lesson"
-              pendingLabel="Scheduling…"
-              onCancel={closeModal}
-            />
+          <Card className="td-modal-pop flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden p-0">
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5">
+              <h3 className="text-sm font-semibold text-ink">Schedule lesson</h3>
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label="Close"
+                className="rounded-full p-1.5 text-ink-subtle transition-colors hover:bg-surface-muted hover:text-ink"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5">
+              <LessonForm
+                action={createLessonAction}
+                students={students}
+                subjects={subjects}
+                ratesByStudent={ratesByStudent}
+                pickerLessons={pickerLessons}
+                allowRecurrence
+                defaultValues={{
+                  studentId: students[0]?.id ?? "",
+                  dateParam: createPrefill.dateParam,
+                  minutes: createPrefill.minutes,
+                  durationMinutes: createPrefill.durationMinutes,
+                  notes: "",
+                }}
+                submitLabel="Schedule lesson"
+                pendingLabel="Scheduling…"
+                onCancel={closeModal}
+              />
+            </div>
           </Card>
         </div>
       )}

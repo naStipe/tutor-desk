@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
 import { PageHeader } from "../../../components/PageHeader";
+import { Select } from "../../../components/Select";
 import { formatFullDateTime } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 import { PaymentBadge } from "./PaymentBadge";
@@ -34,7 +35,7 @@ const STATUS_FILTERS: { value: LessonStatus | "all"; label: string }[] = [
 ];
 
 const selectClass =
-  "rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25";
 
 export function LessonsListView({
   lessons,
@@ -107,41 +108,30 @@ export function LessonsListView({
       />
 
       <div className="flex flex-wrap gap-2">
-        <select
+        <Select
           value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as LessonStatus | "all")}
+          onChange={(value) => setStatusFilter(value as LessonStatus | "all")}
           className={selectClass}
-        >
-          {STATUS_FILTERS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <select
+          options={STATUS_FILTERS}
+        />
+        <Select
           value={studentFilter}
-          onChange={(event) => setStudentFilter(event.target.value)}
+          onChange={setStudentFilter}
           className={selectClass}
-        >
-          <option value="all">All students</option>
-          {students.map((student) => (
-            <option key={student.id} value={student.id}>
-              {student.name}
-            </option>
-          ))}
-        </select>
-        <select
+          options={[
+            { value: "all", label: "All students" },
+            ...students.map((student) => ({ value: student.id, label: student.name })),
+          ]}
+        />
+        <Select
           value={subjectFilter}
-          onChange={(event) => setSubjectFilter(event.target.value)}
+          onChange={setSubjectFilter}
           className={selectClass}
-        >
-          <option value="all">All subjects</option>
-          {subjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: "all", label: "All subjects" },
+            ...subjects.map((subject) => ({ value: subject.id, label: subject.name })),
+          ]}
+        />
       </div>
 
       {sorted.length === 0 ? (

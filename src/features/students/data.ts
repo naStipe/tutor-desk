@@ -5,7 +5,7 @@ import type { StudentInput } from "./schemas";
 export type Student = Database["public"]["Tables"]["student"]["Row"];
 
 const STUDENT_COLUMNS =
-  "id, tutor_id, name, email, phone, telegram, notes, archived_at, created_at, updated_at";
+  "id, tutor_id, name, email, phone, telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
 
 export async function listActiveStudents(supabase: SupabaseClient<Database>) {
   const { data, error } = await supabase
@@ -54,6 +54,8 @@ export async function createStudent(
       phone: input.phone ?? null,
       telegram: input.telegram ?? null,
       notes: input.notes ?? null,
+      default_hourly_rate: input.defaultHourlyRate ?? null,
+      default_currency: input.defaultHourlyRate ? input.defaultCurrency : null,
     })
     .select(STUDENT_COLUMNS)
     .single();
@@ -75,6 +77,8 @@ export async function updateStudent(
       phone: input.phone ?? null,
       telegram: input.telegram ?? null,
       notes: input.notes ?? null,
+      default_hourly_rate: input.defaultHourlyRate ?? null,
+      default_currency: input.defaultHourlyRate ? input.defaultCurrency : null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

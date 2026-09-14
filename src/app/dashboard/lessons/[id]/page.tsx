@@ -13,6 +13,7 @@ import { LessonDetailsCard } from "../../../../features/lessons/components/Lesso
 import { LessonHomeworkCard } from "../../../../features/lessons/components/LessonHomeworkCard";
 import { LessonStatusActions } from "../../../../features/lessons/components/LessonStatusActions";
 import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
+import { Select } from "../../../../components/Select";
 import {
   addDays,
   formatFullDateTime,
@@ -98,7 +99,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           lessonId={lesson.id}
           students={students}
           subjects={subjects}
-          ratesByStudent={buildRatesByStudent(rates)}
+          ratesByStudent={buildRatesByStudent(rates, activeStudents)}
           pickerLessons={pickerLessons}
           studentName={lesson.student?.name ?? "Unknown student"}
           subjectName={subjects.find((subject) => subject.id === lesson.subject_id)?.name ?? null}
@@ -146,17 +147,15 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           <form action={setLessonPaymentAction} className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="id" value={lesson.id} />
             <input type="hidden" name="paymentStatus" value="paid" />
-            <select
+            <Select
               name="paymentMethod"
               defaultValue={lesson.payment_method ?? "invoice"}
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink"
-            >
-              {PAYMENT_METHODS.map((method) => (
-                <option key={method} value={method}>
-                  {PAYMENT_METHOD_LABELS[method]}
-                </option>
-              ))}
-            </select>
+              className="flex w-40 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25"
+              options={PAYMENT_METHODS.map((method) => ({
+                value: method,
+                label: PAYMENT_METHOD_LABELS[method],
+              }))}
+            />
             <Button type="submit">Mark paid</Button>
           </form>
         )}

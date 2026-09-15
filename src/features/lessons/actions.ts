@@ -39,6 +39,7 @@ function fields(formData: FormData) {
     startTime: formData.get("startTime"),
     durationMinutes: formData.get("durationMinutes"),
     notes: formData.get("notes"),
+    meetingUrl: formData.get("meetingUrl"),
     price: formData.get("price"),
     currency: formData.get("currency"),
     paymentStatus: formData.get("paymentStatus") ?? "unpaid",

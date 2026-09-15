@@ -31,6 +31,7 @@ export function LessonDetailsCard({
     startTimeIso: string;
     durationMinutes: number;
     notes: string;
+    meetingUrl?: string;
     price?: string;
     currency?: string;
     paymentStatus?: PaymentStatus;

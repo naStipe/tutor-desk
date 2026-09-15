@@ -50,6 +50,7 @@ type LessonFormProps = {
     minutes: number; // minutes since midnight
     durationMinutes: number;
     notes: string;
+    meetingUrl?: string;
     price?: string;
     currency?: string;
     paymentStatus?: PaymentStatus;
@@ -247,6 +248,22 @@ export function LessonForm({
           )}
         </div>
       )}
+
+      <Field
+        label="Meeting link"
+        htmlFor="meetingUrl"
+        hint="Optional — e.g. a Google Meet or Zoom URL"
+        errors={state.fieldErrors?.meetingUrl}
+      >
+        <input
+          id="meetingUrl"
+          name="meetingUrl"
+          type="url"
+          placeholder="https://meet.google.com/…"
+          defaultValue={defaultValues?.meetingUrl}
+          className={inputClassName}
+        />
+      </Field>
 
       <Field label="Notes" htmlFor="notes" errors={state.fieldErrors?.notes}>
         <textarea

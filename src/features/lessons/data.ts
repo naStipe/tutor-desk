@@ -10,7 +10,7 @@ export type LessonWithStudent = Lesson & {
 };
 
 const LESSON_COLUMNS =
-  "id, tutor_id, student_id, subject_id, series_id, start_time, end_time, status, notes, price, currency, payment_status, payment_method, paid_at, created_at, updated_at, student:student_id (id, name), subject:subject_id (id, name)";
+  "id, tutor_id, student_id, subject_id, series_id, start_time, end_time, status, notes, meeting_url, price, currency, payment_status, payment_method, paid_at, created_at, updated_at, student:student_id (id, name), subject:subject_id (id, name)";
 
 function addMinutes(iso: string, minutes: number) {
   return new Date(new Date(iso).getTime() + minutes * 60000).toISOString();
@@ -175,6 +175,7 @@ export async function createLesson(
       start_time: input.startTime,
       end_time: addMinutes(input.startTime, input.durationMinutes),
       notes: input.notes ?? null,
+      meeting_url: input.meetingUrl ?? null,
       price: input.price ?? null,
       currency: input.currency ?? null,
       payment_status: input.paymentStatus,
@@ -201,6 +202,7 @@ export async function updateLesson(
       start_time: input.startTime,
       end_time: addMinutes(input.startTime, input.durationMinutes),
       notes: input.notes ?? null,
+      meeting_url: input.meetingUrl ?? null,
       price: input.price ?? null,
       currency: input.currency ?? null,
       payment_status: input.paymentStatus,

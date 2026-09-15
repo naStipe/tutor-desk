@@ -154,6 +154,7 @@ export type Database = {
           currency: string | null
           end_time: string
           id: string
+          meeting_url: string | null
           notes: string | null
           paid_at: string | null
           payment_method: string | null
@@ -172,6 +173,7 @@ export type Database = {
           currency?: string | null
           end_time: string
           id?: string
+          meeting_url?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
@@ -190,6 +192,7 @@ export type Database = {
           currency?: string | null
           end_time?: string
           id?: string
+          meeting_url?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null

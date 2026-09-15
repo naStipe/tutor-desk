@@ -18,6 +18,7 @@ export type TodayLesson = {
   endTime: string;
   status: string;
   notes: string | null;
+  meetingUrl: string | null;
   studentId: string | null;
   studentName: string;
 };
@@ -115,15 +116,6 @@ function GreetingHeader({ now, firstName }: { now: Date; firstName: string }) {
         </h1>
       </div>
       <div className="flex items-center gap-2.5">
-        <button
-          type="button"
-          disabled
-          title="Search isn't wired up yet"
-          className="flex w-[170px] cursor-not-allowed items-center gap-2 rounded-[11px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-field)] px-3.5 py-2.5 text-left text-[13px] text-[var(--td2-text-faint)] sm:w-[190px]"
-        >
-          <span className="font-mono">/</span>
-          Search students
-        </button>
         <Link
           href="/dashboard/schedule?create=1"
           className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110"
@@ -206,16 +198,18 @@ function HeroLesson({
       </div>
 
       <div className="relative flex flex-wrap gap-2.5">
-        <button
-          type="button"
-          disabled
-          title="No meeting link on this lesson"
-          className={`w-full rounded-[11px] bg-[var(--td2-primary-bg)] px-5 py-3 text-[14px] font-medium text-[var(--td2-primary-fg)] opacity-50 sm:w-auto ${
-            soon || inProgress ? "td-ring" : ""
-          }`}
-        >
-          Join Google Meet
-        </button>
+        {lesson.meetingUrl && (
+          <a
+            href={lesson.meetingUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={`w-full rounded-[11px] bg-[var(--td2-primary-bg)] px-5 py-3 text-center text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[filter] duration-150 hover:brightness-110 sm:w-auto ${
+              soon || inProgress ? "td-ring" : ""
+            }`}
+          >
+            Join meeting
+          </a>
+        )}
         <Link
           href={`/dashboard/lessons/${lesson.id}`}
           className="rounded-[11px] border border-[var(--td2-border-strong)] px-[18px] py-3 text-[14px] text-[var(--td2-text-primary)] transition-colors hover:bg-[var(--td2-bg-inset)]"
@@ -496,7 +490,7 @@ function PrepQueueCard({ lesson }: { lesson?: TodayLesson }) {
         href={`/dashboard/lessons/${lesson.id}`}
         className="mt-4 inline-flex rounded-[9px] bg-[var(--td2-primary-fg)] px-3.5 py-[9px] text-[13px] text-[var(--td2-primary-bg)] transition-[filter] duration-150 hover:brightness-110"
       >
-        Write plan · 8 min
+        Write plan
       </Link>
     </div>
   );

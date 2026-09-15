@@ -42,6 +42,7 @@ const isoDateTime = z.string().refine((value) => !Number.isNaN(Date.parse(value)
 
 const optionalUuid = z.preprocess(emptyToUndefined, z.string().uuid().optional());
 const optionalCurrency = z.preprocess(emptyToUndefined, z.enum(CURRENCIES).optional());
+const optionalUrl = z.preprocess(emptyToUndefined, z.string().url("Enter a valid URL").optional());
 const optionalPaymentMethod = z.preprocess(emptyToUndefined, z.enum(PAYMENT_METHODS).optional());
 const optionalPrice = z.preprocess((value) => {
   if (value === "" || value === null || value === undefined) return undefined;
@@ -63,6 +64,7 @@ export const lessonInputSchema = z.object({
     .max(600, "Duration is too long")
     .default(60),
   notes: optionalTrimmedNotes,
+  meetingUrl: optionalUrl,
   price: optionalPrice,
   currency: optionalCurrency,
   paymentStatus: z.enum(PAYMENT_STATUSES).default("unpaid"),

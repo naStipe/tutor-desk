@@ -32,6 +32,7 @@ export default async function DashboardPage() {
     endTime: lesson.end_time,
     status: lesson.status,
     notes: lesson.notes,
+    meetingUrl: lesson.meeting_url,
     studentId: lesson.student_id,
     studentName: lesson.student?.name ?? "Unknown student",
   }));

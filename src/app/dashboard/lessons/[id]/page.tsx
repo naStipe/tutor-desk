@@ -107,6 +107,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
               (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) / 60000,
             ),
             notes: lesson.notes ?? "",
+            meetingUrl: lesson.meeting_url ?? undefined,
             price: lesson.price !== null ? String(lesson.price) : undefined,
             currency: lesson.currency ?? undefined,
             paymentStatus: lesson.payment_status as (typeof PAYMENT_STATUSES)[number],

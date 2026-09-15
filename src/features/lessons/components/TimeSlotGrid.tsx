@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { combineDateAndMinutes, formatMinutesOfDay } from "../date-utils";
+import { combineDateAndMinutes, formatMinutesOfDay, minutesSinceMidnight } from "../date-utils";
 
-const START_MINUTES = 7 * 60;
-const END_MINUTES = 21 * 60;
+const DEFAULT_START_MINUTES = 7 * 60;
+const DEFAULT_END_MINUTES = 21 * 60;
 const SLOT_STEP = 15;
 
 type Interval = { start: number; end: number };
@@ -30,9 +30,25 @@ export function TimeSlotGrid({
   const now = new Date();
   const slots: { minutes: number; reason: SlotReason }[] = [];
 
+  // Widen the default window instead of hiding times that fall outside it: the lesson
+  // currently being edited/selected, and any already-booked lesson on this day, must stay
+  // reachable even if they start before 7:00 or run past 21:00.
+  const boundaryMinutes = [
+    DEFAULT_START_MINUTES,
+    DEFAULT_END_MINUTES,
+    ...(selectedMinutes !== null ? [selectedMinutes, selectedMinutes + durationMinutes] : []),
+    ...busyIntervals.flatMap((busy) => [
+      minutesSinceMidnight(new Date(busy.start)),
+      minutesSinceMidnight(new Date(busy.end)),
+    ]),
+  ];
+  const startMinutesBound =
+    Math.floor(Math.min(...boundaryMinutes) / SLOT_STEP) * SLOT_STEP;
+  const endMinutesBound = Math.ceil(Math.max(...boundaryMinutes) / SLOT_STEP) * SLOT_STEP;
+
   for (
-    let minutes = START_MINUTES;
-    minutes + durationMinutes <= END_MINUTES;
+    let minutes = startMinutesBound;
+    minutes + durationMinutes <= endMinutesBound;
     minutes += SLOT_STEP
   ) {
     const slotStart = combineDateAndMinutes(dateParam, minutes);
@@ -58,11 +74,7 @@ export function TimeSlotGrid({
   }
 
   if (slots.length === 0) {
-    return (
-      <p className="text-sm text-ink-subtle">
-        This duration doesn't fit within the 7:00–21:00 scheduling window.
-      </p>
-    );
+    return <p className="text-sm text-ink-subtle">This duration doesn't fit on the selected day.</p>;
   }
 
   const anchorMinutes = hoveredMinutes ?? selectedMinutes;

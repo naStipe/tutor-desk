@@ -22,12 +22,11 @@ import {
 } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 
-const START_HOUR = 7;
-const END_HOUR = 21;
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 21;
 const PX_PER_HOUR = 44;
 const SNAP_MINUTES = 15;
 const GUTTER_PX = 52;
-const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
 const GRID_MAX_HEIGHT_PX = 560;
 
 export type CalendarLesson = {
@@ -46,15 +45,9 @@ const STATUS_BLOCK_CLASSES: Record<LessonStatus, string> = {
   no_show: "bg-warning hover:bg-warning-strong text-on-warning",
 };
 
-function clampMinutes(minutes: number) {
-  return Math.min(Math.max(minutes, START_HOUR * 60), END_HOUR * 60);
-}
-
 function snap(minutes: number) {
   return Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
 }
-
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
 type DragState = {
   id: string;
@@ -102,6 +95,29 @@ export function LessonCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
+
+  // The grid always covers the default window, but expands to fit any lesson that falls
+  // outside it instead of clipping/hiding it.
+  const { startHour: START_HOUR, endHour: END_HOUR } = useMemo(() => {
+    let earliestHour = DEFAULT_START_HOUR;
+    let latestHour = DEFAULT_END_HOUR;
+    for (const lesson of lessons) {
+      const start = minutesSinceMidnight(new Date(lesson.startTime)) / 60;
+      const end = minutesSinceMidnight(new Date(lesson.endTime)) / 60;
+      earliestHour = Math.min(earliestHour, Math.floor(start));
+      latestHour = Math.max(latestHour, Math.ceil(end));
+    }
+    return { startHour: earliestHour, endHour: latestHour };
+  }, [lessons]);
+  const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
+  const HOURS = useMemo(
+    () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
+    [START_HOUR, END_HOUR],
+  );
+
+  function clampMinutes(minutes: number) {
+    return Math.min(Math.max(minutes, START_HOUR * 60), END_HOUR * 60);
+  }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll to "now" only on initial mount
   useEffect(() => {

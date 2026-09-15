@@ -11,6 +11,7 @@ import { LessonForm } from "./LessonForm";
 import type { PickerLesson } from "./LessonDateTimePicker";
 import { createLessonAction } from "../actions";
 import { toDateParam } from "../date-utils";
+import { CalendarLegend } from "./CalendarLegend";
 import { LessonCalendar, type CalendarLesson } from "./LessonCalendar";
 import { MonthCalendar } from "./MonthCalendar";
 import { XIcon } from "../../../components/icons";
@@ -142,6 +143,8 @@ export function LessonsCalendarView({
         </div>
       </div>
 
+      <CalendarLegend reviewLabel="Ready for review" />
+
       {view === "month" ? (
         <Card>
           <MonthCalendar
@@ -161,7 +164,9 @@ export function LessonsCalendarView({
       ) : (
         <>
           {students.length === 0 ? (
-            <p className="text-xs text-ink-subtle">Add a student before you can schedule a lesson.</p>
+            <p className="text-xs text-ink-subtle">
+              Add a student before you can schedule a lesson.
+            </p>
           ) : (
             <p className="text-xs text-ink-subtle">
               Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.

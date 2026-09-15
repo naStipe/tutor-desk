@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { PageHeader } from "../../../components/PageHeader";
 import { toDateParam } from "../date-utils";
+import { CalendarLegend } from "./CalendarLegend";
 import type { CalendarLesson } from "./LessonCalendar";
 import { MonthCalendar } from "./MonthCalendar";
 import { StudentLessonCalendar } from "./StudentLessonCalendar";
@@ -99,13 +100,13 @@ export function StudentScheduleView({
         </div>
       </div>
 
+      <CalendarLegend reviewLabel="Awaiting feedback" />
+
       {view === "month" ? (
         <Card>
           <MonthCalendar
             month={new Date(monthAnchorValue)}
-            onMonthChange={(month) =>
-              router.push(`${monthBaseHref}&date=${toDateParam(month)}`)
-            }
+            onMonthChange={(month) => router.push(`${monthBaseHref}&date=${toDateParam(month)}`)}
             selectedDate={null}
             onSelectDate={(dateParam) => router.push(`${dayBaseHref}&date=${dateParam}`)}
             countByDate={monthCountByDate}

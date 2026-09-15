@@ -1,0 +1,155 @@
+"use client";
+
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Button } from "../../../components/Button";
+import { Field, inputClassName } from "../../../components/Field";
+import { Select } from "../../../components/Select";
+import { CURRENCIES } from "../../rates/schemas";
+import type { TutorProfileActionState } from "../actions";
+
+const initialState: TutorProfileActionState = {};
+
+const LOCALE_OPTIONS = [
+  { value: "ru-RU", label: "Russian (ru-RU)" },
+  { value: "en-US", label: "English — US (en-US)" },
+  { value: "en-GB", label: "English — UK (en-GB)" },
+  { value: "de-DE", label: "German (de-DE)" },
+  { value: "es-ES", label: "Spanish (es-ES)" },
+];
+
+function timezoneOptions() {
+  const names =
+    typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["UTC"];
+  return names.map((name) => ({ value: name, label: name.replace(/_/g, " ") }));
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Saving…" : "Save settings"}
+    </Button>
+  );
+}
+
+export function SettingsForm({
+  action,
+  defaultValues,
+}: {
+  action: (state: TutorProfileActionState, formData: FormData) => Promise<TutorProfileActionState>;
+  defaultValues: {
+    name: string;
+    timezone: string;
+    locale: string;
+    currency: string;
+    defaultHourlyRate: string;
+    paymentInstructions: string;
+  };
+}) {
+  const [state, formAction] = useActionState(action, initialState);
+  const [timezone, setTimezone] = useState(defaultValues.timezone);
+  const [locale, setLocale] = useState(defaultValues.locale);
+  const [currency, setCurrency] = useState(defaultValues.currency);
+  const [timezoneOpts] = useState(timezoneOptions);
+
+  return (
+    <form action={formAction} className="space-y-4" noValidate>
+      {state.error && (
+        <p
+          role="alert"
+          className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger"
+        >
+          {state.error}
+        </p>
+      )}
+      {state.message && (
+        <p className="rounded-lg border border-brand/25 bg-brand/10 p-3 text-sm text-brand">
+          {state.message}
+        </p>
+      )}
+
+      <Field label="Your name" htmlFor="name" errors={state.fieldErrors?.name}>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          defaultValue={defaultValues.name}
+          placeholder="Shown to students and in the app"
+          className={inputClassName}
+        />
+      </Field>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Timezone" htmlFor="timezone" errors={state.fieldErrors?.timezone}>
+          <Select
+            id="timezone"
+            name="timezone"
+            value={timezone}
+            onChange={setTimezone}
+            options={timezoneOpts}
+          />
+        </Field>
+
+        <Field label="Language" htmlFor="locale" errors={state.fieldErrors?.locale}>
+          <Select
+            id="locale"
+            name="locale"
+            value={locale}
+            onChange={setLocale}
+            options={LOCALE_OPTIONS}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Default currency" htmlFor="currency" errors={state.fieldErrors?.currency}>
+          <Select
+            id="currency"
+            name="currency"
+            value={currency}
+            onChange={setCurrency}
+            options={CURRENCIES.map((code) => ({ value: code, label: code }))}
+          />
+        </Field>
+
+        <Field
+          label="Default hourly rate"
+          htmlFor="defaultHourlyRate"
+          hint="Used to prefill new students' rates"
+          errors={state.fieldErrors?.defaultHourlyRate}
+        >
+          <input
+            id="defaultHourlyRate"
+            name="defaultHourlyRate"
+            type="number"
+            min={0}
+            step={0.01}
+            inputMode="decimal"
+            defaultValue={defaultValues.defaultHourlyRate}
+            className={inputClassName}
+          />
+        </Field>
+      </div>
+
+      <Field
+        label="Payment instructions"
+        htmlFor="paymentInstructions"
+        hint="Shown to students when they owe you money"
+        errors={state.fieldErrors?.paymentInstructions}
+      >
+        <textarea
+          id="paymentInstructions"
+          name="paymentInstructions"
+          rows={4}
+          defaultValue={defaultValues.paymentInstructions}
+          className={inputClassName}
+        />
+      </Field>
+
+      <div className="pt-2">
+        <SubmitButton />
+      </div>
+    </form>
+  );
+}

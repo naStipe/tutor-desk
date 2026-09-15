@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -318,12 +312,15 @@ export type Database = {
           default_hourly_rate: number | null
           email: string | null
           id: string
+          invite_token_expires_at: string | null
+          invite_token_hash: string | null
           name: string
           notes: string | null
           phone: string | null
           telegram: string | null
           tutor_id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -332,12 +329,15 @@ export type Database = {
           default_hourly_rate?: number | null
           email?: string | null
           id?: string
+          invite_token_expires_at?: string | null
+          invite_token_hash?: string | null
           name: string
           notes?: string | null
           phone?: string | null
           telegram?: string | null
           tutor_id: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -346,12 +346,15 @@ export type Database = {
           default_hourly_rate?: number | null
           email?: string | null
           id?: string
+          invite_token_expires_at?: string | null
+          invite_token_hash?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
           telegram?: string | null
           tutor_id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -450,21 +453,33 @@ export type Database = {
       tutor_profile: {
         Row: {
           created_at: string
+          currency: string
+          default_hourly_rate: number | null
           locale: string
+          name: string | null
+          payment_instructions: string | null
           timezone: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          currency?: string
+          default_hourly_rate?: number | null
           locale?: string
+          name?: string | null
+          payment_instructions?: string | null
           timezone?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          currency?: string
+          default_hourly_rate?: number | null
           locale?: string
+          name?: string | null
+          payment_instructions?: string | null
           timezone?: string
           updated_at?: string
           user_id?: string
@@ -476,7 +491,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_student_invite: { Args: { p_token: string }; Returns: string }
+      submit_homework: {
+        Args: { p_homework_id: string; p_submission_text: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

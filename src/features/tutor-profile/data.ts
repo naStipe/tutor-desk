@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/supabase/database.types";
+import type { TutorProfileSettingsInput } from "./schemas";
 
 export async function ensureCurrentTutorProfile(
   supabase: SupabaseClient<Database>,
@@ -8,7 +9,7 @@ export async function ensureCurrentTutorProfile(
   const { data: profile, error } = await supabase
     .from("tutor_profile")
     .upsert({ user_id: userId }, { onConflict: "user_id" })
-    .select("user_id, created_at, updated_at")
+    .select("user_id, name, created_at, updated_at")
     .single();
 
   if (error) throw new Error(`Unable to initialize tutor profile: ${error.message}`);
@@ -42,4 +43,36 @@ export async function getTutorFormatSettings(supabase: SupabaseClient<Database>,
     timeZone: data?.timezone ?? FALLBACK_TIMEZONE,
     locale: data?.locale ?? FALLBACK_LOCALE,
   };
+}
+
+export async function getTutorProfile(supabase: SupabaseClient<Database>, userId: string) {
+  const { data, error } = await supabase
+    .from("tutor_profile")
+    .select("user_id, name, timezone, locale, currency, default_hourly_rate, payment_instructions")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Unable to load tutor profile: ${error.message}`);
+  return data;
+}
+
+export async function updateTutorProfile(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  input: TutorProfileSettingsInput,
+) {
+  const { error } = await supabase
+    .from("tutor_profile")
+    .update({
+      name: input.name ?? null,
+      timezone: input.timezone,
+      locale: input.locale,
+      currency: input.currency,
+      default_hourly_rate: input.defaultHourlyRate ?? null,
+      payment_instructions: input.paymentInstructions ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) throw new Error(`Unable to update tutor profile: ${error.message}`);
 }

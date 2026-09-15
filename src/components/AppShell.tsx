@@ -21,6 +21,7 @@ const TUTOR_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/lessons", label: "Lessons", match: "/dashboard/lessons", exact: false },
   { href: "/dashboard/homework", label: "Homework", match: "/dashboard/homework", exact: false },
   { href: "/dashboard/subjects", label: "Subjects", match: "/dashboard/subjects", exact: false },
+  { href: "/dashboard/settings", label: "Settings", match: "/dashboard/settings", exact: false },
 ];
 
 function studentNavItems(studentId: string | null): NavItem[] {
@@ -200,7 +201,8 @@ function Brand() {
   );
 }
 
-function Footer({ email }: { email: string }) {
+function Footer({ email, name }: { email: string; name?: string | null }) {
+  const displayName = name || displayNameFromEmail(email) || "Tutor";
   return (
     <div className="mt-auto flex items-center gap-2.5 border-t border-[var(--td2-border-rail)] pt-4">
       <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-[var(--td2-border-card)] bg-[var(--td2-bg-inset)] text-[12px] font-medium text-[var(--td2-text-secondary)]">
@@ -208,7 +210,7 @@ function Footer({ email }: { email: string }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium text-[var(--td2-text-primary)]">
-          {displayNameFromEmail(email) || "Tutor"}
+          {displayName}
         </p>
         <p className="truncate font-mono text-[10px] text-[var(--td2-text-faint)]">{email}</p>
       </div>
@@ -228,11 +230,13 @@ function Footer({ email }: { email: string }) {
 
 export function AppShell({
   email,
+  name,
   homeworkCount = 0,
   students = [],
   children,
 }: {
   email: string;
+  name?: string | null;
   homeworkCount?: number;
   students?: { id: string; name: string }[];
   children: ReactNode;
@@ -277,7 +281,7 @@ export function AppShell({
           <div className="flex-1">
             <NavLinks items={navItems} pathname={pathname} homeworkCount={homeworkCount} />
           </div>
-          <Footer email={email} />
+          <Footer email={email} name={name} />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -337,7 +341,7 @@ export function AppShell({
                 onNavigate={() => setMobileNavOpen(false)}
               />
               <div className="mt-4 border-t border-[var(--td2-border-rail)] pt-4">
-                <Footer email={email} />
+                <Footer email={email} name={name} />
               </div>
             </div>
           )}

@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   const client = accessToken ? createTokenClient(accessToken) : supabase;
 
-  const [, homeworkCountResult, studentsResult] = await Promise.allSettled([
+  const [profileResult, homeworkCountResult, studentsResult] = await Promise.allSettled([
     cachedForTutor("tutor-profile", [user.id], [`tutor-profile:${user.id}`], 5 * 60, () =>
       ensureCurrentTutorProfile(client, user.id),
     ),
@@ -27,12 +27,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       listActiveStudents(client),
     ),
   ]);
+  const name = profileResult.status === "fulfilled" ? profileResult.value.name : null;
   const homeworkCount = homeworkCountResult.status === "fulfilled" ? homeworkCountResult.value : 0;
   const students = studentsResult.status === "fulfilled" ? studentsResult.value : [];
 
   return (
     <AppShell
       email={user.email ?? ""}
+      name={name}
       homeworkCount={homeworkCount}
       students={students.map((student) => ({ id: student.id, name: student.name }))}
     >

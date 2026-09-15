@@ -30,11 +30,10 @@ export default async function NewHomeworkPage({
     user ? getTutorFormatSettings(supabase, user.id) : Promise.resolve(undefined),
   ]);
   const timeZone = format?.timeZone;
-  const locale = format?.locale;
 
   const lessonOptions = lessons.map((lesson) => ({
     id: lesson.id,
-    label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString(locale ?? "en-US", { month: "short", day: "numeric", timeZone })}, ${formatTimeRange(lesson.start_time, lesson.end_time, timeZone, locale)}`,
+    label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone })}, ${formatTimeRange(lesson.start_time, lesson.end_time, timeZone)}`,
   }));
 
   return (

@@ -60,7 +60,7 @@ async function requireTutorId() {
 /** Where the calendar should land, with the given lesson highlighted. */
 function calendarHref(startTimeIso: string, lessonId: string) {
   const date = toDateParam(new Date(startTimeIso));
-  return `/dashboard/schedule?view=day&date=${date}&highlight=${lessonId}`;
+  return `/dashboard/schedule?view=week&date=${date}&highlight=${lessonId}`;
 }
 
 export async function createLessonAction(
@@ -96,7 +96,7 @@ export async function createLessonAction(
       const firstLesson = await getFirstLessonForSeries(supabase, series.id);
       href = firstLesson
         ? calendarHref(firstLesson.start_time, firstLesson.id)
-        : `/dashboard/schedule?view=day&date=${parsed.data.startTime.slice(0, 10)}`;
+        : `/dashboard/schedule?view=week&date=${parsed.data.startTime.slice(0, 10)}`;
     } else {
       const lesson = await createLesson(supabase, tutorId, parsed.data);
       href = calendarHref(lesson.start_time, lesson.id);

@@ -72,7 +72,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     <div className="max-w-xl space-y-6">
       <PageHeader
         title={lesson.student?.name ?? "Lesson"}
-        description={formatFullDateTime(lesson.start_time, timeZone, locale)}
+        description={formatFullDateTime(lesson.start_time, timeZone)}
         avatar={<Avatar name={lesson.student?.name ?? "?"} />}
         actions={
           <Link href="/dashboard/lessons" className="text-sm text-ink-muted hover:text-ink">

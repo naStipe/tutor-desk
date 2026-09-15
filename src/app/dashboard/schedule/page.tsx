@@ -3,6 +3,7 @@ import { LessonsCalendarView } from "../../../features/lessons/components/Lesson
 import {
   addDays,
   addMonths,
+  formatAgendaDate,
   formatDayHeading,
   formatMonthHeading,
   formatWeekRange,
@@ -201,6 +202,38 @@ export default async function SchedulePage({
     homeworkReviewCountByDate[key] = (homeworkReviewCountByDate[key] ?? 0) + 1;
   }
 
+  const agendaLessons = lessons.map((lesson) => ({
+    id: lesson.id,
+    studentName: lesson.student?.name ?? "Unknown student",
+    subjectName: lesson.subject?.name ?? null,
+    startTime: lesson.start_time,
+    status: lesson.status as "scheduled" | "completed" | "cancelled" | "no_show",
+    paymentStatus: lesson.payment_status,
+  }));
+
+  const agendaHomework = [
+    ...homeworkDue.map((item) => ({
+      id: item.id,
+      title: item.title,
+      studentName: item.student?.name ?? "Unknown student",
+      subjectName: item.subject?.name ?? null,
+      status: item.status,
+      dateLabel: item.due_date ? `Due ${formatAgendaDate(item.due_date)}` : "No due date",
+      sortValue: item.due_date ?? "",
+    })),
+    ...homeworkAwaitingReview.map((item) => ({
+      id: item.id,
+      title: item.title,
+      studentName: item.student?.name ?? "Unknown student",
+      subjectName: item.subject?.name ?? null,
+      status: item.status,
+      dateLabel: item.submitted_at
+        ? `Submitted ${new Date(item.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+        : "Submitted",
+      sortValue: item.submitted_at ?? "",
+    })),
+  ].sort((a, b) => a.sortValue.localeCompare(b.sortValue));
+
   return (
     <LessonsCalendarView
       title="Schedule"
@@ -229,6 +262,8 @@ export default async function SchedulePage({
       monthAnchorValue={toLocalMidnightValue(anchor)}
       homeworkDueCountByDate={homeworkDueCountByDate}
       homeworkReviewCountByDate={homeworkReviewCountByDate}
+      agendaLessons={agendaLessons}
+      agendaHomework={agendaHomework}
     />
   );
 }

@@ -135,6 +135,28 @@ export function formatWeekdayShort(date: Date, timeZone?: string, locale = DISPL
   return date.toLocaleDateString(locale, { weekday: "short", timeZone });
 }
 
+/** Compact "Mon, Jan 5 · 3:00 PM" label for agenda-style lists. */
+export function formatAgendaDateTime(iso: string, timeZone?: string, locale = DISPLAY_LOCALE) {
+  const date = new Date(iso);
+  const dateLabel = date.toLocaleDateString(locale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone,
+  });
+  const timeLabel = date.toLocaleTimeString(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
+  return `${dateLabel} · ${timeLabel}`;
+}
+
+/** Compact "Jan 5" label for agenda-style lists. */
+export function formatAgendaDate(dateParam: string, locale = DISPLAY_LOCALE) {
+  return parseDateParam(dateParam).toLocaleDateString(locale, { month: "short", day: "numeric" });
+}
+
 export function formatMonthHeading(date: Date, timeZone?: string, locale = DISPLAY_LOCALE) {
   return date.toLocaleDateString(locale, { month: "long", year: "numeric", timeZone });
 }

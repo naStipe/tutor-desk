@@ -15,6 +15,7 @@ import { toDateParam } from "../date-utils";
 import { CalendarLegend } from "./CalendarLegend";
 import { LessonCalendar, type CalendarLesson } from "./LessonCalendar";
 import { MonthCalendar } from "./MonthCalendar";
+import { type AgendaHomework, type AgendaLesson, ScheduleAgenda } from "./ScheduleAgenda";
 
 const navLinkClass =
   "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
@@ -47,6 +48,9 @@ export function LessonsCalendarView({
   monthAnchorValue,
   homeworkDueCountByDate,
   homeworkReviewCountByDate,
+  agendaLessons,
+  agendaHomework,
+  timeZone,
 }: {
   title: string;
   description: string;
@@ -69,6 +73,9 @@ export function LessonsCalendarView({
   monthAnchorValue: string;
   homeworkDueCountByDate: Record<string, number>;
   homeworkReviewCountByDate: Record<string, number>;
+  agendaLessons: AgendaLesson[];
+  agendaHomework: AgendaHomework[];
+  timeZone?: string;
 }) {
   const router = useRouter();
   const [createPrefill, setCreatePrefill] = useState<Prefill | null>(
@@ -146,21 +153,66 @@ export function LessonsCalendarView({
       <CalendarLegend reviewLabel="Ready for review" />
 
       {view === "month" ? (
-        <Card>
-          <MonthCalendar
-            month={new Date(monthAnchorValue)}
-            onMonthChange={(month) =>
-              router.push(`/dashboard/schedule?view=month&date=${toDateParam(month)}`)
-            }
-            selectedDate={null}
-            onSelectDate={(dateParam) =>
-              router.push(`/dashboard/schedule?view=day&date=${dateParam}`)
-            }
-            countByDate={monthCountByDate}
-            homeworkCountByDate={homeworkDueCountByDate}
-            reviewCountByDate={homeworkReviewCountByDate}
-          />
-        </Card>
+        <>
+          <Card>
+            <MonthCalendar
+              month={new Date(monthAnchorValue)}
+              onMonthChange={(month) =>
+                router.push(`/dashboard/schedule?view=month&date=${toDateParam(month)}`)
+              }
+              selectedDate={null}
+              onSelectDate={(dateParam) =>
+                router.push(`/dashboard/schedule?view=day&date=${dateParam}`)
+              }
+              countByDate={monthCountByDate}
+              homeworkCountByDate={homeworkDueCountByDate}
+              reviewCountByDate={homeworkReviewCountByDate}
+            />
+          </Card>
+          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} />
+        </>
+      ) : view === "day" ? (
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <div className="lg:shrink-0">
+            {students.length === 0 ? (
+              <p className="text-xs text-ink-subtle">
+                Add a student before you can schedule a lesson.
+              </p>
+            ) : (
+              <p className="text-xs text-ink-subtle">
+                Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
+              </p>
+            )}
+
+            <div className="mt-3">
+              <LessonCalendar
+                dayStartValues={dayStartValues}
+                lessons={lessons}
+                students={students}
+                highlightLessonId={highlightLessonId}
+                homeworkDueCountByDate={homeworkDueCountByDate}
+                homeworkReviewCountByDate={homeworkReviewCountByDate}
+                onSlotClick={(dayIndex, startMinutes, endMinutes) => {
+                  const day = new Date(dayStartValues[dayIndex]);
+                  setCreatePrefill({
+                    dateParam: toDateParam(day),
+                    minutes: startMinutes,
+                    durationMinutes: Math.max(15, endMinutes - startMinutes),
+                  });
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <ScheduleAgenda
+              lessons={agendaLessons}
+              homework={agendaHomework}
+              timeZone={timeZone}
+              singleColumn
+            />
+          </div>
+        </div>
       ) : (
         <>
           {students.length === 0 ? (
@@ -189,6 +241,8 @@ export function LessonsCalendarView({
               });
             }}
           />
+
+          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} />
         </>
       )}
 

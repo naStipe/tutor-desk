@@ -13,6 +13,7 @@ import {
   updateStudentAction,
 } from "../../../../features/students/actions";
 import { ConfirmDeleteForm } from "../../../../features/students/components/ConfirmDeleteForm";
+import { InviteCard } from "../../../../features/students/components/InviteCard";
 import { StudentForm } from "../../../../features/students/components/StudentForm";
 import { getStudent } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
@@ -83,6 +84,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           />
         </div>
       </Card>
+
+      <InviteCard studentId={student.id} linked={student.user_id !== null} />
 
       <Card className="space-y-4">
         <div>

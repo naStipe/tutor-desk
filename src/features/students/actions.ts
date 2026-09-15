@@ -1,12 +1,21 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { cancelScheduledLessonsForStudent } from "../lessons/data";
 import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
-import { archiveStudent, createStudent, deleteStudent, updateStudent } from "./data";
+import {
+  archiveStudent,
+  createStudent,
+  deleteStudent,
+  setStudentInviteToken,
+  updateStudent,
+} from "./data";
 import { studentInputSchema } from "./schemas";
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type StudentActionState = {
   error?: string;
@@ -85,6 +94,23 @@ export async function updateStudentAction(
   revalidatePath("/dashboard/students");
   revalidatePath(`/dashboard/students/${id}`);
   redirect(`/dashboard/students/${id}`);
+}
+
+export async function generateStudentInviteAction(
+  studentId: string,
+): Promise<{ token: string } | { error: string }> {
+  const { supabase } = await requireTutorId();
+
+  const token = randomBytes(24).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + INVITE_TTL_MS).toISOString();
+
+  try {
+    await setStudentInviteToken(supabase, studentId, tokenHash, expiresAt);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Unable to create invite." };
+  }
+  return { token };
 }
 
 export async function archiveStudentAction(formData: FormData) {

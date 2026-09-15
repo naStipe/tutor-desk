@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { getEnv } from "../../lib/env";
 import { createClient } from "../../lib/supabase/server";
+import { getLinkedStudentId } from "../students/data";
 import { ensureCurrentTutorProfile } from "../tutor-profile/data";
 import { signInSchema, signUpSchema } from "./schemas";
 
@@ -35,6 +36,11 @@ export async function signUpAction(
     return { message: "Check your email to confirm your account, then sign in." };
   }
 
+  const linkedStudentId = await getLinkedStudentId(supabase, data.session.user.id).catch(
+    () => null,
+  );
+  if (linkedStudentId) redirect("/portal");
+
   try {
     await ensureCurrentTutorProfile(supabase, data.session.user.id);
   } catch (error) {
@@ -55,6 +61,9 @@ export async function signInAction(
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
+
+  const linkedStudentId = await getLinkedStudentId(supabase, data.user.id).catch(() => null);
+  if (linkedStudentId) redirect("/portal");
 
   try {
     await ensureCurrentTutorProfile(supabase, data.user.id);

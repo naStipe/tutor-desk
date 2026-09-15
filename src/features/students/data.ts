@@ -5,7 +5,7 @@ import type { StudentInput } from "./schemas";
 export type Student = Database["public"]["Tables"]["student"]["Row"];
 
 const STUDENT_COLUMNS =
-  "id, tutor_id, name, email, phone, telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
+  "id, tutor_id, user_id, name, email, phone, telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
 
 export async function listActiveStudents(supabase: SupabaseClient<Database>) {
   const { data, error } = await supabase
@@ -102,4 +102,30 @@ export async function deleteStudent(supabase: SupabaseClient<Database>, id: stri
   const { error } = await supabase.from("student").delete().eq("id", id);
 
   if (error) throw new Error(`Unable to delete student: ${error.message}`);
+}
+
+/** The student row (if any) whose portal account is this signed-in user. */
+export async function getLinkedStudentId(supabase: SupabaseClient<Database>, userId: string) {
+  const { data, error } = await supabase
+    .from("student")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Unable to check linked student: ${error.message}`);
+  return data?.id ?? null;
+}
+
+export async function setStudentInviteToken(
+  supabase: SupabaseClient<Database>,
+  studentId: string,
+  tokenHash: string,
+  expiresAt: string,
+) {
+  const { error } = await supabase
+    .from("student")
+    .update({ invite_token_hash: tokenHash, invite_token_expires_at: expiresAt })
+    .eq("id", studentId);
+
+  if (error) throw new Error(`Unable to create invite: ${error.message}`);
 }

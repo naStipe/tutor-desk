@@ -17,7 +17,12 @@ import { Select } from "../../../../components/Select";
 import { addDays, formatFullDateTime, startOfDay } from "../../../../features/lessons/date-utils";
 import { getLesson, listLessonsInRange } from "../../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../../features/lessons/rates-map";
-import { type LessonStatus, PAYMENT_METHODS } from "../../../../features/lessons/schemas";
+import {
+  type LessonStatus,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+} from "../../../../features/lessons/schemas";
 import { listHomeworkForLesson } from "../../../../features/homework/data";
 import { listRatesForTutor } from "../../../../features/rates/data";
 import { listActiveStudents } from "../../../../features/students/data";
@@ -25,12 +30,6 @@ import { listSubjects } from "../../../../features/subjects/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
-  online: "Online (coming soon)",
-  invoice: "Invoice",
-  sbp: "SBP transfer",
-};
 
 export default async function LessonDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -108,6 +107,10 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             notes: lesson.notes ?? "",
             price: lesson.price !== null ? String(lesson.price) : undefined,
             currency: lesson.currency ?? undefined,
+            paymentStatus: lesson.payment_status as (typeof PAYMENT_STATUSES)[number],
+            paymentMethod: (lesson.payment_method ?? undefined) as
+              | (typeof PAYMENT_METHODS)[number]
+              | undefined,
           }}
         />
       </Card>

@@ -7,6 +7,7 @@ import { Field, inputClassName } from "../../../components/Field";
 import { DatePicker } from "../../../components/DatePicker";
 import { Select } from "../../../components/Select";
 import { CURRENCIES } from "../../rates/schemas";
+import { PAYMENT_METHODS, PAYMENT_STATUSES, type PaymentMethod, type PaymentStatus } from "../schemas";
 import type { LessonActionState } from "../actions";
 import { combineDateAndMinutes, startOfDay, toDateParam } from "../date-utils";
 import { DEFAULT_RATE_KEY } from "../rates-map";
@@ -46,6 +47,8 @@ type LessonFormProps = {
     notes: string;
     price?: string;
     currency?: string;
+    paymentStatus?: PaymentStatus;
+    paymentMethod?: PaymentMethod;
   };
   submitLabel: string;
   pendingLabel: string;
@@ -74,6 +77,12 @@ export function LessonForm({
   const [priceTouched, setPriceTouched] = useState(Boolean(defaultValues?.price));
   const [price, setPrice] = useState(defaultValues?.price ?? "");
   const [currency, setCurrency] = useState(defaultValues?.currency ?? "RUB");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(
+    defaultValues?.paymentStatus ?? "unpaid",
+  );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "">(
+    defaultValues?.paymentMethod ?? "",
+  );
   const [repeat, setRepeat] = useState(false);
 
   const rate =
@@ -171,6 +180,40 @@ export function LessonForm({
             value={currency}
             onChange={setCurrency}
             options={CURRENCIES.map((code) => ({ value: code, label: code }))}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field
+          label="Payment status"
+          htmlFor="paymentStatus"
+          errors={state.fieldErrors?.paymentStatus}
+        >
+          <Select
+            id="paymentStatus"
+            name="paymentStatus"
+            value={paymentStatus}
+            onChange={(value) => setPaymentStatus(value as PaymentStatus)}
+            options={PAYMENT_STATUSES.map((value) => ({
+              value,
+              label: value === "paid" ? "Paid" : "Unpaid",
+            }))}
+          />
+        </Field>
+
+        <Field
+          label="Payment method"
+          htmlFor="paymentMethod"
+          errors={state.fieldErrors?.paymentMethod}
+        >
+          <Select
+            id="paymentMethod"
+            name="paymentMethod"
+            value={paymentMethod}
+            onChange={(value) => setPaymentMethod(value as PaymentMethod | "")}
+            placeholder="Not set"
+            options={PAYMENT_METHODS.map((value) => ({ value, label: value }))}
           />
         </Field>
       </div>

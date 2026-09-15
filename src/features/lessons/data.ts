@@ -153,6 +153,8 @@ export async function updateLesson(
       notes: input.notes ?? null,
       price: input.price ?? null,
       currency: input.currency ?? null,
+      payment_status: input.paymentStatus,
+      payment_method: input.paymentMethod ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

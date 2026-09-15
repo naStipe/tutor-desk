@@ -6,6 +6,7 @@ import { formatTimeRange, minutesSinceMidnight, toDateParam } from "../date-util
 import { LessonForm, type RatesByStudent } from "./LessonForm";
 import type { PickerLesson } from "./LessonDateTimePicker";
 import type { LessonActionState } from "../actions";
+import type { PaymentMethod, PaymentStatus } from "../schemas";
 
 export function LessonDetailsCard({
   action,
@@ -32,6 +33,8 @@ export function LessonDetailsCard({
     notes: string;
     price?: string;
     currency?: string;
+    paymentStatus?: PaymentStatus;
+    paymentMethod?: PaymentMethod;
   };
   studentName: string;
   subjectName: string | null;

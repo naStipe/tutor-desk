@@ -9,6 +9,12 @@ export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 export const PAYMENT_METHODS = ["online", "invoice", "sbp"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  online: "Online (coming soon)",
+  invoice: "Invoice",
+  sbp: "SBP transfer",
+};
+
 export const CURRENCIES = ["RUB", "EUR"] as const;
 export type Currency = (typeof CURRENCIES)[number];
 

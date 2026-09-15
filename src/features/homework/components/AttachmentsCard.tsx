@@ -87,7 +87,10 @@ export function AttachmentsCard({
       )}
 
       {state.error && (
-        <p role="alert" className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger">
+        <p
+          role="alert"
+          className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger"
+        >
           {state.error}
         </p>
       )}

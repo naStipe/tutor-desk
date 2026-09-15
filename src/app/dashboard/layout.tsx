@@ -27,8 +27,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       listActiveStudents(client),
     ),
   ]);
-  const homeworkCount =
-    homeworkCountResult.status === "fulfilled" ? homeworkCountResult.value : 0;
+  const homeworkCount = homeworkCountResult.status === "fulfilled" ? homeworkCountResult.value : 0;
   const students = studentsResult.status === "fulfilled" ? studentsResult.value : [];
 
   return (

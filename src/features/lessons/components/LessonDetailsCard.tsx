@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "../../../components/Button";
-import { formatTimeRange, minutesSinceMidnight, toDateParam } from "../date-utils";
-import { LessonForm, type RatesByStudent } from "./LessonForm";
-import type { PickerLesson } from "./LessonDateTimePicker";
 import type { LessonActionState } from "../actions";
+import { formatTimeRange, minutesSinceMidnight, toDateParam } from "../date-utils";
 import type { PaymentMethod, PaymentStatus } from "../schemas";
+import type { PickerLesson } from "./LessonDateTimePicker";
+import { LessonForm, type RatesByStudent } from "./LessonForm";
 
 export function LessonDetailsCard({
   action,
@@ -58,7 +58,9 @@ export function LessonDetailsCard({
           <dt className="text-ink-subtle">Subject</dt>
           <dd className="text-ink">{subjectName ?? "—"}</dd>
           <dt className="text-ink-subtle">Time</dt>
-          <dd className="text-ink">{formatTimeRange(startTime.toISOString(), endTime.toISOString())}</dd>
+          <dd className="text-ink">
+            {formatTimeRange(startTime.toISOString(), endTime.toISOString())}
+          </dd>
           <dt className="text-ink-subtle">Duration</dt>
           <dd className="text-ink">{defaultValues.durationMinutes} min</dd>
           {defaultValues.notes && (

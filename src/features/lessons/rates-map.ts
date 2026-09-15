@@ -5,7 +5,11 @@ export const DEFAULT_RATE_KEY = "";
 
 export function buildRatesByStudent(
   rates: { student_id: string; subject_id: string; hourly_rate: number; currency: string }[],
-  students: { id: string; default_hourly_rate: number | null; default_currency: string | null }[] = [],
+  students: {
+    id: string;
+    default_hourly_rate: number | null;
+    default_currency: string | null;
+  }[] = [],
 ): RatesByStudent {
   const map: RatesByStudent = {};
 

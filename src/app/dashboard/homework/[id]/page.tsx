@@ -9,7 +9,11 @@ import { FeedbackForm } from "../../../../features/homework/components/FeedbackF
 import { HomeworkForm } from "../../../../features/homework/components/HomeworkForm";
 import { HomeworkStatusBadge } from "../../../../features/homework/components/HomeworkStatusBadge";
 import { SubmissionForm } from "../../../../features/homework/components/SubmissionForm";
-import { getHomework, getSignedAttachmentUrl, listAttachments } from "../../../../features/homework/data";
+import {
+  getHomework,
+  getSignedAttachmentUrl,
+  listAttachments,
+} from "../../../../features/homework/data";
 import { formatTimeRange } from "../../../../features/lessons/date-utils";
 import { listLessonsForSelect } from "../../../../features/lessons/data";
 import { listActiveStudents } from "../../../../features/students/data";
@@ -61,7 +65,9 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
   }));
 
   const links = (homework.links as { label: string | null; url: string }[] | null) ?? [];
-  const linksText = links.map((link) => (link.label ? `${link.label} | ${link.url}` : link.url)).join("\n");
+  const linksText = links
+    .map((link) => (link.label ? `${link.label} | ${link.url}` : link.url))
+    .join("\n");
 
   const dueLabel = formatDueDate(homework.due_date);
 

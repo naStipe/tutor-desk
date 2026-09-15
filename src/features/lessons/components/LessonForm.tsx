@@ -7,7 +7,12 @@ import { Field, inputClassName } from "../../../components/Field";
 import { DatePicker } from "../../../components/DatePicker";
 import { Select } from "../../../components/Select";
 import { CURRENCIES } from "../../rates/schemas";
-import { PAYMENT_METHODS, PAYMENT_STATUSES, type PaymentMethod, type PaymentStatus } from "../schemas";
+import {
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+  type PaymentMethod,
+  type PaymentStatus,
+} from "../schemas";
 import type { LessonActionState } from "../actions";
 import { combineDateAndMinutes, startOfDay, toDateParam } from "../date-utils";
 import { DEFAULT_RATE_KEY } from "../rates-map";

@@ -144,7 +144,11 @@ export function LessonsListView({
             <thead>
               <tr className="border-b border-border">
                 <th className="px-4 py-3">
-                  <button type="button" onClick={() => toggleSort("date")} className={sortHeaderClass("date")}>
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("date")}
+                    className={sortHeaderClass("date")}
+                  >
                     Date {sortKey === "date" && (sortDir === "asc" ? "↑" : "↓")}
                   </button>
                 </th>
@@ -188,7 +192,10 @@ export function LessonsListView({
                   style={{ animationDelay: `${Math.min(index, 20) * 15}ms` }}
                 >
                   <td className="px-4 py-3">
-                    <Link href={`/dashboard/lessons/${lesson.id}`} className="text-ink hover:underline">
+                    <Link
+                      href={`/dashboard/lessons/${lesson.id}`}
+                      className="text-ink hover:underline"
+                    >
                       {formatFullDateTime(lesson.startTime)}
                     </Link>
                   </td>

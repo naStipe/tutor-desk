@@ -109,7 +109,10 @@ export function StudentLessonCalendar({
         })}
       </div>
 
-      <div className="flex overflow-x-auto overflow-y-auto" style={{ maxHeight: GRID_MAX_HEIGHT_PX }}>
+      <div
+        className="flex overflow-x-auto overflow-y-auto"
+        style={{ maxHeight: GRID_MAX_HEIGHT_PX }}
+      >
         <div className="shrink-0 select-none" style={{ width: GUTTER_PX }}>
           {HOURS.map((hour) => (
             <div key={hour} className="relative text-right" style={{ height: PX_PER_HOUR }}>

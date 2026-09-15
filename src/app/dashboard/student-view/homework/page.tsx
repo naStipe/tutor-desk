@@ -33,10 +33,7 @@ export default async function StudentViewHomeworkPage({
 
   if (!selected) {
     return (
-      <EmptyState
-        title="No students yet"
-        description="Add a student to preview their homework."
-      />
+      <EmptyState title="No students yet" description="Add a student to preview their homework." />
     );
   }
 
@@ -68,7 +65,9 @@ export default async function StudentViewHomeworkPage({
                   {formatDueDate(item.due_date)}
                 </p>
                 {item.status === "reviewed" && item.feedback_text && (
-                  <p className="mt-1 truncate text-sm text-ink-muted">Feedback: {item.feedback_text}</p>
+                  <p className="mt-1 truncate text-sm text-ink-muted">
+                    Feedback: {item.feedback_text}
+                  </p>
                 )}
               </div>
               <HomeworkStatusBadge status={item.status} />

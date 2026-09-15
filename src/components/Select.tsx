@@ -83,7 +83,12 @@ export function Select({
       case "Enter":
       case " ":
         event.preventDefault();
-        openAt(Math.max(0, options.findIndex((option) => option.value === current)));
+        openAt(
+          Math.max(
+            0,
+            options.findIndex((option) => option.value === current),
+          ),
+        );
         break;
       case "Escape":
         setOpen(false);
@@ -140,7 +145,16 @@ export function Select({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
-        onClick={() => (open ? setOpen(false) : openAt(Math.max(0, options.findIndex((o) => o.value === current))))}
+        onClick={() =>
+          open
+            ? setOpen(false)
+            : openAt(
+                Math.max(
+                  0,
+                  options.findIndex((o) => o.value === current),
+                ),
+              )
+        }
         onKeyDown={handleTriggerKeyDown}
         className={
           className ??

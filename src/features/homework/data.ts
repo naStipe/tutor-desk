@@ -253,7 +253,9 @@ export const HOMEWORK_ATTACHMENTS_BUCKET = "homework-attachments";
 export async function listAttachments(supabase: SupabaseClient<Database>, homeworkId: string) {
   const { data, error } = await supabase
     .from("homework_attachment")
-    .select("id, homework_id, tutor_id, storage_path, file_name, content_type, size_bytes, created_at")
+    .select(
+      "id, homework_id, tutor_id, storage_path, file_name, content_type, size_bytes, created_at",
+    )
     .eq("homework_id", homeworkId)
     .order("created_at", { ascending: true });
 

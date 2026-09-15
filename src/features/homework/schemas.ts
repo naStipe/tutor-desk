@@ -28,27 +28,35 @@ const optionalDate = z.preprocess(
     .optional(),
 );
 
-const linkListSchema = z.preprocess((value) => {
-  if (typeof value !== "string") return value === undefined || value === null ? [] : value;
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const separatorIndex = line.indexOf("|");
-      if (separatorIndex === -1) return { label: null, url: line.trim() };
-      return {
-        label: line.slice(0, separatorIndex).trim() || null,
-        url: line.slice(separatorIndex + 1).trim(),
-      };
-    });
-}, z.array(z.object({ label: z.string().nullable(), url: z.string().url("Enter a valid URL") })).max(20, "Too many links"));
+const linkListSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value === undefined || value === null ? [] : value;
+    return value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separatorIndex = line.indexOf("|");
+        if (separatorIndex === -1) return { label: null, url: line.trim() };
+        return {
+          label: line.slice(0, separatorIndex).trim() || null,
+          url: line.slice(separatorIndex + 1).trim(),
+        };
+      });
+  },
+  z
+    .array(z.object({ label: z.string().nullable(), url: z.string().url("Enter a valid URL") }))
+    .max(20, "Too many links"),
+);
 
-const optionalTitle = z.preprocess((value) => {
-  if (typeof value !== "string") return value;
-  const trimmed = value.trim();
-  return trimmed === "" ? "Untitled homework" : trimmed;
-}, z.string().trim().max(200, "Title is too long"));
+const optionalTitle = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed === "" ? "Untitled homework" : trimmed;
+  },
+  z.string().trim().max(200, "Title is too long"),
+);
 
 export const homeworkInputSchema = z.object({
   studentId: z.string().uuid("Choose a student"),

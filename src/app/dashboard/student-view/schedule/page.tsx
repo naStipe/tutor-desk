@@ -50,7 +50,11 @@ export default async function StudentViewSchedulePage({
   const anchor = parseDateParam(dateParam);
 
   const rangeStart =
-    view === "day" ? startOfDay(anchor) : view === "month" ? startOfWeek(startOfMonth(anchor)) : startOfWeek(anchor);
+    view === "day"
+      ? startOfDay(anchor)
+      : view === "month"
+        ? startOfWeek(startOfMonth(anchor))
+        : startOfWeek(anchor);
   const rangeDays = view === "day" ? 1 : view === "month" ? 42 : 7;
   const rangeEnd = addDays(rangeStart, rangeDays);
 

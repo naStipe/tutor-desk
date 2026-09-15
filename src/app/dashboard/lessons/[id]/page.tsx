@@ -101,8 +101,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             subjectId: lesson.subject_id ?? undefined,
             startTimeIso: lesson.start_time,
             durationMinutes: Math.round(
-              (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) /
-                60000,
+              (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) / 60000,
             ),
             notes: lesson.notes ?? "",
             price: lesson.price !== null ? String(lesson.price) : undefined,
@@ -116,7 +115,11 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
       </Card>
 
       <Card>
-        <LessonHomeworkCard lessonId={lesson.id} studentId={lesson.student_id} homework={lessonHomework} />
+        <LessonHomeworkCard
+          lessonId={lesson.id}
+          studentId={lesson.student_id}
+          homework={lessonHomework}
+        />
       </Card>
 
       <Card className="space-y-4">

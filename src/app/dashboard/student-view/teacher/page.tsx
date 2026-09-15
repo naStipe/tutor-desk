@@ -40,7 +40,10 @@ export default async function StudentViewTeacherPage() {
       </Card>
 
       {subjects.length === 0 ? (
-        <EmptyState title="No subjects yet" description="Your tutor hasn't added any subjects yet." />
+        <EmptyState
+          title="No subjects yet"
+          description="Your tutor hasn't added any subjects yet."
+        />
       ) : (
         <Card>
           <h2 className="mb-3 text-sm font-semibold text-ink">Subjects taught</h2>

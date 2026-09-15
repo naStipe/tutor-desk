@@ -47,7 +47,10 @@ export default async function StudentViewLessonsPage({
       <PageHeader title="Lessons" description={`Every lesson for ${selected.name}`} />
 
       {lessons.length === 0 ? (
-        <EmptyState title="No lessons yet" description={`${selected.name} has no lessons on record.`} />
+        <EmptyState
+          title="No lessons yet"
+          description={`${selected.name} has no lessons on record.`}
+        />
       ) : (
         <Card className="overflow-x-auto p-0">
           <table className="w-full min-w-[560px] text-sm">

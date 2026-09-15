@@ -42,8 +42,7 @@ export function TimeSlotGrid({
       minutesSinceMidnight(new Date(busy.end)),
     ]),
   ];
-  const startMinutesBound =
-    Math.floor(Math.min(...boundaryMinutes) / SLOT_STEP) * SLOT_STEP;
+  const startMinutesBound = Math.floor(Math.min(...boundaryMinutes) / SLOT_STEP) * SLOT_STEP;
   const endMinutesBound = Math.ceil(Math.max(...boundaryMinutes) / SLOT_STEP) * SLOT_STEP;
 
   for (
@@ -61,7 +60,9 @@ export function TimeSlotGrid({
     );
     const noFit =
       !occupied &&
-      busyIntervals.some((busy) => slotStart.getTime() < busy.end && slotEnd.getTime() > busy.start);
+      busyIntervals.some(
+        (busy) => slotStart.getTime() < busy.end && slotEnd.getTime() > busy.start,
+      );
 
     const reason: SlotReason = isPast
       ? "past"
@@ -74,7 +75,9 @@ export function TimeSlotGrid({
   }
 
   if (slots.length === 0) {
-    return <p className="text-sm text-ink-subtle">This duration doesn't fit on the selected day.</p>;
+    return (
+      <p className="text-sm text-ink-subtle">This duration doesn't fit on the selected day.</p>
+    );
   }
 
   const anchorMinutes = hoveredMinutes ?? selectedMinutes;

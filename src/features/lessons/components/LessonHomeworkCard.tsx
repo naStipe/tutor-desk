@@ -41,7 +41,9 @@ export function LessonHomeworkCard({
               >
                 {item.title}
               </Link>
-              <span className="shrink-0 text-xs text-ink-subtle">{formatDueDate(item.due_date)}</span>
+              <span className="shrink-0 text-xs text-ink-subtle">
+                {formatDueDate(item.due_date)}
+              </span>
               <HomeworkStatusBadge status={item.status} />
             </li>
           ))}

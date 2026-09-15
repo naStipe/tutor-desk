@@ -14,13 +14,7 @@ import { LessonHomeworkCard } from "../../../../features/lessons/components/Less
 import { LessonStatusActions } from "../../../../features/lessons/components/LessonStatusActions";
 import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
 import { Select } from "../../../../components/Select";
-import {
-  addDays,
-  formatFullDateTime,
-  minutesSinceMidnight,
-  startOfDay,
-  toDateParam,
-} from "../../../../features/lessons/date-utils";
+import { addDays, formatFullDateTime, startOfDay } from "../../../../features/lessons/date-utils";
 import { getLesson, listLessonsInRange } from "../../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../../features/lessons/rates-map";
 import { type LessonStatus, PAYMENT_METHODS } from "../../../../features/lessons/schemas";
@@ -106,8 +100,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           defaultValues={{
             studentId: lesson.student_id,
             subjectId: lesson.subject_id ?? undefined,
-            dateParam: toDateParam(new Date(lesson.start_time)),
-            minutes: minutesSinceMidnight(new Date(lesson.start_time)),
+            startTimeIso: lesson.start_time,
             durationMinutes: Math.round(
               (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) /
                 60000,

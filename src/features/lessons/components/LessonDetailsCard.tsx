@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "../../../components/Button";
-import { combineDateAndMinutes, formatTimeRange } from "../date-utils";
+import { formatTimeRange, minutesSinceMidnight, toDateParam } from "../date-utils";
 import { LessonForm, type RatesByStudent } from "./LessonForm";
 import type { PickerLesson } from "./LessonDateTimePicker";
 import type { LessonActionState } from "../actions";
@@ -27,8 +27,7 @@ export function LessonDetailsCard({
   defaultValues: {
     studentId: string;
     subjectId?: string;
-    dateParam: string;
-    minutes: number;
+    startTimeIso: string;
     durationMinutes: number;
     notes: string;
     price?: string;
@@ -38,7 +37,7 @@ export function LessonDetailsCard({
   subjectName: string | null;
 }) {
   const [editing, setEditing] = useState(false);
-  const startTime = combineDateAndMinutes(defaultValues.dateParam, defaultValues.minutes);
+  const startTime = new Date(defaultValues.startTimeIso);
   const endTime = new Date(startTime.getTime() + defaultValues.durationMinutes * 60000);
 
   if (!editing) {
@@ -80,7 +79,11 @@ export function LessonDetailsCard({
         subjects={subjects}
         ratesByStudent={ratesByStudent}
         pickerLessons={pickerLessons}
-        defaultValues={defaultValues}
+        defaultValues={{
+          ...defaultValues,
+          dateParam: toDateParam(startTime),
+          minutes: minutesSinceMidnight(startTime),
+        }}
         submitLabel="Save changes"
         pendingLabel="Saving…"
         onCancel={() => setEditing(false)}

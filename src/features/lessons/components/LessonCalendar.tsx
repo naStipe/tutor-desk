@@ -50,6 +50,9 @@ function snap(minutes: number) {
   return Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
 }
 
+const TOUCH_LONG_PRESS_MS = 350;
+const TOUCH_CANCEL_PX = 8;
+
 type DragState = {
   id: string;
   pointerId: number;
@@ -59,6 +62,9 @@ type DragState = {
   originStartMinutes: number;
   durationMinutes: number;
   moved: boolean;
+  /** Mouse/pen drag immediately; touch must survive a long-press first, so a scroll isn't hijacked. */
+  armed: boolean;
+  longPressTimer: ReturnType<typeof setTimeout> | null;
 };
 
 export function LessonCalendar({
@@ -159,22 +165,50 @@ export function LessonCalendar({
     event.stopPropagation();
     const start = new Date(lesson.startTime);
     const end = new Date(lesson.endTime);
-    dragRef.current = {
+    const isTouch = event.pointerType === "touch";
+    const target = event.currentTarget;
+    const pointerId = event.pointerId;
+    const state: DragState = {
       id: lesson.id,
-      pointerId: event.pointerId,
+      pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
       originDayIndex: dayIndex,
       originStartMinutes: minutesSinceMidnight(start),
       durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
       moved: false,
+      armed: !isTouch,
+      longPressTimer: null,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = state;
+
+    if (isTouch) {
+      // Don't capture the pointer yet: touch-action: pan-y lets a vertical scroll pass through
+      // natively until the long-press fires, so scrolling the page never gets hijacked into a drag.
+      state.longPressTimer = setTimeout(() => {
+        if (dragRef.current !== state) return;
+        state.armed = true;
+        target.setPointerCapture(pointerId);
+      }, TOUCH_LONG_PRESS_MS);
+    } else {
+      target.setPointerCapture(pointerId);
+    }
   }
 
   function handleBlockPointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
     const drag = dragRef.current;
     if (!drag || event.pointerId !== drag.pointerId) return;
+
+    if (!drag.armed) {
+      const dx0 = event.clientX - drag.startClientX;
+      const dy0 = event.clientY - drag.startClientY;
+      if (Math.hypot(dx0, dy0) > TOUCH_CANCEL_PX) {
+        // Moved before the long-press armed: this is a scroll, not a drag. Let it through.
+        if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
+        dragRef.current = null;
+      }
+      return;
+    }
 
     const dx = event.clientX - drag.startClientX;
     const dy = event.clientY - drag.startClientY;
@@ -186,6 +220,14 @@ export function LessonCalendar({
     setDragPreview({ id: drag.id, dayIndex, startMinutes });
   }
 
+  function handleBlockPointerCancel(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
+    dragRef.current = null;
+    setDragPreview(null);
+  }
+
   function handleBlockPointerUp(
     event: ReactPointerEvent<HTMLButtonElement>,
     lesson: CalendarLesson,
@@ -193,8 +235,9 @@ export function LessonCalendar({
     const drag = dragRef.current;
     dragRef.current = null;
     if (!drag || event.pointerId !== drag.pointerId) return;
+    if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
 
-    if (!drag.moved) {
+    if (!drag.armed || !drag.moved) {
       setDragPreview(null);
       router.push(`/dashboard/lessons/${lesson.id}`);
       return;
@@ -416,7 +459,8 @@ export function LessonCalendar({
                       onPointerDown={(event) => handleBlockPointerDown(event, lesson, dayIndex)}
                       onPointerMove={handleBlockPointerMove}
                       onPointerUp={(event) => handleBlockPointerUp(event, lesson)}
-                      className={`absolute z-20 overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
+                      onPointerCancel={handleBlockPointerCancel}
+                      className={`absolute z-20 touch-pan-y overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
                       style={{
                         top,
                         height,

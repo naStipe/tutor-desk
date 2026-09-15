@@ -49,8 +49,8 @@ const optionalPrice = z.preprocess((value) => {
   return value;
 }, z.coerce
   .number()
-  .int("Price must be a whole number")
   .min(0, "Price can't be negative")
+  .multipleOf(0.01, "Price can have at most 2 decimal places")
   .optional());
 
 export const lessonInputSchema = z.object({

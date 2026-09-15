@@ -16,6 +16,7 @@ export async function ensureCurrentTutorProfile(
 }
 
 const FALLBACK_TIMEZONE = "UTC";
+const FALLBACK_LOCALE = "en-US";
 
 export async function getTutorTimezone(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase
@@ -26,4 +27,19 @@ export async function getTutorTimezone(supabase: SupabaseClient<Database>, userI
 
   if (error) throw new Error(`Unable to load tutor timezone: ${error.message}`);
   return data?.timezone ?? FALLBACK_TIMEZONE;
+}
+
+/** Wall-clock formatting settings for a tutor: their configured timezone and display locale. */
+export async function getTutorFormatSettings(supabase: SupabaseClient<Database>, userId: string) {
+  const { data, error } = await supabase
+    .from("tutor_profile")
+    .select("timezone, locale")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Unable to load tutor settings: ${error.message}`);
+  return {
+    timeZone: data?.timezone ?? FALLBACK_TIMEZONE,
+    locale: data?.locale ?? FALLBACK_LOCALE,
+  };
 }

@@ -58,12 +58,13 @@ export function parseDateParam(value: string | undefined): Date {
   return new Date();
 }
 
-// A fixed locale keeps date/time text readable regardless of the server's OS locale
-// (observed to render malformed strings for some option combinations under non-US locales).
+// Falls back to a fixed locale when the tutor's own locale isn't known yet, keeping date/time
+// text readable regardless of the server's OS locale (observed to render malformed strings for
+// some option combinations under non-US locales).
 const DISPLAY_LOCALE = "en-US";
 
-export function formatDayHeading(date: Date, timeZone?: string) {
-  return date.toLocaleDateString(DISPLAY_LOCALE, {
+export function formatDayHeading(date: Date, timeZone?: string, locale = DISPLAY_LOCALE) {
+  return date.toLocaleDateString(locale, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -71,16 +72,16 @@ export function formatDayHeading(date: Date, timeZone?: string) {
   });
 }
 
-export function formatWeekRange(weekStart: Date, timeZone?: string) {
+export function formatWeekRange(weekStart: Date, timeZone?: string, locale = DISPLAY_LOCALE) {
   const weekEnd = addDays(weekStart, 6);
-  const startLabel = weekStart.toLocaleDateString(DISPLAY_LOCALE, {
+  const startLabel = weekStart.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     timeZone,
   });
   // Always include the month (some JS date-formatting implementations mis-render a
   // day+year-only combination), even when start and end fall in the same month.
-  const endLabel = weekEnd.toLocaleDateString(DISPLAY_LOCALE, {
+  const endLabel = weekEnd.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -89,15 +90,20 @@ export function formatWeekRange(weekStart: Date, timeZone?: string) {
   return `${startLabel} – ${endLabel}`;
 }
 
-export function formatTimeRange(startIso: string, endIso: string, timeZone?: string) {
+export function formatTimeRange(
+  startIso: string,
+  endIso: string,
+  timeZone?: string,
+  locale = DISPLAY_LOCALE,
+) {
   const options: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", timeZone };
-  const start = new Date(startIso).toLocaleTimeString(DISPLAY_LOCALE, options);
-  const end = new Date(endIso).toLocaleTimeString(DISPLAY_LOCALE, options);
+  const start = new Date(startIso).toLocaleTimeString(locale, options);
+  const end = new Date(endIso).toLocaleTimeString(locale, options);
   return `${start} – ${end}`;
 }
 
-export function formatFullDateTime(iso: string, timeZone?: string) {
-  return new Date(iso).toLocaleString(DISPLAY_LOCALE, {
+export function formatFullDateTime(iso: string, timeZone?: string, locale = DISPLAY_LOCALE) {
+  return new Date(iso).toLocaleString(locale, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -125,12 +131,12 @@ export function formatHourLabel(hour: number) {
   return `${displayHour} ${period}`;
 }
 
-export function formatWeekdayShort(date: Date, timeZone?: string) {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { weekday: "short", timeZone });
+export function formatWeekdayShort(date: Date, timeZone?: string, locale = DISPLAY_LOCALE) {
+  return date.toLocaleDateString(locale, { weekday: "short", timeZone });
 }
 
-export function formatMonthHeading(date: Date, timeZone?: string) {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { month: "long", year: "numeric", timeZone });
+export function formatMonthHeading(date: Date, timeZone?: string, locale = DISPLAY_LOCALE) {
+  return date.toLocaleDateString(locale, { month: "long", year: "numeric", timeZone });
 }
 
 export function formatMinutesOfDay(minutes: number) {

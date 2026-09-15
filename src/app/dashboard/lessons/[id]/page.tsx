@@ -21,7 +21,7 @@ import {
   type LessonStatus,
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
-  PAYMENT_STATUSES,
+  type PAYMENT_STATUSES,
 } from "../../../../features/lessons/schemas";
 import { listHomeworkForLesson } from "../../../../features/homework/data";
 import { listRatesForTutor } from "../../../../features/rates/data";

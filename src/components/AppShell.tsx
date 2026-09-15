@@ -102,7 +102,12 @@ function NavLinks({
       {items.map((item) => {
         const active = item.exact ? pathname === item.match : pathname.startsWith(item.match);
         return (
-          <Link key={item.match} href={item.href} onClick={onNavigate}>
+          <Link
+            key={item.match}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+          >
             <NavPill active={active} count={item.label === "Homework" ? homeworkCount : undefined}>
               {item.label}
             </NavPill>

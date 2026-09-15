@@ -16,6 +16,16 @@ function addMinutes(iso: string, minutes: number) {
   return new Date(new Date(iso).getTime() + minutes * 60000).toISOString();
 }
 
+/** Postgres exclusion_violation, raised by the (tutor_id, time range) no-overlap constraint. */
+const CONFLICT_ERROR_CODE = "23P01";
+
+function lessonWriteErrorMessage(error: { code?: string; message: string }, fallback: string) {
+  if (error.code === CONFLICT_ERROR_CODE) {
+    return "This time overlaps another lesson. Choose a different time.";
+  }
+  return `${fallback}: ${error.message}`;
+}
+
 export async function listLessonsInRange(
   supabase: SupabaseClient<Database>,
   range: { start: string; end: string },
@@ -174,7 +184,7 @@ export async function createLesson(
     .select(LESSON_COLUMNS)
     .single();
 
-  if (error) throw new Error(`Unable to schedule lesson: ${error.message}`);
+  if (error) throw new Error(lessonWriteErrorMessage(error, "Unable to schedule lesson"));
   return data as unknown as LessonWithStudent;
 }
 
@@ -201,7 +211,7 @@ export async function updateLesson(
     .select(LESSON_COLUMNS)
     .single();
 
-  if (error) throw new Error(`Unable to update lesson: ${error.message}`);
+  if (error) throw new Error(lessonWriteErrorMessage(error, "Unable to update lesson"));
   return data as unknown as LessonWithStudent;
 }
 
@@ -218,7 +228,7 @@ export async function updateLessonTime(
     .select(LESSON_COLUMNS)
     .single();
 
-  if (error) throw new Error(`Unable to move lesson: ${error.message}`);
+  if (error) throw new Error(lessonWriteErrorMessage(error, "Unable to move lesson"));
   return data as unknown as LessonWithStudent;
 }
 
@@ -369,19 +379,30 @@ export async function insertGeneratedLessons(
   }[],
 ) {
   if (rows.length === 0) return;
-  const { error } = await supabase.from("lesson").insert(
-    rows.map((row) => ({
-      tutor_id: row.tutorId,
-      student_id: row.studentId,
-      subject_id: row.subjectId,
-      series_id: row.seriesId,
-      start_time: row.startTime,
-      end_time: row.endTime,
-      price: row.price,
-      currency: row.currency,
-    })),
-  );
-  if (error) throw new Error(`Unable to generate recurring lessons: ${error.message}`);
+  const payload = rows.map((row) => ({
+    tutor_id: row.tutorId,
+    student_id: row.studentId,
+    subject_id: row.subjectId,
+    series_id: row.seriesId,
+    start_time: row.startTime,
+    end_time: row.endTime,
+    price: row.price,
+    currency: row.currency,
+  }));
+  const { error } = await supabase.from("lesson").insert(payload);
+  if (!error) return;
+  if (error.code !== CONFLICT_ERROR_CODE) {
+    throw new Error(`Unable to generate recurring lessons: ${error.message}`);
+  }
+
+  // One occurrence overlapping an unrelated lesson shouldn't block the rest of the series:
+  // fall back to inserting one at a time and skip whichever rows conflict.
+  for (const row of payload) {
+    const { error: rowError } = await supabase.from("lesson").insert(row);
+    if (rowError && rowError.code !== CONFLICT_ERROR_CODE) {
+      throw new Error(`Unable to generate recurring lessons: ${rowError.message}`);
+    }
+  }
 }
 
 export async function updateSeriesGeneratedUntil(

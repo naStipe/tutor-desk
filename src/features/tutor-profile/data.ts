@@ -14,3 +14,16 @@ export async function ensureCurrentTutorProfile(
   if (error) throw new Error(`Unable to initialize tutor profile: ${error.message}`);
   return profile;
 }
+
+const FALLBACK_TIMEZONE = "UTC";
+
+export async function getTutorTimezone(supabase: SupabaseClient<Database>, userId: string) {
+  const { data, error } = await supabase
+    .from("tutor_profile")
+    .select("timezone")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Unable to load tutor timezone: ${error.message}`);
+  return data?.timezone ?? FALLBACK_TIMEZONE;
+}

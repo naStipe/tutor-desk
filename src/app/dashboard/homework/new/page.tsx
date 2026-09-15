@@ -8,6 +8,7 @@ import { listLessonsForSelect } from "../../../../features/lessons/data";
 import { formatTimeRange } from "../../../../features/lessons/date-utils";
 import { listActiveStudents } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
+import { getTutorTimezone } from "../../../../features/tutor-profile/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -19,15 +20,19 @@ export default async function NewHomeworkPage({
 }) {
   const { studentId, lessonId } = await searchParams;
   const supabase = await createClient();
-  const [students, lessons, subjects] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const [students, lessons, subjects, timeZone] = await Promise.all([
     listActiveStudents(supabase),
     listLessonsForSelect(supabase),
     listSubjects(supabase),
+    user ? getTutorTimezone(supabase, user.id) : Promise.resolve(undefined),
   ]);
 
   const lessonOptions = lessons.map((lesson) => ({
     id: lesson.id,
-    label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${formatTimeRange(lesson.start_time, lesson.end_time)}`,
+    label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone })}, ${formatTimeRange(lesson.start_time, lesson.end_time, timeZone)}`,
   }));
 
   return (

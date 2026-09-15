@@ -27,6 +27,7 @@ import { listHomeworkForLesson } from "../../../../features/homework/data";
 import { listRatesForTutor } from "../../../../features/rates/data";
 import { listActiveStudents } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
+import { getTutorTimezone } from "../../../../features/tutor-profile/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +54,8 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     ]);
   if (!lesson) notFound();
 
+  const timeZone = await getTutorTimezone(supabase, lesson.tutor_id);
+
   const pickerLessons = pickerLessonRows.map((row) => ({
     id: row.id,
     startTime: row.start_time,
@@ -68,7 +71,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     <div className="max-w-xl space-y-6">
       <PageHeader
         title={lesson.student?.name ?? "Lesson"}
-        description={formatFullDateTime(lesson.start_time)}
+        description={formatFullDateTime(lesson.start_time, timeZone)}
         avatar={<Avatar name={lesson.student?.name ?? "?"} />}
         actions={
           <Link href="/dashboard/lessons" className="text-sm text-ink-muted hover:text-ink">

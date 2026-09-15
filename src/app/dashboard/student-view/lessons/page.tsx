@@ -7,6 +7,7 @@ import { StatusBadge } from "../../../../features/lessons/components/StatusBadge
 import { formatFullDateTime } from "../../../../features/lessons/date-utils";
 import { listLessonsForStudent } from "../../../../features/lessons/data";
 import { resolveViewedStudent } from "../../../../features/student-view/resolve";
+import { getTutorTimezone } from "../../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
 import { getCurrentUser } from "../../../../lib/supabase/current-user";
 import { createTokenClient } from "../../../../lib/supabase/token-client";
@@ -34,13 +35,16 @@ export default async function StudentViewLessonsPage({
     );
   }
 
-  const lessons = await cachedForTutor(
-    "student-view-lessons",
-    [user.id, selected.id],
-    [tutorTag("lessons", user.id)],
-    30,
-    () => listLessonsForStudent(client, selected.id),
-  );
+  const [lessons, timeZone] = await Promise.all([
+    cachedForTutor(
+      "student-view-lessons",
+      [user.id, selected.id],
+      [tutorTag("lessons", user.id)],
+      30,
+      () => listLessonsForStudent(client, selected.id),
+    ),
+    getTutorTimezone(client, user.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -73,7 +77,9 @@ export default async function StudentViewLessonsPage({
             <tbody>
               {lessons.map((lesson) => (
                 <tr key={lesson.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-4 py-3 text-ink">{formatFullDateTime(lesson.start_time)}</td>
+                  <td className="px-4 py-3 text-ink">
+                    {formatFullDateTime(lesson.start_time, timeZone)}
+                  </td>
                   <td className="px-4 py-3 text-ink-muted">{lesson.subject?.name ?? "—"}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={lesson.status} />

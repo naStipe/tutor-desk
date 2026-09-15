@@ -62,19 +62,21 @@ export function parseDateParam(value: string | undefined): Date {
 // (observed to render malformed strings for some option combinations under non-US locales).
 const DISPLAY_LOCALE = "en-US";
 
-export function formatDayHeading(date: Date) {
+export function formatDayHeading(date: Date, timeZone?: string) {
   return date.toLocaleDateString(DISPLAY_LOCALE, {
     weekday: "long",
     month: "long",
     day: "numeric",
+    timeZone,
   });
 }
 
-export function formatWeekRange(weekStart: Date) {
+export function formatWeekRange(weekStart: Date, timeZone?: string) {
   const weekEnd = addDays(weekStart, 6);
   const startLabel = weekStart.toLocaleDateString(DISPLAY_LOCALE, {
     month: "short",
     day: "numeric",
+    timeZone,
   });
   // Always include the month (some JS date-formatting implementations mis-render a
   // day+year-only combination), even when start and end fall in the same month.
@@ -82,24 +84,26 @@ export function formatWeekRange(weekStart: Date) {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone,
   });
   return `${startLabel} – ${endLabel}`;
 }
 
-export function formatTimeRange(startIso: string, endIso: string) {
-  const options: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
+export function formatTimeRange(startIso: string, endIso: string, timeZone?: string) {
+  const options: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", timeZone };
   const start = new Date(startIso).toLocaleTimeString(DISPLAY_LOCALE, options);
   const end = new Date(endIso).toLocaleTimeString(DISPLAY_LOCALE, options);
   return `${start} – ${end}`;
 }
 
-export function formatFullDateTime(iso: string) {
+export function formatFullDateTime(iso: string, timeZone?: string) {
   return new Date(iso).toLocaleString(DISPLAY_LOCALE, {
     weekday: "long",
     month: "long",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone,
   });
 }
 
@@ -121,12 +125,12 @@ export function formatHourLabel(hour: number) {
   return `${displayHour} ${period}`;
 }
 
-export function formatWeekdayShort(date: Date) {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { weekday: "short" });
+export function formatWeekdayShort(date: Date, timeZone?: string) {
+  return date.toLocaleDateString(DISPLAY_LOCALE, { weekday: "short", timeZone });
 }
 
-export function formatMonthHeading(date: Date) {
-  return date.toLocaleDateString(DISPLAY_LOCALE, { month: "long", year: "numeric" });
+export function formatMonthHeading(date: Date, timeZone?: string) {
+  return date.toLocaleDateString(DISPLAY_LOCALE, { month: "long", year: "numeric", timeZone });
 }
 
 export function formatMinutesOfDay(minutes: number) {

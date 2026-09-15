@@ -11,6 +11,7 @@ import {
   useTransition,
 } from "react";
 import { moveLessonAction } from "../actions";
+import { layoutDayIntervals } from "../calendar-layout";
 import {
   formatHourLabel,
   formatMinutesOfDay,
@@ -353,6 +354,13 @@ export function LessonCalendar({
             const dayLessons = lessons.filter((lesson) =>
               isSameDay(new Date(lesson.startTime), day),
             );
+            const dayLayout = layoutDayIntervals(
+              dayLessons.map((lesson) => ({
+                id: lesson.id,
+                startMinutes: minutesSinceMidnight(new Date(lesson.startTime)),
+                endMinutes: minutesSinceMidnight(new Date(lesson.endTime)),
+              })),
+            );
 
             return (
               // biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only calendar creation, keyboard users use the "Schedule lesson" button
@@ -396,6 +404,10 @@ export function LessonCalendar({
                   const height = Math.max((durationMinutes / 60) * PX_PER_HOUR, 22);
                   const compact = height < 40;
                   const isHighlighted = highlightLessonId === lesson.id;
+                  const layout = dayLayout.get(lesson.id);
+                  const columns = isDragging ? 1 : (layout?.columns ?? 1);
+                  const column = isDragging ? 0 : (layout?.column ?? 0);
+                  const widthPct = 100 / columns;
 
                   return (
                     <button
@@ -404,8 +416,13 @@ export function LessonCalendar({
                       onPointerDown={(event) => handleBlockPointerDown(event, lesson, dayIndex)}
                       onPointerMove={handleBlockPointerMove}
                       onPointerUp={(event) => handleBlockPointerUp(event, lesson)}
-                      className={`absolute inset-x-1 z-20 overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
-                      style={{ top, height }}
+                      className={`absolute z-20 overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
+                      style={{
+                        top,
+                        height,
+                        left: `calc(${column * widthPct}% + 2px)`,
+                        width: `calc(${widthPct}% - 4px)`,
+                      }}
                     >
                       <span className="block truncate font-medium leading-tight">
                         {formatMinutesOfDay(startMinutes)} · {lesson.studentName}

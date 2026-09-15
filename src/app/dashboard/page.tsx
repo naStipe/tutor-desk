@@ -14,7 +14,16 @@ export default async function DashboardPage() {
   if (!user) redirect("/sign-in");
 
   const client = accessToken ? createTokenClient(accessToken) : supabase;
-  const generatedNewLessons = await ensureUpcomingLessonsGenerated(client, user.id);
+
+  // Shares its cache key with the schedule page's gate: series generation is a write path,
+  // expensive to check on every navigation, and only matters once new occurrences fall due.
+  const generatedNewLessons = await cachedForTutor(
+    "ensure-lessons-generated",
+    [user.id],
+    [tutorTag("lessons", user.id)],
+    3600,
+    () => ensureUpcomingLessonsGenerated(client, user.id),
+  );
 
   const { todaysLessons, homeworkAttention, unbilled, weekLoad } = generatedNewLessons
     ? await getTodayDashboardData(client)

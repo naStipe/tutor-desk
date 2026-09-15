@@ -18,6 +18,8 @@ function addMinutes(iso: string, minutes: number) {
 
 /** Postgres exclusion_violation, raised by the (tutor_id, time range) no-overlap constraint. */
 const CONFLICT_ERROR_CODE = "23P01";
+/** Postgres unique_violation, raised by the (series_id, start_time) no-duplicate constraint. */
+const DUPLICATE_ERROR_CODE = "23505";
 
 function lessonWriteErrorMessage(error: { code?: string; message: string }, fallback: string) {
   if (error.code === CONFLICT_ERROR_CODE) {
@@ -393,15 +395,20 @@ export async function insertGeneratedLessons(
   }));
   const { error } = await supabase.from("lesson").insert(payload);
   if (!error) return;
-  if (error.code !== CONFLICT_ERROR_CODE) {
+  if (error.code !== CONFLICT_ERROR_CODE && error.code !== DUPLICATE_ERROR_CODE) {
     throw new Error(`Unable to generate recurring lessons: ${error.message}`);
   }
 
-  // One occurrence overlapping an unrelated lesson shouldn't block the rest of the series:
-  // fall back to inserting one at a time and skip whichever rows conflict.
+  // One occurrence overlapping an unrelated lesson, or one a concurrent request already
+  // generated, shouldn't block the rest of the series: fall back to inserting one at a time and
+  // skip whichever rows conflict.
   for (const row of payload) {
     const { error: rowError } = await supabase.from("lesson").insert(row);
-    if (rowError && rowError.code !== CONFLICT_ERROR_CODE) {
+    if (
+      rowError &&
+      rowError.code !== CONFLICT_ERROR_CODE &&
+      rowError.code !== DUPLICATE_ERROR_CODE
+    ) {
       throw new Error(`Unable to generate recurring lessons: ${rowError.message}`);
     }
   }

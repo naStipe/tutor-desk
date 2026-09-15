@@ -2,12 +2,16 @@ import { redirect } from "next/navigation";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { AuthForm } from "../../../features/auth/components/AuthForm";
 import { signUpAction, signInWithGoogleAction } from "../../../features/auth/actions";
+import { getLinkedStudentId } from "../../../features/students/data";
 import { createClient } from "../../../lib/supabase/server";
 
 export default async function SignUpPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
-  if (data.user) redirect("/dashboard");
+  if (data.user) {
+    const linkedStudentId = await getLinkedStudentId(supabase, data.user.id).catch(() => null);
+    redirect(linkedStudentId ? "/portal" : "/dashboard");
+  }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center p-6">

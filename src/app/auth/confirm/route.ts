@@ -9,7 +9,11 @@ import { createClient } from "../../../lib/supabase/server";
 const INVITE_COMPLETE_PATTERN = /^\/invite\/([A-Za-z0-9_-]+)\/complete$/;
 
 const nextSchema = z
-  .union([z.literal("/dashboard"), z.string().regex(INVITE_COMPLETE_PATTERN)])
+  .union([
+    z.literal("/dashboard"),
+    z.literal("/reset-password"),
+    z.string().regex(INVITE_COMPLETE_PATTERN),
+  ])
   .default("/dashboard");
 
 const tokenHashSchema = z.object({
@@ -51,6 +55,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (!userId) return NextResponse.redirect(new URL("/sign-in?error=profile", siteUrl));
+
+  if (next === "/reset-password") return NextResponse.redirect(new URL(next, siteUrl));
 
   const inviteMatch = next.match(INVITE_COMPLETE_PATTERN);
   if (inviteMatch) {

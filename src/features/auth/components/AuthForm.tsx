@@ -32,6 +32,7 @@ type AuthFormProps = {
   alternateHref: string;
   alternateLabel: string;
   notice?: string;
+  forgotPasswordHref?: string;
 };
 
 export function AuthForm(props: AuthFormProps) {
@@ -86,9 +87,19 @@ export function AuthForm(props: AuthFormProps) {
           ))}
         </div>
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink">
-            Password
-          </label>
+          <div className="mb-1 flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium text-ink">
+              Password
+            </label>
+            {props.forgotPasswordHref && (
+              <Link
+                href={props.forgotPasswordHref}
+                className="text-xs font-medium text-brand underline underline-offset-2"
+              >
+                Forgot password?
+              </Link>
+            )}
+          </div>
           <input
             id="password"
             name="password"

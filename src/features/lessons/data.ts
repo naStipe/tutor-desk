@@ -63,15 +63,55 @@ export async function listLessonsForStudent(
   return data as unknown as LessonWithStudent[];
 }
 
-export async function listAllLessonsForTutor(supabase: SupabaseClient<Database>, limit = 1000) {
-  const { data, error } = await supabase
-    .from("lesson")
-    .select(LESSON_COLUMNS)
-    .order("start_time", { ascending: false })
-    .limit(limit);
+export type LessonListSortKey = "date" | "student" | "subject" | "status";
+
+const LESSON_SORT_COLUMNS: Record<LessonListSortKey, { column: string; foreignTable?: string }> = {
+  date: { column: "start_time" },
+  student: { column: "name", foreignTable: "student" },
+  subject: { column: "name", foreignTable: "subject" },
+  status: { column: "status" },
+};
+
+export async function listLessonsPage(
+  supabase: SupabaseClient<Database>,
+  options: {
+    status?: LessonStatus;
+    studentId?: string;
+    subjectId?: string;
+    sortKey?: LessonListSortKey;
+    sortDir?: "asc" | "desc";
+    page?: number;
+    pageSize?: number;
+  } = {},
+) {
+  const {
+    status,
+    studentId,
+    subjectId,
+    sortKey = "date",
+    sortDir = "desc",
+    page = 1,
+    pageSize = 50,
+  } = options;
+
+  let query = supabase.from("lesson").select(LESSON_COLUMNS, { count: "exact" });
+
+  if (status) query = query.eq("status", status);
+  if (studentId) query = query.eq("student_id", studentId);
+  if (subjectId) query = query.eq("subject_id", subjectId);
+
+  const sort = LESSON_SORT_COLUMNS[sortKey];
+  const ascending = sortDir === "asc";
+  query = sort.foreignTable
+    ? query.order(sort.column, { ascending, foreignTable: sort.foreignTable })
+    : query.order(sort.column, { ascending });
+  if (sortKey !== "date") query = query.order("start_time", { ascending: false });
+
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await query.range(from, from + pageSize - 1);
 
   if (error) throw new Error(`Unable to load lessons: ${error.message}`);
-  return data as unknown as LessonWithStudent[];
+  return { lessons: data as unknown as LessonWithStudent[], totalCount: count ?? 0 };
 }
 
 export async function listUpcomingLessons(supabase: SupabaseClient<Database>, limit = 5) {

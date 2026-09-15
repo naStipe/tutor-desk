@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "../../../components/Avatar";
-import { LinkButton } from "../../../components/Button";
+import { Button, LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
 import { BookIcon } from "../../../components/icons";
@@ -37,21 +37,36 @@ export function HomeworkListView({
   homework,
   students,
   subjects,
+  studentFilter,
+  subjectFilter,
+  page,
+  pageSize,
+  totalCount,
 }: {
   homework: ListHomework[];
   students: { id: string; name: string }[];
   subjects: { id: string; name: string }[];
+  studentFilter: string;
+  subjectFilter: string;
+  page: number;
+  pageSize: number;
+  totalCount: number;
 }) {
-  const [studentFilter, setStudentFilter] = useState("all");
-  const [subjectFilter, setSubjectFilter] = useState("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const filtered = useMemo(() => {
-    return homework.filter((item) => {
-      if (studentFilter !== "all" && item.studentId !== studentFilter) return false;
-      if (subjectFilter !== "all" && item.subjectId !== subjectFilter) return false;
-      return true;
-    });
-  }, [homework, studentFilter, subjectFilter]);
+  function pushParams(updates: Record<string, string | null>) {
+    const next = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === "all") next.delete(key);
+      else next.set(key, value);
+    }
+    if (!("page" in updates)) next.delete("page");
+    router.push(`${pathname}?${next.toString()}`);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div className="space-y-6">
@@ -61,11 +76,11 @@ export function HomeworkListView({
         actions={<LinkButton href="/dashboard/homework/new">Add homework</LinkButton>}
       />
 
-      {homework.length > 0 && (
+      {(totalCount > 0 || studentFilter !== "all" || subjectFilter !== "all") && (
         <div className="flex flex-wrap gap-2">
           <Select
             value={studentFilter}
-            onChange={setStudentFilter}
+            onChange={(value) => pushParams({ student: value })}
             className={selectClass}
             options={[
               { value: "all", label: "All students" },
@@ -74,7 +89,7 @@ export function HomeworkListView({
           />
           <Select
             value={subjectFilter}
-            onChange={setSubjectFilter}
+            onChange={(value) => pushParams({ subject: value })}
             className={selectClass}
             options={[
               { value: "all", label: "All subjects" },
@@ -84,20 +99,20 @@ export function HomeworkListView({
         </div>
       )}
 
-      {homework.length === 0 ? (
+      {totalCount === 0 ? (
         <EmptyState
           title="No homework yet"
           description="Assign your first piece of homework to a student."
           icon={<BookIcon className="h-6 w-6" />}
           action={<LinkButton href="/dashboard/homework/new">Add homework</LinkButton>}
         />
-      ) : filtered.length === 0 ? (
+      ) : homework.length === 0 ? (
         <Card>
           <p className="text-sm text-ink-muted">No homework matches these filters.</p>
         </Card>
       ) : (
         <Card className="divide-y divide-border overflow-hidden p-0">
-          {filtered.map((item) => (
+          {homework.map((item) => (
             <Link
               key={item.id}
               href={`/dashboard/homework/${item.id}`}
@@ -115,6 +130,32 @@ export function HomeworkListView({
             </Link>
           ))}
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-ink-muted">
+          <span>
+            Page {page} of {totalPages} · {totalCount} homework items
+          </span>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={page <= 1}
+              onClick={() => pushParams({ page: String(page - 1) })}
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={page >= totalPages}
+              onClick={() => pushParams({ page: String(page + 1) })}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

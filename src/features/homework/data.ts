@@ -32,6 +32,33 @@ export async function listHomework(
   return data as unknown as HomeworkWithStudent[];
 }
 
+export async function listHomeworkPage(
+  supabase: SupabaseClient<Database>,
+  options: {
+    studentId?: string;
+    subjectId?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+) {
+  const { studentId, subjectId, page = 1, pageSize = 50 } = options;
+
+  let query = supabase
+    .from("homework")
+    .select(HOMEWORK_COLUMNS, { count: "exact" })
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  if (studentId) query = query.eq("student_id", studentId);
+  if (subjectId) query = query.eq("subject_id", subjectId);
+
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await query.range(from, from + pageSize - 1);
+
+  if (error) throw new Error(`Unable to load homework: ${error.message}`);
+  return { homework: data as unknown as HomeworkWithStudent[], totalCount: count ?? 0 };
+}
+
 export async function listHomeworkDueInRange(
   supabase: SupabaseClient<Database>,
   range: { start: string; end: string },

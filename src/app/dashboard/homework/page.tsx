@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { HomeworkListView } from "../../../features/homework/components/HomeworkListView";
-import { listHomework } from "../../../features/homework/data";
+import { listHomeworkPage } from "../../../features/homework/data";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
 import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
@@ -9,15 +9,31 @@ import { createTokenClient } from "../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomeworkPage() {
+const PAGE_SIZE = 50;
+
+export default async function HomeworkPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
   const client = accessToken ? createTokenClient(accessToken) : supabase;
 
-  const [homework, students, subjects] = await Promise.all([
-    cachedForTutor("homework-list", [user.id], [tutorTag("homework", user.id)], 30, () =>
-      listHomework(client),
+  const params = await searchParams;
+  const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+  const studentId = first(params.student);
+  const subjectId = first(params.subject);
+  const page = Math.max(1, Number(first(params.page)) || 1);
+
+  const [{ homework, totalCount }, students, subjects] = await Promise.all([
+    cachedForTutor(
+      "homework-page",
+      [user.id, studentId ?? "", subjectId ?? "", String(page)],
+      [tutorTag("homework", user.id)],
+      30,
+      () => listHomeworkPage(client, { studentId, subjectId, page, pageSize: PAGE_SIZE }),
     ),
     cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 120, () =>
       listActiveStudents(client),
@@ -43,6 +59,11 @@ export default async function HomeworkPage() {
       homework={listItems}
       students={students}
       subjects={subjects.map((subject) => ({ id: subject.id, name: subject.name }))}
+      studentFilter={studentId ?? "all"}
+      subjectFilter={subjectId ?? "all"}
+      page={page}
+      pageSize={PAGE_SIZE}
+      totalCount={totalCount}
     />
   );
 }

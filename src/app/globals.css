@@ -8,117 +8,53 @@
  * TutorDesk design tokens.
  *
  * Tailwind color utilities (bg-canvas, text-brand, border-cyan/25, ...) are generated from the
- * `--color-*` variables below. Each references a `--td-*` raw value so the same utility class
- * resolves to a different color under `:root` (light) vs `.dark` (dark) without touching any
- * component — see https://tailwindcss.com/docs/theme for the pattern.
+ * `--color-*` variables below. Each references a `--td2-*` raw value (the "Today" dashboard
+ * palette, see the block further down) so the same utility class resolves to a different color
+ * under `:root` (light) vs `.dark` (dark) without touching any component — see
+ * https://tailwindcss.com/docs/theme for the pattern.
  */
 @theme {
-  --color-canvas: var(--td-canvas);
-  --color-surface: var(--td-surface);
-  --color-surface-muted: var(--td-surface-muted);
-  --color-border: var(--td-border);
-  --color-border-strong: var(--td-border-strong);
+  --color-canvas: var(--td2-bg-page);
+  --color-surface: var(--td2-bg-card);
+  --color-surface-muted: var(--td2-bg-inset);
+  --color-border: var(--td2-border-card);
+  --color-border-strong: var(--td2-border-strong);
 
-  --color-ink: var(--td-ink);
-  --color-ink-muted: var(--td-ink-muted);
-  --color-ink-subtle: var(--td-ink-subtle);
+  --color-ink: var(--td2-text-primary);
+  --color-ink-muted: var(--td2-text-secondary);
+  --color-ink-subtle: var(--td2-text-muted);
 
-  --color-brand: var(--td-brand);
-  --color-brand-strong: var(--td-brand-strong);
-  --color-on-brand: var(--td-on-brand);
+  --color-brand: var(--td2-brand);
+  --color-brand-strong: var(--td2-brand-strong);
+  --color-on-brand: var(--td2-on-brand);
 
-  --color-cyan: var(--td-cyan);
-  --color-cyan-strong: var(--td-cyan-strong);
-  --color-on-cyan: var(--td-on-cyan);
+  --color-cyan: var(--td2-cyan);
+  --color-cyan-strong: var(--td2-cyan-strong);
+  --color-on-cyan: var(--td2-on-cyan);
 
-  --color-violet: var(--td-violet);
-  --color-violet-strong: var(--td-violet-strong);
-  --color-on-violet: var(--td-on-violet);
+  --color-violet: var(--td2-violet);
+  --color-violet-strong: var(--td2-violet-strong);
+  --color-on-violet: var(--td2-on-violet);
 
-  --color-danger: var(--td-danger);
-  --color-danger-strong: var(--td-danger-strong);
-  --color-on-danger: var(--td-on-danger);
+  --color-danger: var(--td2-danger);
+  --color-danger-strong: var(--td2-danger-strong);
+  --color-on-danger: var(--td2-on-danger);
 
-  --color-warning: var(--td-warning);
-  --color-warning-strong: var(--td-warning-strong);
-  --color-on-warning: var(--td-on-warning);
+  --color-warning: var(--td2-warning);
+  --color-warning-strong: var(--td2-warning-strong);
+  --color-on-warning: var(--td2-on-warning);
 
   --font-sans: var(--font-space-grotesk), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
-:root {
-  --td-canvas: #eceee9;
-  --td-surface: #f9faf7;
-  --td-surface-muted: #eef0eb;
-  --td-border: #dde1db;
-  --td-border-strong: #c5cdc7;
-
-  --td-ink: #202723;
-  --td-ink-muted: #57645d;
-  --td-ink-subtle: #8a9791;
-
-  --td-brand: #059669;
-  --td-brand-strong: #047857;
-  --td-on-brand: #ffffff;
-
-  --td-cyan: #0891b2;
-  --td-cyan-strong: #0e7490;
-  --td-on-cyan: #ffffff;
-
-  --td-violet: #7c3aed;
-  --td-violet-strong: #6d28d9;
-  --td-on-violet: #ffffff;
-
-  --td-danger: #dc2626;
-  --td-danger-strong: #b91c1c;
-  --td-on-danger: #ffffff;
-
-  --td-warning: #b45309;
-  --td-warning-strong: #92400e;
-  --td-on-warning: #ffffff;
-
-  color-scheme: light;
-}
-
-.dark {
-  --td-canvas: #0a0f0d;
-  --td-surface: #121917;
-  --td-surface-muted: #1a2320;
-  --td-border: #223029;
-  --td-border-strong: #304039;
-
-  --td-ink: #f2f6f4;
-  --td-ink-muted: #93a8a1;
-  --td-ink-subtle: #62766f;
-
-  --td-brand: #34d399;
-  --td-brand-strong: #6ee7b7;
-  --td-on-brand: #052e1f;
-
-  --td-cyan: #22d3ee;
-  --td-cyan-strong: #67e8f9;
-  --td-on-cyan: #042f2e;
-
-  --td-violet: #a78bfa;
-  --td-violet-strong: #c4b5fd;
-  --td-on-violet: #1e1147;
-
-  --td-danger: #f87171;
-  --td-danger-strong: #fca5a5;
-  --td-on-danger: #2a0a0a;
-
-  --td-warning: #fbbf24;
-  --td-warning-strong: #fde047;
-  --td-on-warning: #2c1a02;
-
-  color-scheme: dark;
-}
-
 /*
- * "Today" dashboard palette (design_handoff_today_dashboard). Scoped under the td2-*
- * namespace so it can be adopted screen-by-screen without re-theming every existing page
- * at once. Used via arbitrary-value utilities, e.g. bg-[var(--td2-bg-card)].
+ * "Today" dashboard palette (design_handoff_today_dashboard) — the app's one design-token
+ * namespace. Used directly via arbitrary-value utilities (e.g. bg-[var(--td2-bg-card)]) by a
+ * few dashboard components, and indirectly by everything else through the `--color-*` theme
+ * block above. `brand`/`cyan`/`violet`/`danger`/`warning` below are semantic accents the
+ * handoff didn't define; they bridge to td2's accent/attention colors where there's a
+ * reasonable match and keep their own values where there isn't.
  */
 :root {
   --td2-bg-page: #ecede8;
@@ -164,6 +100,28 @@
   /* Primary fill (buttons, "up next"/prep queue surfaces): inverted per theme. */
   --td2-primary-bg: #23282a;
   --td2-primary-fg: #4cf0b3;
+
+  --td2-brand: var(--td2-accent-text-strong);
+  --td2-brand-strong: var(--td2-accent-dot);
+  --td2-on-brand: #ffffff;
+
+  --td2-cyan: #0891b2;
+  --td2-cyan-strong: #0e7490;
+  --td2-on-cyan: #ffffff;
+
+  --td2-violet: #7c3aed;
+  --td2-violet-strong: #6d28d9;
+  --td2-on-violet: #ffffff;
+
+  --td2-danger: #dc2626;
+  --td2-danger-strong: #b91c1c;
+  --td2-on-danger: #ffffff;
+
+  --td2-warning: #b45309;
+  --td2-warning-strong: #92400e;
+  --td2-on-warning: #ffffff;
+
+  color-scheme: light;
 }
 
 .dark {
@@ -208,6 +166,28 @@
 
   --td2-primary-bg: #4cf0b3;
   --td2-primary-fg: #05100c;
+
+  --td2-brand: var(--td2-accent-text-strong);
+  --td2-brand-strong: var(--td2-accent-dot);
+  --td2-on-brand: var(--td2-accent-ink);
+
+  --td2-cyan: #22d3ee;
+  --td2-cyan-strong: #67e8f9;
+  --td2-on-cyan: #042f2e;
+
+  --td2-violet: #a78bfa;
+  --td2-violet-strong: #c4b5fd;
+  --td2-on-violet: #1e1147;
+
+  --td2-danger: #f87171;
+  --td2-danger-strong: #fca5a5;
+  --td2-on-danger: #2a0a0a;
+
+  --td2-warning: #fbbf24;
+  --td2-warning-strong: #fde047;
+  --td2-on-warning: #2c1a02;
+
+  color-scheme: dark;
 }
 
 body {

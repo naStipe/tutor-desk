@@ -5,7 +5,7 @@
 - Milestone: **TD-005 — Full visual overhaul: design tokens, dark mode, distinctive brand identity**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
-- Last updated: 2026-09-13
+- Last updated: 2026-09-16
 
 ## Current Reality
 
@@ -35,6 +35,13 @@ Unchanged from TD-001S/Google OAuth/TD-002/TD-003/TD-004. The sign-in/sign-up pa
 were restyled to the new tokens but their logic is untouched.
 
 ## UI
+
+- **Exploratory design lab** (`/mockups/linen` and `/mockups/orbit`): two public, static dashboard
+  previews were added for visual comparison without changing the authenticated product UI. `Linen`
+  is a calm light workspace using blue-grey, sage, and warm neutral accents; `Orbit` is a restrained
+  dark workspace using muted sea-glass, lavender, and clay accents. Both use realistic TutorDesk
+  content, responsive dashboard layouts, and presentation-only revenue, workload, preparation, and
+  capacity charts. A floating concept switcher moves between the two previews.
 
 - **Design tokens** (`src/app/globals.css`): semantic CSS custom properties (`--td-canvas`,
   `--td-surface`, `--td-border`, `--td-ink`/`-muted`/`-subtle`, and per-hue `--td-{brand,cyan,violet,
@@ -71,6 +78,9 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Not Implemented
 
+- The design-lab previews are intentionally not connected to Supabase, live tutor data, or product
+  actions, and are not linked from the production navigation. They are visual proposals only.
+
 - Everything listed as not implemented in TD-004 remains not implemented (recurring lessons,
   invoices, student portal, etc.) — this task was visual/theming only, no feature scope changed.
 - A dedicated mobile-optimized week calendar layout (unchanged from TD-004 — see Known Issues).
@@ -79,6 +89,11 @@ were restyled to the new tokens but their logic is untouched.
   toggles work before a settings page exists.
 
 ## Verification State
+
+- Design-lab verification (2026-09-16): scoped Biome format/lint, full TypeScript typecheck, and the
+  optimized Next.js production build passed. Both mockups compiled as static routes and were
+  manually inspected in the in-app browser at a narrow responsive viewport. No behavior tests were
+  added because the concepts contain no product functionality.
 
 - `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (6 unit test files, 21 tests — no
   test logic changed, this was a styling task).

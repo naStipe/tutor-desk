@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  formatCountdown,
   formatDuration,
   formatEyebrowDate,
   formatOverdue,
   formatRelativePast,
   greetingWord,
+  WEEKLY_GOAL_HOURS,
 } from "../format";
-import { Sparkline } from "./Sparkline";
 
 export type TodayLesson = {
   id: string;
@@ -32,25 +31,44 @@ export type HomeworkAttentionItem = {
   dueDate: string | null;
 };
 
+export type UpcomingLesson = {
+  id: string;
+  startTime: string;
+  endTime: string;
+  notes: string | null;
+  studentId: string;
+  studentName: string;
+};
+
+export type StudentOverview = {
+  id: string;
+  name: string;
+  sparkline: number[];
+  totalHours: number;
+  status: "overdue" | "plan-missing" | "no-lesson" | "caught-up";
+};
+
+export type SubjectSplitItem = { name: string; hours: number; percent: number };
+
+export type DashboardAnalytics = {
+  hoursTrend: number[];
+  weekLabels: string[];
+  monthHours: number;
+  monthVsPrevPct: number | null;
+  subjectSplit: SubjectSplitItem[];
+  heatmap: number[][];
+  studentsOverview: StudentOverview[];
+  upcomingAfterToday: UpcomingLesson[];
+};
+
 export type TodayDashboardProps = {
   firstName: string;
   lessons: TodayLesson[];
   homework: HomeworkAttentionItem[];
   unbilled: { count: number; oldestDate: string | null };
   weekLoad: { lessonCount: number; totalMinutes: number; perDayMinutes: number[] };
+  analytics: DashboardAnalytics;
 };
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
-function daysAgo(now: Date, iso: string) {
-  const days = Math.max(0, Math.floor((now.getTime() - new Date(iso).getTime()) / 86400000));
-  return days;
-}
 
 function useNow(intervalMs: number) {
   const [now, setNow] = useState(() => new Date());
@@ -61,40 +79,27 @@ function useNow(intervalMs: number) {
   return now;
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
+function Card({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <span className="rounded-[7px] border border-[var(--td2-border-chip)] bg-[var(--td2-bg-inset)] px-[9px] py-1 font-mono text-[11px] text-[var(--td2-text-secondary)]">
+    <div
+      className={`rounded-[16px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[22px_24px] ${className}`}
+    >
       {children}
-    </span>
+    </div>
   );
 }
 
-function SchedulePill({
-  label,
-}: {
-  label: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "CANCELLED";
-}) {
-  const base = "shrink-0 rounded-[20px] px-[9px] py-[3px] font-mono text-[10px] tracking-[0.08em]";
-  if (label === "UP NEXT" || label === "IN PROGRESS")
-    return (
-      <span
-        className={`${base} font-medium bg-[var(--td2-primary-bg)] text-[var(--td2-primary-fg)]`}
-      >
-        {label}
-      </span>
-    );
-  if (label === "NO PLAN")
-    return (
-      <span
-        className={`${base} border border-[var(--td2-attention-border)] text-[var(--td2-attention)]`}
-      >
-        NO PLAN
-      </span>
-    );
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <span className={`${base} border border-[var(--td2-border-chip)] text-[var(--td2-text-faint)]`}>
-      {label}
-    </span>
+    <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--td2-text-muted)]">
+      {children}
+    </p>
   );
 }
 
@@ -110,389 +115,464 @@ function GreetingHeader({ now, firstName }: { now: Date; firstName: string }) {
         </p>
         <h1
           suppressHydrationWarning
-          className="mt-2 text-[30px] font-bold leading-none tracking-[-0.035em] text-[var(--td2-text-primary)] lg:text-[40px]"
+          className="mt-2 text-[30px] font-bold leading-none tracking-[-0.035em] text-[var(--td2-text-primary)] lg:text-[38px]"
         >
           {greetingWord(now)}, {firstName}.
         </h1>
       </div>
-      <div className="flex items-center gap-2.5">
-        <Link
-          href="/dashboard/schedule?create=1"
-          className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110"
-        >
-          + New lesson
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function HeroLesson({
-  now,
-  lesson,
-  prepLesson,
-}: {
-  now: Date;
-  lesson?: TodayLesson;
-  prepLesson?: TodayLesson;
-}) {
-  if (!lesson) {
-    return (
-      <div className="relative flex flex-col justify-center gap-2 overflow-hidden rounded-[18px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[26px_28px]">
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--td2-text-muted)]">
-          Today
-        </p>
-        <p className="text-[22px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
-          Nothing left today.
-        </p>
-        <p className="text-[13px] text-[var(--td2-text-muted)]">
-          {prepLesson
-            ? "One lesson still needs a plan — see Prep queue."
-            : "Enjoy the rest of your day."}
-        </p>
-      </div>
-    );
-  }
-
-  const start = new Date(lesson.startTime);
-  const end = new Date(lesson.endTime);
-  const inProgress = now >= start && now < end;
-  const soon = now < start && start.getTime() - now.getTime() <= 15 * 60000;
-
-  return (
-    <div className="group relative flex flex-col gap-[22px] overflow-hidden rounded-[18px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[26px_28px] transition-colors duration-200 hover:border-[var(--td2-accent-surface-border)]">
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-[70px] -top-[70px] h-[220px] w-[220px] rounded-full bg-[var(--td2-accent)] opacity-[0.18] dark:opacity-[0.07]"
-      />
-
-      <div className="relative flex items-center gap-3">
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--td2-accent-text-strong)]">
-          Next lesson
-        </span>
-        <span className="flex items-center gap-1.5 font-mono text-[11px] text-[var(--td2-text-muted)]">
-          <span
-            aria-hidden="true"
-            className="td-pulse-dot h-[7px] w-[7px] rounded-full bg-[var(--td2-accent-dot)]"
-          />
-          <span suppressHydrationWarning>{formatCountdown(now, start, end)}</span>
-        </span>
-      </div>
-
-      <div className="relative flex items-end gap-5">
-        <span className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-[16px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-inset-2)] text-[20px] font-medium text-[var(--td2-text-secondary)]">
-          {initials(lesson.studentName)}
-        </span>
-        <div>
-          <p className="text-[32px] font-bold leading-none tracking-[-0.04em] text-[var(--td2-text-primary)] lg:text-[36px] xl:text-[44px]">
-            {lesson.studentName}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Chip>
-              {start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} —{" "}
-              {end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-            </Chip>
-            {lesson.notes && <Chip>Has a plan</Chip>}
-          </div>
-        </div>
-      </div>
-
-      <div className="relative flex flex-wrap gap-2.5">
-        {lesson.meetingUrl && (
-          <a
-            href={lesson.meetingUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={`w-full rounded-[11px] bg-[var(--td2-primary-bg)] px-5 py-3 text-center text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[filter] duration-150 hover:brightness-110 sm:w-auto ${
-              soon || inProgress ? "td-ring" : ""
-            }`}
-          >
-            Join meeting
-          </a>
-        )}
-        <Link
-          href={`/dashboard/lessons/${lesson.id}`}
-          className="rounded-[11px] border border-[var(--td2-border-strong)] px-[18px] py-3 text-[14px] text-[var(--td2-text-primary)] transition-colors hover:bg-[var(--td2-bg-inset)]"
-        >
-          Open lesson plan
-        </Link>
-        <Link
-          href={`/dashboard/lessons/${lesson.id}`}
-          className="rounded-[11px] border border-[var(--td2-border-strong)] px-3.5 py-3 text-[14px] text-[var(--td2-text-muted)] transition-colors hover:bg-[var(--td2-bg-inset)] hover:text-[var(--td2-text-primary)]"
-        >
-          Reschedule
-        </Link>
-      </div>
-
-      <div className="relative border-t border-[var(--td2-border-hairline)] pt-4 text-[13px] text-[var(--td2-text-muted)]">
-        {lesson.notes ? (
-          <>
-            Has a lesson plan ready ·{" "}
-            <span className="text-[var(--td2-text-primary)]">on track for today</span>
-          </>
-        ) : (
-          <>
-            No lesson plan yet ·{" "}
-            <span className="text-[var(--td2-text-primary)]">
-              write one before {initials(lesson.studentName)} joins
-            </span>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function StatBlock({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-1 flex-col justify-between gap-2 rounded-[18px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[22px_24px] transition-transform duration-200 hover:-translate-y-[3px]">
-      {children}
-    </div>
-  );
-}
-
-function StatsStack({
-  now,
-  unbilled,
-  weekLoad,
-}: {
-  now: Date;
-  unbilled: { count: number; oldestDate: string | null };
-  weekLoad: { lessonCount: number; totalMinutes: number; perDayMinutes: number[] };
-}) {
-  const oldestDays = unbilled.oldestDate ? daysAgo(now, unbilled.oldestDate) : null;
-  const todayIndex = (now.getDay() + 6) % 7;
-
-  return (
-    <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-col lg:gap-[18px]">
-      <Link href="/dashboard/lessons">
-        <StatBlock>
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--td2-text-muted)]">
-            Unbilled
-          </p>
-          <div>
-            <p className="text-[30px] font-bold tracking-[-0.03em] text-[var(--td2-text-primary)] lg:text-[38px]">
-              {unbilled.count}
-            </p>
-            <p className="mt-1.5 text-[13px] text-[var(--td2-text-muted)]">
-              completed lesson{unbilled.count === 1 ? "" : "s"}
-              {oldestDays !== null && oldestDays > 0 ? ` · oldest ${oldestDays}d` : ""}
-            </p>
-          </div>
-        </StatBlock>
+      <Link
+        href="/dashboard/schedule?create=1"
+        className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110"
+      >
+        + New lesson
       </Link>
-      <StatBlock>
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--td2-text-muted)]">
-          This week
-        </p>
-        <div>
-          <p className="flex items-baseline gap-2">
-            <span className="text-[30px] font-bold tracking-[-0.03em] text-[var(--td2-text-primary)] lg:text-[38px]">
-              {weekLoad.lessonCount}
-            </span>
-            <span className="text-[14px] text-[var(--td2-text-muted)]">
-              lessons · {formatDuration(weekLoad.totalMinutes)}
-            </span>
-          </p>
-          <div className="mt-2.5">
-            <Sparkline values={weekLoad.perDayMinutes} activeIndex={todayIndex} />
-          </div>
-        </div>
-      </StatBlock>
     </div>
   );
 }
 
-function ScheduleCard({
+function buildLinePath(values: number[], width: number, height: number, topPad = 10, botPad = 12) {
+  const max = Math.max(1, ...values);
+  const innerHeight = height - topPad - botPad;
+  const step = values.length > 1 ? width / (values.length - 1) : 0;
+  const points = values.map((value, index) => ({
+    x: index * step,
+    y: topPad + innerHeight - (value / max) * innerHeight,
+  }));
+  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const last = points[points.length - 1];
+  const areaPath = `${linePath} L${(last?.x ?? 0).toFixed(1)} ${height} L0 ${height} Z`;
+  return { linePath, areaPath, points, last };
+}
+
+function HoursTrendCard({ analytics }: { analytics: DashboardAnalytics }) {
+  const width = 520;
+  const height = 150;
+  const { linePath, areaPath, last } = buildLinePath(analytics.hoursTrend, width, height);
+  const weekHours = analytics.hoursTrend.at(-1) ?? 0;
+  const goalPct = Math.min(100, Math.round((weekHours / WEEKLY_GOAL_HOURS) * 100));
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Eyebrow>Teaching hours · last 8 weeks</Eyebrow>
+          <div className="mt-2.5 flex items-baseline gap-2.5">
+            <span className="text-[30px] font-bold tracking-[-0.03em] text-[var(--td2-text-primary)]">
+              {analytics.monthHours < 10 ? analytics.monthHours.toFixed(1) : Math.round(analytics.monthHours)}h
+            </span>
+            {analytics.monthVsPrevPct !== null && (
+              <span className="text-[12px] font-medium text-[var(--td2-accent-text-strong)]">
+                {analytics.monthVsPrevPct >= 0 ? "+" : ""}
+                {analytics.monthVsPrevPct}% vs last month
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="text-right">
+          <Eyebrow>This week vs {WEEKLY_GOAL_HOURS}h goal</Eyebrow>
+          <p className="mt-2.5 text-[13px] font-medium text-[var(--td2-text-secondary)]">
+            {weekHours.toFixed(1)}h · {goalPct}%
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="none"
+          className="block h-[130px] w-full"
+          role="img"
+          aria-label="Teaching hours per week, last 8 weeks"
+        >
+          <defs>
+            <linearGradient id="hoursTrendFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--td2-accent)" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="var(--td2-accent)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <line x1="0" y1={height * 0.23} x2={width} y2={height * 0.23} stroke="currentColor" strokeOpacity="0.08" />
+          <line x1="0" y1={height * 0.48} x2={width} y2={height * 0.48} stroke="currentColor" strokeOpacity="0.08" />
+          <line x1="0" y1={height * 0.73} x2={width} y2={height * 0.73} stroke="currentColor" strokeOpacity="0.08" />
+          <path d={areaPath} fill="url(#hoursTrendFill)" />
+          <path d={linePath} fill="none" stroke="var(--td2-accent)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          {last && (
+            <>
+              <circle cx={last.x} cy={last.y} r="4.5" fill="var(--td2-accent)" />
+              <circle cx={last.x} cy={last.y} r="8" fill="var(--td2-accent)" fillOpacity="0.2" />
+            </>
+          )}
+        </svg>
+        <div className="mt-2 flex justify-between font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
+          {analytics.weekLabels.map((label) => (
+            <span key={label}>{label}</span>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * 42;
+const DONUT_OPACITIES = [1, 0.6, 0.32, 0.16];
+
+function SubjectSplitCard({ analytics }: { analytics: DashboardAnalytics }) {
+  const items = analytics.subjectSplit.slice(0, 4);
+  let cumulative = 0;
+
+  return (
+    <Card className="flex flex-col">
+      <Eyebrow>Subject split · this month</Eyebrow>
+      {items.length === 0 ? (
+        <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">No lessons logged this month yet.</p>
+      ) : (
+        <>
+          <div className="mt-4 flex items-center gap-5">
+            <div className="relative h-[104px] w-[104px] shrink-0">
+              <svg
+                viewBox="0 0 100 100"
+                className="block h-[104px] w-[104px] -rotate-90"
+                role="img"
+                aria-label="Subject split for this month"
+              >
+                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeOpacity="0.08" strokeWidth="12" />
+                {items.map((item, index) => {
+                  const dash = (item.percent / 100) * DONUT_CIRCUMFERENCE;
+                  const offset = -((cumulative / 100) * DONUT_CIRCUMFERENCE);
+                  cumulative += item.percent;
+                  return (
+                    <circle
+                      key={item.name}
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      fill="none"
+                      stroke="var(--td2-accent)"
+                      strokeOpacity={DONUT_OPACITIES[index] ?? 0.16}
+                      strokeWidth="12"
+                      strokeDasharray={`${dash} ${DONUT_CIRCUMFERENCE - dash}`}
+                      strokeDashoffset={offset}
+                    />
+                  );
+                })}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-[19px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+                  {Math.round(analytics.monthHours)}h
+                </span>
+                <span className="font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--td2-text-faint)]">
+                  Total
+                </span>
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+              {items.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-2.5">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-[2px]"
+                    style={{ background: "var(--td2-accent)", opacity: DONUT_OPACITIES[index] ?? 0.16 }}
+                  />
+                  <span className="flex-1 truncate text-[12.5px] font-medium text-[var(--td2-text-primary)]">
+                    {item.name}
+                  </span>
+                  <span className="font-mono text-[11px] text-[var(--td2-text-muted)]">
+                    {item.hours.toFixed(1)}h
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 flex-1" />
+          <div className="mt-4 border-t border-[var(--td2-border-hairline)] pt-3.5 text-[12px] text-[var(--td2-text-muted)]">
+            {items[0].name} is {items[0].percent}% of this month.
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
+function SchedulePill({ label }: { label: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY" }) {
+  const base = "shrink-0 rounded-[7px] px-[9px] py-[4px] font-mono text-[9px] tracking-[0.08em]";
+  if (label === "UP NEXT" || label === "IN PROGRESS")
+    return <span className={`${base} font-medium bg-[var(--td2-primary-bg)] text-[var(--td2-primary-fg)]`}>{label}</span>;
+  if (label === "NO PLAN")
+    return (
+      <span className={`${base} bg-[var(--td2-accent-surface)] text-[var(--td2-accent-text)]`}>NO PLAN</span>
+    );
+  if (label === "DONE")
+    return <span className={`${base} bg-[var(--td2-bg-inset)] text-[var(--td2-text-faint)]`}>DONE</span>;
+  return <span className={`${base} bg-[var(--td2-bg-inset)] text-[var(--td2-text-muted)]`}>READY</span>;
+}
+
+function ScheduleAheadCard({
   now,
   lessons,
-  nextLessonId,
+  upcoming,
 }: {
   now: Date;
   lessons: TodayLesson[];
-  nextLessonId?: string;
+  upcoming: UpcomingLesson[];
 }) {
-  const totalMinutes = lessons.reduce((sum, lesson) => {
-    if (lesson.status === "cancelled") return sum;
-    return (
-      sum + (new Date(lesson.endTime).getTime() - new Date(lesson.startTime).getTime()) / 60000
-    );
-  }, 0);
+  const remainingToday = lessons.filter(
+    (lesson) => lesson.status !== "cancelled" && new Date(lesson.endTime) > now,
+  );
+  const items = [
+    ...remainingToday.map((lesson) => ({
+      id: lesson.id,
+      startTime: lesson.startTime,
+      endTime: lesson.endTime,
+      notes: lesson.notes,
+      status: lesson.status,
+      studentName: lesson.studentName,
+    })),
+    ...upcoming.map((lesson) => ({
+      id: lesson.id,
+      startTime: lesson.startTime,
+      endTime: lesson.endTime,
+      notes: lesson.notes,
+      status: "scheduled",
+      studentName: lesson.studentName,
+    })),
+  ].slice(0, 5);
+
+  const totalMinutes = items.reduce(
+    (sum, item) => sum + (new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / 60000,
+    0,
+  );
 
   return (
-    <div className="rounded-[18px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[20px] lg:p-[22px_24px]">
-      <div className="mb-[18px] flex items-baseline justify-between">
-        <h2 className="text-[18px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
-          Today&apos;s schedule
+    <Card className="flex flex-col">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+          Next few days
         </h2>
         <span className="font-mono text-[11px] text-[var(--td2-text-muted)]">
-          {lessons.length} lesson{lessons.length === 1 ? "" : "s"} · {formatDuration(totalMinutes)}
+          {items.length} · {formatDuration(totalMinutes)}
         </span>
       </div>
-
-      {lessons.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-[12px] border border-dashed border-[var(--td2-border-strong)] py-10 text-center">
-          <p className="text-sm text-[var(--td2-text-muted)]">No lessons today.</p>
-          <Link
-            href="/dashboard/schedule?create=1"
-            className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-4 py-2 text-[13px] font-medium text-[var(--td2-primary-fg)]"
-          >
-            Schedule a lesson
-          </Link>
-        </div>
+      {items.length === 0 ? (
+        <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">Nothing scheduled yet.</p>
       ) : (
-        <div>
-          {lessons.map((lesson) => {
-            const start = new Date(lesson.startTime);
-            const end = new Date(lesson.endTime);
-            const isNext = lesson.id === nextLessonId;
-            const inProgress = isNext && now >= start && now < end;
-            const cancelled = lesson.status === "cancelled";
-            const past = end <= now && lesson.status !== "scheduled";
-
-            let pillLabel: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "CANCELLED" | null =
-              null;
-            if (cancelled) pillLabel = "CANCELLED";
-            else if (lesson.status === "completed" || lesson.status === "no_show")
-              pillLabel = "DONE";
-            else if (isNext) pillLabel = inProgress ? "IN PROGRESS" : "UP NEXT";
-            else if (!lesson.notes) pillLabel = "NO PLAN";
-
-            const dimmed = past && !isNext;
+        <div className="mt-3.5">
+          {items.map((item, index) => {
+            const start = new Date(item.startTime);
+            const inProgress = index === 0 && now >= start && now < new Date(item.endTime);
+            const done = item.status === "completed" || item.status === "no_show";
+            const hasPlan = item.notes && item.notes.trim() !== "";
+            let pill: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY" = hasPlan ? "READY" : "NO PLAN";
+            if (done) pill = "DONE";
+            else if (index === 0) pill = inProgress ? "IN PROGRESS" : "UP NEXT";
 
             return (
               <Link
-                key={lesson.id}
-                href={`/dashboard/lessons/${lesson.id}`}
-                className={`grid grid-cols-[56px_1fr_auto] items-center gap-4 border-t border-[var(--td2-border-hairline)] py-[13px] first:border-t-0 sm:grid-cols-[64px_1fr_auto] ${
-                  isNext
-                    ? "-mx-[14px] my-1.5 rounded-[12px] border-t-0 bg-[var(--td2-accent-surface)] px-[14px] py-[15px]"
-                    : "hover:bg-[var(--td2-bg-row-hover)]"
-                }`}
+                key={item.id}
+                href={`/dashboard/lessons/${item.id}`}
+                className="flex items-center gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
               >
-                <span
-                  className={`font-mono text-[13px] ${cancelled ? "line-through" : ""} ${
-                    isNext
-                      ? "font-medium text-[var(--td2-accent-text)]"
-                      : dimmed
-                        ? "text-[var(--td2-text-faint)]"
-                        : "text-[var(--td2-text-secondary)]"
-                  }`}
-                >
+                <span className="w-[52px] shrink-0 font-mono text-[10.5px] text-[var(--td2-text-secondary)]">
+                  {start.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}{" "}
                   {start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                 </span>
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] text-[11px] ${
-                      isNext
-                        ? "bg-[var(--td2-primary-bg)] text-[var(--td2-primary-fg)]"
-                        : "bg-[var(--td2-bg-inset-2)] text-[var(--td2-text-secondary)]"
-                    }`}
-                  >
-                    {initials(lesson.studentName)}
-                  </span>
-                  <span
-                    className={`truncate ${isNext ? "text-[15px] font-medium" : "text-sm"} ${
-                      cancelled
-                        ? "line-through text-[var(--td2-text-faint)]"
-                        : dimmed
-                          ? "text-[var(--td2-text-faint)]"
-                          : "text-[var(--td2-text-primary)]"
-                    }`}
-                  >
-                    {lesson.studentName}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-medium text-[var(--td2-text-primary)]">
+                    {item.studentName}
                   </span>
                 </span>
-                {pillLabel && <SchedulePill label={pillLabel} />}
+                <SchedulePill label={pill} />
               </Link>
             );
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
-function NeedsReviewCard({ now, items }: { now: Date; items: HomeworkAttentionItem[] }) {
+function MiniTrendLine({ values }: { values: number[] }) {
+  const width = 64;
+  const height = 20;
+  const { linePath } = buildLinePath(values, width, height, 2, 2);
   return (
-    <div className="rounded-[18px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[20px] lg:p-[22px_24px]">
-      <div className="mb-4 flex items-center gap-2.5">
-        <h2 className="text-[18px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
-          Needs review
-        </h2>
-        {items.length > 0 && (
-          <span className="rounded-[20px] bg-[var(--td2-attention)] px-2 py-0.5 font-mono text-[11px] font-medium text-[var(--td2-attention-ink)]">
-            {items.length}
-          </span>
-        )}
-      </div>
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="h-5 w-16 shrink-0"
+      role="img"
+      aria-label="Hours per week trend"
+    >
+      <path d={linePath} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-      {items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-[var(--td2-text-muted)]">All caught up.</p>
+const STATUS_LABEL: Record<StudentOverview["status"], string> = {
+  overdue: "Homework overdue",
+  "plan-missing": "Plan missing",
+  "no-lesson": "No next lesson",
+  "caught-up": "All caught up",
+};
+
+function StudentsOverviewCard({ students }: { students: StudentOverview[] }) {
+  const shown = students.slice(0, 5);
+  return (
+    <Card className="flex flex-col">
+      <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">Students</h2>
+      {shown.length === 0 ? (
+        <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">No active students yet.</p>
       ) : (
-        <div>
-          {items.map(({ id, title, studentName, overdue, submittedAt, dueDate }) => (
-            <Link
-              key={id}
-              href={`/dashboard/homework/${id}`}
-              className="flex items-center justify-between gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-[var(--td2-text-primary)]">
-                  {title}
-                </p>
-                <p
-                  suppressHydrationWarning
-                  className={`mt-1 font-mono text-[11px] ${overdue ? "text-[var(--td2-attention)]" : "text-[var(--td2-text-muted)]"}`}
+        <div className="mt-3.5">
+          {shown.map((student) => {
+            const needsAttention = student.status === "overdue" || student.status === "plan-missing";
+            return (
+              <Link
+                key={student.id}
+                href={`/dashboard/students/${student.id}`}
+                className="flex items-center gap-2.5 border-t border-[var(--td2-border-hairline)] py-2.5 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12.5px] font-medium text-[var(--td2-text-primary)]">
+                    {student.name}
+                  </span>
+                  <span
+                    className={`block text-[11px] ${
+                      needsAttention ? "text-[var(--td2-accent-text)]" : "text-[var(--td2-text-muted)]"
+                    }`}
+                  >
+                    {STATUS_LABEL[student.status]}
+                  </span>
+                </span>
+                <span
+                  className={needsAttention ? "text-[var(--td2-accent)]" : "text-[var(--td2-text-faint)]"}
                 >
-                  {studentName} ·{" "}
-                  {overdue
-                    ? formatOverdue(now, dueDate ?? now.toISOString())
-                    : formatRelativePast(now, submittedAt ?? now.toISOString())}
-                </p>
-              </div>
-              <span className="shrink-0 border-b border-[var(--td2-accent-underline)] pb-0.5 text-[13px] text-[var(--td2-accent-text)]">
-                {overdue ? "Nudge" : "Review"}
-              </span>
-            </Link>
-          ))}
+                  <MiniTrendLine values={student.sparkline} />
+                </span>
+                <span className="w-6 shrink-0 text-right font-mono text-[11px] text-[var(--td2-text-muted)]">
+                  {student.totalHours.toFixed(0)}h
+                </span>
+              </Link>
+            );
+          })}
         </div>
       )}
-    </div>
+      <div className="mt-4 flex-1" />
+      <p className="mt-4 border-t border-[var(--td2-border-hairline)] pt-3.5 text-[11.5px] text-[var(--td2-text-muted)]">
+        Trend = hours per week, last 7 weeks.
+      </p>
+    </Card>
   );
 }
 
-function PrepQueueCard({ lesson }: { lesson?: TodayLesson }) {
-  if (!lesson) {
-    return (
-      <div className="rounded-[18px] bg-[var(--td2-bg-inset)] p-[22px_24px]">
-        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--td2-text-muted)]">
-          Prep queue
-        </p>
-        <p className="mt-2.5 text-[15px] text-[var(--td2-text-secondary)]">
-          Every upcoming lesson has a plan.
-        </p>
-      </div>
-    );
-  }
+function heatCellStyle(hours: number, max: number) {
+  if (max <= 0 || hours <= 0) return { background: "var(--td2-bg-inset)" };
+  const ratio = hours / max;
+  const opacity = ratio > 0.66 ? 1 : ratio > 0.33 ? 0.55 : 0.28;
+  return { background: "var(--td2-accent)", opacity };
+}
 
-  const start = new Date(lesson.startTime);
+function TermHeatmapCard({ analytics }: { analytics: DashboardAnalytics }) {
+  const max = Math.max(1, ...analytics.heatmap.flat());
+  const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
 
   return (
-    <div className="rounded-[18px] bg-[var(--td2-primary-bg)] p-[22px_24px] text-[var(--td2-primary-fg)]">
-      <p className="font-mono text-[11px] uppercase tracking-[0.12em] opacity-70">Prep queue</p>
-      <p className="mt-2.5 text-[17px] font-medium leading-[1.35]">
-        {lesson.studentName}&apos;s{" "}
-        {start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} lesson has no
-        plan yet.
-      </p>
-      <Link
-        href={`/dashboard/lessons/${lesson.id}`}
-        className="mt-4 inline-flex rounded-[9px] bg-[var(--td2-primary-fg)] px-3.5 py-[9px] text-[13px] text-[var(--td2-primary-bg)] transition-[filter] duration-150 hover:brightness-110"
-      >
-        Write plan
-      </Link>
-    </div>
+    <Card className="flex flex-col">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+          Term heatmap
+        </h2>
+      </div>
+      <div className="mt-4 flex gap-1.5">
+        <div className="flex flex-col gap-1.5 pt-[18px] font-mono text-[8.5px] text-[var(--td2-text-faint)]">
+          {weekdayLabels.map((label, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed 7-day week order, no identity to key on
+            <div key={index} className="flex h-[15px] items-center">
+              {label}
+            </div>
+          ))}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="mb-1.5 flex gap-1.5 font-mono text-[8.5px] text-[var(--td2-text-faint)]">
+            {analytics.heatmap.map((_, weekIndex) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed week-number order, no identity to key on
+              <div key={weekIndex} className="flex-1 text-center">
+                W{weekIndex + 1}
+              </div>
+            ))}
+          </div>
+          <div
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${analytics.heatmap.length}, 1fr)` }}
+          >
+            {Array.from({ length: 7 }, (_, dayIndex) =>
+              analytics.heatmap.map((week, weekIndex) => ({
+                key: `${weekIndex}-${dayIndex}`,
+                hours: week[dayIndex] ?? 0,
+              })),
+            )
+              .flat()
+              .map((cell) => (
+                <div
+                  key={cell.key}
+                  className="h-[15px] rounded-[3px]"
+                  style={heatCellStyle(cell.hours, max)}
+                />
+              ))}
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 flex-1" />
+      <div className="mt-4 flex items-center gap-2 border-t border-[var(--td2-border-hairline)] pt-3.5">
+        <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
+          Less
+        </span>
+        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-bg-inset)" }} />
+        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-accent)", opacity: 0.28 }} />
+        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-accent)", opacity: 0.55 }} />
+        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-accent)" }} />
+        <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
+          More
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <Card className="flex flex-col gap-2.5">
+      <div className="flex items-center gap-2.5">
+        <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+          Needs review
+        </h2>
+        <span className="rounded-[20px] bg-[var(--td2-attention)] px-2 py-0.5 font-mono text-[11px] font-medium text-[var(--td2-attention-ink)]">
+          {items.length}
+        </span>
+      </div>
+      <div>
+        {items.map(({ id, title, studentName, overdue, submittedAt, dueDate }) => (
+          <Link
+            key={id}
+            href={`/dashboard/homework/${id}`}
+            className="flex items-center justify-between gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-[var(--td2-text-primary)]">{title}</p>
+              <p
+                suppressHydrationWarning
+                className={`mt-1 font-mono text-[11px] ${overdue ? "text-[var(--td2-accent-text)]" : "text-[var(--td2-text-muted)]"}`}
+              >
+                {studentName} ·{" "}
+                {overdue
+                  ? formatOverdue(now, dueDate ?? now.toISOString())
+                  : formatRelativePast(now, submittedAt ?? now.toISOString())}
+              </p>
+            </div>
+            <span className="shrink-0 border-b border-[var(--td2-accent-underline)] pb-0.5 text-[13px] text-[var(--td2-accent-text)]">
+              {overdue ? "Nudge" : "Review"}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </Card>
   );
 }
 
@@ -501,45 +581,36 @@ export function TodayDashboard({
   lessons,
   homework,
   unbilled,
-  weekLoad,
+  analytics,
 }: TodayDashboardProps) {
   const now = useNow(30000);
 
-  const nextLesson = lessons.find(
-    (lesson) => lesson.status === "scheduled" && new Date(lesson.endTime) > now,
-  );
-  const prepLesson = lessons.find(
-    (lesson) =>
-      lesson.status === "scheduled" &&
-      new Date(lesson.endTime) > now &&
-      (!lesson.notes || lesson.notes.trim() === ""),
-  );
-
   return (
-    <div className="flex flex-col gap-[18px] p-5 sm:px-[34px] sm:py-[30px] lg:gap-y-[26px] lg:grid lg:grid-cols-[1.4fr_1fr] xl:grid-cols-[1.7fr_1fr]">
-      <div className="order-1 lg:order-none lg:col-span-2">
-        <GreetingHeader now={now} firstName={firstName} />
+    <div className="flex flex-col gap-[18px] p-5 sm:px-[34px] sm:py-[30px] lg:gap-[22px]">
+      <GreetingHeader now={now} firstName={firstName} />
+
+      {unbilled.count > 0 && (
+        <Link
+          href="/dashboard/lessons"
+          className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] hover:bg-[var(--td2-bg-row-hover)]"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />
+          {unbilled.count} unbilled lesson{unbilled.count === 1 ? "" : "s"}
+        </Link>
+      )}
+
+      <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.6fr_1fr] lg:gap-[22px]">
+        <HoursTrendCard analytics={analytics} />
+        <SubjectSplitCard analytics={analytics} />
       </div>
 
-      <div className="order-2 lg:order-none lg:col-start-1 lg:row-start-2">
-        <HeroLesson now={now} lesson={nextLesson} prepLesson={prepLesson} />
+      <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2 xl:grid-cols-3 lg:gap-[22px]">
+        <ScheduleAheadCard now={now} lessons={lessons} upcoming={analytics.upcomingAfterToday} />
+        <StudentsOverviewCard students={analytics.studentsOverview} />
+        <TermHeatmapCard analytics={analytics} />
       </div>
 
-      <div className="order-6 lg:order-none lg:col-start-2 lg:row-start-2">
-        <StatsStack now={now} unbilled={unbilled} weekLoad={weekLoad} />
-      </div>
-
-      <div className="order-4 lg:order-none lg:col-start-1 lg:row-start-3">
-        <ScheduleCard now={now} lessons={lessons} nextLessonId={nextLesson?.id} />
-      </div>
-
-      <div className="order-5 lg:order-none lg:col-start-2 lg:row-start-3">
-        <NeedsReviewCard now={now} items={homework} />
-      </div>
-
-      <div className="order-3 lg:order-none lg:col-start-2 lg:row-start-4">
-        <PrepQueueCard lesson={prepLesson} />
-      </div>
+      <NeedsReviewStrip now={now} items={homework} />
     </div>
   );
 }

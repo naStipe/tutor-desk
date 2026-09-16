@@ -9,6 +9,17 @@ import { createTokenClient } from "../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
+function weekLabels(trendStart: Date, weeks: number) {
+  const labels: string[] = [];
+  for (let i = 0; i < weeks - 1; i++) {
+    const date = new Date(trendStart);
+    date.setDate(date.getDate() + i * 7);
+    labels.push(date.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase());
+  }
+  labels.push("THIS WK");
+  return labels;
+}
+
 export default async function DashboardPage() {
   const { supabase, user, accessToken } = await getCurrentUser();
   if (!user) redirect("/sign-in");
@@ -25,12 +36,17 @@ export default async function DashboardPage() {
     () => ensureUpcomingLessonsGenerated(client, user.id),
   );
 
-  const { todaysLessons, homeworkAttention, unbilled, weekLoad } = generatedNewLessons
+  const { todaysLessons, homeworkAttention, unbilled, weekLoad, analytics } = generatedNewLessons
     ? await getTodayDashboardData(client)
     : await cachedForTutor(
         "today-dashboard",
         [user.id],
-        [tutorTag("lessons", user.id), tutorTag("homework", user.id)],
+        [
+          tutorTag("lessons", user.id),
+          tutorTag("homework", user.id),
+          tutorTag("students", user.id),
+          tutorTag("subjects", user.id),
+        ],
         30,
         () => getTodayDashboardData(client),
       );
@@ -55,6 +71,11 @@ export default async function DashboardPage() {
     dueDate: item.due_date,
   }));
 
+  const upcomingAfterToday = analytics.upcomingAfterToday.map((lesson) => ({
+    ...lesson,
+    studentName: analytics.studentNames.get(lesson.studentId) ?? "Unknown student",
+  }));
+
   return (
     <TodayDashboard
       firstName={firstNameFromEmail(user.email ?? "")}
@@ -62,6 +83,16 @@ export default async function DashboardPage() {
       homework={homework}
       unbilled={unbilled}
       weekLoad={weekLoad}
+      analytics={{
+        hoursTrend: analytics.hoursTrend,
+        weekLabels: weekLabels(analytics.trendStart, analytics.hoursTrend.length),
+        monthHours: analytics.monthHours,
+        monthVsPrevPct: analytics.monthVsPrevPct,
+        subjectSplit: analytics.subjectSplit,
+        heatmap: analytics.heatmap,
+        studentsOverview: analytics.studentsOverview,
+        upcomingAfterToday,
+      }}
     />
   );
 }

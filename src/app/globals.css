@@ -81,25 +81,25 @@
   --td2-text-disabled: #a5aba3;
   --td2-text-disabled-2: #b8bdb5;
 
-  --td2-accent: #4cf0b3;
-  --td2-accent-ink: #16211c;
-  --td2-accent-text: #00734f;
-  --td2-accent-text-strong: #00875f;
-  --td2-accent-dot: #00a87a;
-  --td2-accent-surface: #eafbf4;
-  --td2-accent-surface-border: #b8e8d6;
-  --td2-accent-underline: #b8e8d6;
+  --td2-accent: #1f6b4a;
+  --td2-accent-ink: #f4faf7;
+  --td2-accent-text: #1f6b4a;
+  --td2-accent-text-strong: #155f3f;
+  --td2-accent-dot: #1f6b4a;
+  --td2-accent-surface: #eaf3ee;
+  --td2-accent-surface-border: #cfe4d7;
+  --td2-accent-underline: #cfe4d7;
 
   --td2-attention: #5b2ee0;
   --td2-attention-ink: #ffffff;
   --td2-attention-border: #d6c9fa;
 
   --td2-bar-inactive: #dfe2da;
-  --td2-bar-active: #23282a;
+  --td2-bar-active: #1f6b4a;
 
   /* Primary fill (buttons, "up next"/prep queue surfaces): inverted per theme. */
-  --td2-primary-bg: #23282a;
-  --td2-primary-fg: #4cf0b3;
+  --td2-primary-bg: #1f6b4a;
+  --td2-primary-fg: #f4faf7;
 
   --td2-brand: var(--td2-accent-text-strong);
   --td2-brand-strong: var(--td2-accent-dot);
@@ -148,24 +148,24 @@
   --td2-text-disabled: #4a514e;
   --td2-text-disabled-2: #454b49;
 
-  --td2-accent: #4cf0b3;
-  --td2-accent-ink: #05100c;
-  --td2-accent-text: #4cf0b3;
-  --td2-accent-text-strong: #4cf0b3;
-  --td2-accent-dot: #4cf0b3;
-  --td2-accent-surface: #161c1a;
-  --td2-accent-surface-border: #2c3a35;
-  --td2-accent-underline: #1e3a31;
+  --td2-accent: #34a874;
+  --td2-accent-ink: #06140d;
+  --td2-accent-text: #4cc98f;
+  --td2-accent-text-strong: #4cc98f;
+  --td2-accent-dot: #34a874;
+  --td2-accent-surface: #13201a;
+  --td2-accent-surface-border: #244a37;
+  --td2-accent-underline: #1c3c2c;
 
   --td2-attention: #b08cff;
   --td2-attention-ink: #140a2b;
   --td2-attention-border: #362c53;
 
   --td2-bar-inactive: #232826;
-  --td2-bar-active: #4cf0b3;
+  --td2-bar-active: #34a874;
 
-  --td2-primary-bg: #4cf0b3;
-  --td2-primary-fg: #05100c;
+  --td2-primary-bg: #34a874;
+  --td2-primary-fg: #06140d;
 
   --td2-brand: var(--td2-accent-text-strong);
   --td2-brand-strong: var(--td2-accent-dot);
@@ -217,13 +217,13 @@ body {
 
 @keyframes tdRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(76, 240, 179, 0.55);
+    box-shadow: 0 0 0 0 rgba(52, 168, 116, 0.55);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(76, 240, 179, 0);
+    box-shadow: 0 0 0 12px rgba(52, 168, 116, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(76, 240, 179, 0);
+    box-shadow: 0 0 0 0 rgba(52, 168, 116, 0);
   }
 }
 

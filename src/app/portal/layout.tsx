@@ -10,7 +10,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const student = await requirePortalStudent(supabase, user.id);
+  const student = await requirePortalStudent(supabase);
 
   return <PortalShell studentName={student.name}>{children}</PortalShell>;
 }

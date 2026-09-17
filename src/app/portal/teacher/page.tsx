@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function PortalTeacherPage() {
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase, user.id);
+  const student = await requirePortalStudent(supabase);
 
   const [tutorProfile, subjects] = await Promise.all([
     getTutorProfile(supabase, student.tutor_id),

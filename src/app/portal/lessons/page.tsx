@@ -5,7 +5,7 @@ import { PageHeader } from "../../../components/PageHeader";
 import { PaymentBadge } from "../../../features/lessons/components/PaymentBadge";
 import { StatusBadge } from "../../../features/lessons/components/StatusBadge";
 import { formatFullDateTime } from "../../../features/lessons/date-utils";
-import { listLessonsForStudent } from "../../../features/lessons/data";
+import { listPortalLessons } from "../../../features/portal/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
@@ -15,10 +15,10 @@ export const dynamic = "force-dynamic";
 export default async function PortalLessonsPage() {
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase, user.id);
+  const student = await requirePortalStudent(supabase);
 
   const [lessons, { timeZone }] = await Promise.all([
-    listLessonsForStudent(supabase, student.id),
+    listPortalLessons(supabase),
     getTutorFormatSettings(supabase, student.tutor_id),
   ]);
 
@@ -53,7 +53,7 @@ export default async function PortalLessonsPage() {
                   <td className="px-4 py-3 text-ink">
                     {formatFullDateTime(lesson.start_time, timeZone)}
                   </td>
-                  <td className="px-4 py-3 text-ink-muted">{lesson.subject?.name ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink-muted">{lesson.subject_name ?? "—"}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={lesson.status} />
                   </td>

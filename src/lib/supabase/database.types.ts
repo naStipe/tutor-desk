@@ -1,4 +1,10 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -492,6 +498,32 @@ export type Database = {
     }
     Functions: {
       accept_student_invite: { Args: { p_token: string }; Returns: string }
+      portal_get_student: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          tutor_id: string
+        }[]
+      }
+      portal_list_lessons: {
+        Args: { p_end?: string; p_limit?: number; p_start?: string }
+        Returns: {
+          currency: string
+          end_time: string
+          id: string
+          meeting_url: string
+          paid_at: string
+          payment_method: string
+          payment_status: string
+          price: number
+          start_time: string
+          status: string
+          student_id: string
+          subject_id: string
+          subject_name: string
+        }[]
+      }
       submit_homework: {
         Args: { p_homework_id: string; p_submission_text: string }
         Returns: undefined

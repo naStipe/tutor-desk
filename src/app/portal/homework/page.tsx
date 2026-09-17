@@ -21,7 +21,7 @@ function formatDueDate(value: string | null) {
 export default async function PortalHomeworkPage() {
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase, user.id);
+  const student = await requirePortalStudent(supabase);
 
   const homework = await listHomework(supabase, { studentId: student.id });
 

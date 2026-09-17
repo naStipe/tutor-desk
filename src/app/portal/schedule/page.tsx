@@ -12,12 +12,12 @@ import {
   toDateParam,
   toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
-import { listLessonsInRange } from "../../../features/lessons/data";
 import { StudentScheduleView } from "../../../features/lessons/components/StudentScheduleView";
 import {
   listHomeworkAwaitingReviewInRange,
   listHomeworkDueInRange,
 } from "../../../features/homework/data";
+import { listPortalLessons } from "../../../features/portal/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 
@@ -53,14 +53,13 @@ export default async function PortalSchedulePage({
 
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase, user.id);
+  const student = await requirePortalStudent(supabase);
 
   const [lessons, homeworkDue, homeworkAwaitingReview] = await Promise.all([
-    listLessonsInRange(
-      supabase,
-      { start: rangeStart.toISOString(), end: rangeEnd.toISOString() },
-      { studentId: student.id },
-    ),
+    listPortalLessons(supabase, {
+      start: rangeStart.toISOString(),
+      end: rangeEnd.toISOString(),
+    }),
     listHomeworkDueInRange(
       supabase,
       { start: rangeStart.toISOString(), end: rangeEnd.toISOString() },
@@ -77,7 +76,7 @@ export default async function PortalSchedulePage({
   const calendarLessons = lessons.map((lesson) => ({
     id: lesson.id,
     studentId: lesson.student_id,
-    studentName: lesson.student?.name ?? student.name,
+    studentName: student.name,
     startTime: lesson.start_time,
     endTime: lesson.end_time,
     status: lesson.status as "scheduled" | "completed" | "cancelled" | "no_show",

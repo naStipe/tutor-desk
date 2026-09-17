@@ -14,7 +14,7 @@ import {
   toDateParam,
   toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
-import { listLessonsInRange } from "../../../features/lessons/data";
+import { listLessonSlotsInRange, listLessonsInRange } from "../../../features/lessons/data";
 import { buildRatesByStudent } from "../../../features/lessons/rates-map";
 import { ensureUpcomingLessonsGenerated } from "../../../features/lessons/recurrence";
 import {
@@ -94,7 +94,7 @@ export default async function SchedulePage({
   const pickerStart = addDays(startOfDay(new Date()), -PICKER_WINDOW_PAST_DAYS);
   const pickerEnd = addDays(startOfDay(new Date()), PICKER_WINDOW_FUTURE_DAYS);
   const fetchPickerLessons = () =>
-    listLessonsInRange(client, {
+    listLessonSlotsInRange(client, {
       start: pickerStart.toISOString(),
       end: pickerEnd.toISOString(),
     });

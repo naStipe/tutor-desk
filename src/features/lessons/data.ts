@@ -48,6 +48,21 @@ export async function listLessonsInRange(
   return data as unknown as LessonWithStudent[];
 }
 
+export async function listLessonSlotsInRange(
+  supabase: SupabaseClient<Database>,
+  range: { start: string; end: string },
+) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .select("id, start_time, end_time, status")
+    .gte("start_time", range.start)
+    .lt("start_time", range.end)
+    .order("start_time", { ascending: true });
+
+  if (error) throw new Error(`Unable to load lessons: ${error.message}`);
+  return data;
+}
+
 export async function listLessonsForSelect(supabase: SupabaseClient<Database>, limit = 100) {
   const { data, error } = await supabase
     .from("lesson")

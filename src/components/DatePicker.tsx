@@ -1,8 +1,10 @@
 "use client";
 
+import { animate } from "motion";
 import { useEffect, useRef, useState } from "react";
 import { MonthCalendar } from "../features/lessons/components/MonthCalendar";
 import { parseDateParam, startOfDay } from "../features/lessons/date-utils";
+import { prefersReducedMotion, SPRING_POP } from "../lib/motion";
 import { CalendarIcon, XIcon } from "./icons";
 
 type DatePickerProps = {
@@ -112,7 +114,13 @@ export function DatePicker({
       </div>
 
       {open && (
-        <div className="td-modal-pop absolute z-50 mt-1 w-72 rounded-lg border border-border bg-surface p-2 shadow-lg shadow-black/10">
+        <div
+          ref={(el) => {
+            if (el && !prefersReducedMotion())
+              animate(el, { opacity: [0, 1], scale: [0.96, 1], y: [-4, 0] }, SPRING_POP);
+          }}
+          className="absolute z-50 mt-1 w-72 origin-top rounded-lg border border-border bg-surface p-2 shadow-lg shadow-black/10"
+        >
           <MonthCalendar
             month={month}
             onMonthChange={setMonth}

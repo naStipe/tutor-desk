@@ -1,6 +1,8 @@
 "use client";
 
+import { animate } from "motion";
 import { type ReactNode, useEffect, useId, useRef } from "react";
+import { prefersReducedMotion, SPRING_SETTLE } from "../lib/motion";
 import { XIcon } from "./icons";
 
 /**
@@ -27,8 +29,23 @@ export function Modal({
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
+
+    if (open && !dialog.open) {
+      dialog.showModal();
+      if (prefersReducedMotion()) return;
+      animate(dialog, { opacity: [0, 1], scale: [0.96, 1] }, SPRING_SETTLE);
+      return;
+    }
+
+    if (!open && dialog.open) {
+      if (prefersReducedMotion()) {
+        dialog.close();
+        return;
+      }
+      const controls = animate(dialog, { opacity: [1, 0], scale: [1, 0.97] }, SPRING_SETTLE);
+      controls.then(() => dialog.close());
+      return () => controls.stop();
+    }
   }, [open]);
 
   return (
@@ -42,7 +59,7 @@ export function Modal({
         // backdrop, since the dialog's own box is sized to its content.
         if (event.target === dialogRef.current) onClose();
       }}
-      className={`td-modal-pop m-auto max-h-[90vh] w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface p-0 text-ink shadow-lg backdrop:bg-black/30 backdrop:backdrop-blur-[2px] ${className}`}
+      className={`m-auto max-h-[90vh] w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface p-0 text-ink shadow-lg backdrop:bg-black/30 backdrop:backdrop-blur-[2px] ${className}`}
     >
       <div className="flex max-h-[90vh] flex-col">
         <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5">
@@ -53,7 +70,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1.5 text-ink-subtle transition-colors hover:bg-surface-muted hover:text-ink"
+            className="rounded-full p-1.5 text-ink-subtle transition-[background-color,color,transform] duration-100 hover:bg-surface-muted hover:text-ink active:scale-90 motion-reduce:active:scale-100"
           >
             <XIcon className="h-4 w-4" />
           </button>

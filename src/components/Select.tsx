@@ -1,6 +1,8 @@
 "use client";
 
+import { animate } from "motion";
 import { useEffect, useId, useRef, useState } from "react";
+import { prefersReducedMotion, SPRING_POP } from "../lib/motion";
 import { CheckIcon, ChevronDownIcon } from "./icons";
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
@@ -184,7 +186,11 @@ export function Select({
           onKeyDown={handleListKeyDown}
           // biome-ignore lint/a11y/noAutofocus: opening the menu should hand keyboard control to it immediately
           autoFocus
-          className="td-modal-pop absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-surface p-1 shadow-lg shadow-black/10"
+          ref={(el) => {
+            if (el && !prefersReducedMotion())
+              animate(el, { opacity: [0, 1], scale: [0.96, 1], y: [-4, 0] }, SPRING_POP);
+          }}
+          className="absolute z-50 mt-1 max-h-60 w-full origin-top overflow-auto rounded-lg border border-border bg-surface p-1 shadow-lg shadow-black/10"
         >
           {options.map((option, index) => (
             // biome-ignore lint/a11y/useFocusableInteractive: focus stays on the listbox; aria-activedescendant simulates focus per option
@@ -200,7 +206,7 @@ export function Select({
               aria-disabled={option.disabled}
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => !option.disabled && commit(option.value)}
-              className={`flex cursor-pointer items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-sm ${
+              className={`flex cursor-pointer items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-sm transition-transform duration-75 active:scale-[0.97] motion-reduce:active:scale-100 ${
                 option.disabled
                   ? "cursor-not-allowed text-ink-subtle"
                   : index === activeIndex

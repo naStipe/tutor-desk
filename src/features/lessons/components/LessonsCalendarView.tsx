@@ -51,6 +51,7 @@ export function LessonsCalendarView({
   agendaLessons,
   agendaHomework,
   timeZone,
+  locale,
 }: {
   title: string;
   description: string;
@@ -76,6 +77,7 @@ export function LessonsCalendarView({
   agendaLessons: AgendaLesson[];
   agendaHomework: AgendaHomework[];
   timeZone?: string;
+  locale?: string;
 }) {
   const router = useRouter();
   const [createPrefill, setCreatePrefill] = useState<Prefill | null>(
@@ -169,7 +171,7 @@ export function LessonsCalendarView({
               reviewCountByDate={homeworkReviewCountByDate}
             />
           </Card>
-          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} />
+          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} locale={locale} />
         </>
       ) : view === "day" ? (
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
@@ -209,6 +211,7 @@ export function LessonsCalendarView({
               lessons={agendaLessons}
               homework={agendaHomework}
               timeZone={timeZone}
+              locale={locale}
               singleColumn
             />
           </div>
@@ -242,7 +245,7 @@ export function LessonsCalendarView({
             }}
           />
 
-          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} />
+          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} locale={locale} />
         </>
       )}
 
@@ -258,6 +261,7 @@ export function LessonsCalendarView({
             subjects={subjects}
             ratesByStudent={ratesByStudent}
             pickerLessons={pickerLessons}
+            locale={locale}
             allowRecurrence
             defaultValues={{
               studentId: students[0]?.id ?? "",

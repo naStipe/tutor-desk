@@ -22,6 +22,8 @@ export function LessonDetailsCard({
   defaultValues,
   studentName,
   subjectName,
+  timeZone,
+  locale = "en-US",
 }: {
   action: (state: LessonActionState, formData: FormData) => Promise<LessonActionState>;
   lessonId: string;
@@ -39,6 +41,8 @@ export function LessonDetailsCard({
   };
   studentName: string;
   subjectName: string | null;
+  timeZone?: string;
+  locale?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<EditData | null>(null);
@@ -74,7 +78,7 @@ export function LessonDetailsCard({
           <dd className="text-ink">{subjectName ?? "—"}</dd>
           <dt className="text-ink-subtle">Time</dt>
           <dd className="text-ink">
-            {formatTimeRange(startTime.toISOString(), endTime.toISOString())}
+            {formatTimeRange(startTime.toISOString(), endTime.toISOString(), timeZone, locale)}
           </dd>
           <dt className="text-ink-subtle">Duration</dt>
           <dd className="text-ink">{defaultValues.durationMinutes} min</dd>
@@ -108,6 +112,7 @@ export function LessonDetailsCard({
         subjects={editData.subjects}
         ratesByStudent={editData.ratesByStudent}
         pickerLessons={editData.pickerLessons}
+        locale={locale}
         defaultValues={{
           ...defaultValues,
           dateParam: toDateParam(startTime),

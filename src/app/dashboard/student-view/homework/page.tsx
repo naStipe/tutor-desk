@@ -5,17 +5,21 @@ import { PageHeader } from "../../../../components/PageHeader";
 import { HomeworkStatusBadge } from "../../../../features/homework/components/HomeworkStatusBadge";
 import { listHomework } from "../../../../features/homework/data";
 import { resolveViewedStudent } from "../../../../features/student-view/resolve";
+import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
 import { getCurrentUser } from "../../../../lib/supabase/current-user";
 import { createTokenClient } from "../../../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
-function formatDueDate(value: string | null) {
+// due_date is a calendar date with no time-of-day, so it's parsed and displayed in UTC rather
+// than any particular timezone, keeping the date stable regardless of the viewer's clock.
+function formatDueDate(value: string | null, locale: string) {
   if (!value) return "No due date";
-  const date = new Date(`${value}T00:00:00`);
-  const isOverdue = date.getTime() < new Date().setHours(0, 0, 0, 0);
-  const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = new Date(`${value}T00:00:00Z`);
+  const todayUtcMidnight = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const isOverdue = date.getTime() < todayUtcMidnight.getTime();
+  const label = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
@@ -37,13 +41,16 @@ export default async function StudentViewHomeworkPage({
     );
   }
 
-  const homework = await cachedForTutor(
-    "student-view-homework",
-    [user.id, selected.id],
-    [tutorTag("homework", user.id)],
-    30,
-    () => listHomework(client, { studentId: selected.id, limit: 100 }),
-  );
+  const [homework, { locale }] = await Promise.all([
+    cachedForTutor(
+      "student-view-homework",
+      [user.id, selected.id],
+      [tutorTag("homework", user.id)],
+      30,
+      () => listHomework(client, { studentId: selected.id, limit: 100 }),
+    ),
+    getTutorFormatSettings(client, user.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -62,7 +69,7 @@ export default async function StudentViewHomeworkPage({
                 <p className="truncate text-sm font-medium text-ink">{item.title}</p>
                 <p className="truncate text-sm text-ink-muted">
                   {item.subject?.name ? `${item.subject.name} · ` : ""}
-                  {formatDueDate(item.due_date)}
+                  {formatDueDate(item.due_date, locale)}
                 </p>
                 {item.status === "reviewed" && item.feedback_text && (
                   <p className="mt-1 truncate text-sm text-ink-muted">

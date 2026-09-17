@@ -38,6 +38,7 @@ type HomeworkFormProps = {
   };
   submitLabel: string;
   pendingLabel: string;
+  locale?: string;
 };
 
 export function HomeworkForm({
@@ -49,6 +50,7 @@ export function HomeworkForm({
   defaultValues,
   submitLabel,
   pendingLabel,
+  locale = "en-US",
 }: HomeworkFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const [studentId, setStudentId] = useState(defaultValues?.studentId ?? students[0]?.id ?? "");
@@ -127,7 +129,7 @@ export function HomeworkForm({
       </Field>
 
       <Field label="Due date" htmlFor="dueDate" hint="Optional" errors={state.fieldErrors?.dueDate}>
-        <DatePicker id="dueDate" name="dueDate" value={dueDate} onChange={setDueDate} />
+        <DatePicker id="dueDate" name="dueDate" value={dueDate} onChange={setDueDate} locale={locale} />
       </Field>
 
       <Field

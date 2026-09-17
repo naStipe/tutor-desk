@@ -29,11 +29,13 @@ export function ScheduleAgenda({
   lessons,
   homework,
   timeZone,
+  locale,
   singleColumn,
 }: {
   lessons: AgendaLesson[];
   homework: AgendaHomework[];
   timeZone?: string;
+  locale?: string;
   /** Stack the two lists instead of placing them side by side, for narrow layouts like the day-view sidebar. */
   singleColumn?: boolean;
 }) {
@@ -56,7 +58,7 @@ export function ScheduleAgenda({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{lesson.studentName}</p>
                     <p className="truncate text-xs text-ink-subtle">
-                      {formatAgendaDateTime(lesson.startTime, timeZone)}
+                      {formatAgendaDateTime(lesson.startTime, timeZone, locale)}
                       {lesson.subjectName ? ` · ${lesson.subjectName}` : ""}
                     </p>
                   </div>

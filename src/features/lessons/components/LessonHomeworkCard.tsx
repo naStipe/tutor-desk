@@ -3,20 +3,24 @@ import { LinkButton } from "../../../components/Button";
 import { HomeworkStatusBadge } from "../../homework/components/HomeworkStatusBadge";
 import type { HomeworkWithStudent } from "../../homework/data";
 
-function formatDueDate(value: string | null) {
+// due_date is a calendar date with no time-of-day, so it's parsed and displayed in UTC rather
+// than any particular timezone, keeping the date stable regardless of the viewer's clock.
+function formatDueDate(value: string | null, locale: string) {
   if (!value) return "No due date";
-  const date = new Date(`${value}T00:00:00`);
-  return `Due ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  const date = new Date(`${value}T00:00:00Z`);
+  return `Due ${date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" })}`;
 }
 
 export function LessonHomeworkCard({
   lessonId,
   studentId,
   homework,
+  locale,
 }: {
   lessonId: string;
   studentId: string;
   homework: HomeworkWithStudent[];
+  locale: string;
 }) {
   return (
     <div className="space-y-3">
@@ -42,7 +46,7 @@ export function LessonHomeworkCard({
                 {item.title}
               </Link>
               <span className="shrink-0 text-xs text-ink-subtle">
-                {formatDueDate(item.due_date)}
+                {formatDueDate(item.due_date, locale)}
               </span>
               <HomeworkStatusBadge status={item.status} />
             </li>

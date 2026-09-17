@@ -50,6 +50,17 @@ export function toLocalMidnightValue(date: Date) {
   return `${toDateParam(date)}T00:00:00`;
 }
 
+/**
+ * The lesson's calendar date as the tutor's own timezone sees it (YYYY-MM-DD), for grouping by
+ * day (e.g. month-view counts). Using the bare local date instead would group by the server or
+ * browser's own timezone, which can misplace a lesson near midnight for a tutor elsewhere.
+ */
+export function toDateParamInZone(date: Date, timeZone?: string) {
+  if (!timeZone) return toDateParam(date);
+  // en-CA formats as YYYY-MM-DD, sparing us from reassembling separately-formatted parts.
+  return date.toLocaleDateString("en-CA", { timeZone });
+}
+
 export function parseDateParam(value: string | undefined): Date {
   if (value) {
     const [year, month, day] = value.split("-").map(Number);

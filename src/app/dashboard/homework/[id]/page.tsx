@@ -18,16 +18,21 @@ import { formatTimeRange } from "../../../../features/lessons/date-utils";
 import { listLessonsForSelect } from "../../../../features/lessons/data";
 import { listActiveStudents } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
+import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-function formatDueDate(value: string | null) {
+// due_date is a calendar date with no time-of-day, so it's parsed and displayed in UTC rather
+// than the tutor's timezone — that keeps the date stable regardless of the host runtime's own
+// timezone, instead of risking an off-by-one-day shift. Locale still affects word order/casing.
+function formatDueDate(value: string | null, locale: string) {
   if (!value) return null;
-  return new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString(locale, {
     weekday: "long",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -43,6 +48,8 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
     listSubjects(supabase),
   ]);
   if (!homework) notFound();
+
+  const { timeZone, locale } = await getTutorFormatSettings(supabase, homework.tutor_id);
 
   const attachmentRows = await listAttachments(supabase, homework.id);
   const attachments = await Promise.all(
@@ -61,7 +68,7 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
 
   const lessonOptions = lessons.map((lesson) => ({
     id: lesson.id,
-    label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${formatTimeRange(lesson.start_time, lesson.end_time)}`,
+    label: `${lesson.student?.name ?? "Unknown"} — ${new Date(lesson.start_time).toLocaleDateString(locale, { month: "short", day: "numeric", timeZone })}, ${formatTimeRange(lesson.start_time, lesson.end_time, timeZone, locale)}`,
   }));
 
   const links = (homework.links as { label: string | null; url: string }[] | null) ?? [];
@@ -69,7 +76,7 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
     .map((link) => (link.label ? `${link.label} | ${link.url}` : link.url))
     .join("\n");
 
-  const dueLabel = formatDueDate(homework.due_date);
+  const dueLabel = formatDueDate(homework.due_date, locale);
 
   return (
     <div className="max-w-xl space-y-6">
@@ -113,6 +120,7 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
             students={students}
             lessons={lessonOptions}
             subjects={subjects}
+            locale={locale}
             defaultValues={{
               studentId: homework.student_id,
               lessonId: homework.lesson_id ?? "",

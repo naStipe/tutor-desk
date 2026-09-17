@@ -12,6 +12,7 @@ import {
   startOfMonth,
   startOfWeek,
   toDateParam,
+  toDateParamInZone,
   toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
 import { listLessonSlotsInRange, listLessonsInRange } from "../../../features/lessons/data";
@@ -24,6 +25,7 @@ import {
 import { listRatesForTutor } from "../../../features/rates/data";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
+import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 import { createTokenClient } from "../../../lib/supabase/token-client";
@@ -99,8 +101,16 @@ export default async function SchedulePage({
       end: pickerEnd.toISOString(),
     });
 
-  const [lessons, students, subjects, rates, pickerLessons, homeworkDue, homeworkAwaitingReview] =
-    await Promise.all([
+  const [
+    lessons,
+    students,
+    subjects,
+    rates,
+    pickerLessons,
+    homeworkDue,
+    homeworkAwaitingReview,
+    { timeZone, locale },
+  ] = await Promise.all([
       generatedNewLessons
         ? fetchLessonsForRange()
         : cachedForTutor(
@@ -150,6 +160,9 @@ export default async function SchedulePage({
             end: rangeEnd.toISOString(),
           }),
       ),
+      cachedForTutor("format-settings", [user.id], [tutorTag("profile", user.id)], 300, () =>
+        getTutorFormatSettings(client, user.id),
+      ),
     ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
@@ -166,7 +179,7 @@ export default async function SchedulePage({
   if (view === "month") {
     for (const lesson of lessons) {
       if (lesson.status === "cancelled") continue;
-      const key = toDateParam(new Date(lesson.start_time));
+      const key = toDateParamInZone(new Date(lesson.start_time), timeZone);
       countByDate[key] = (countByDate[key] ?? 0) + 1;
     }
   }
@@ -184,10 +197,10 @@ export default async function SchedulePage({
 
   const description =
     view === "day"
-      ? formatDayHeading(rangeStart)
+      ? formatDayHeading(rangeStart, timeZone, locale)
       : view === "month"
-        ? formatMonthHeading(anchor)
-        : formatWeekRange(rangeStart);
+        ? formatMonthHeading(anchor, timeZone, locale)
+        : formatWeekRange(rangeStart, timeZone, locale);
 
   const homeworkDueCountByDate: Record<string, number> = {};
   for (const item of homeworkDue) {
@@ -198,7 +211,7 @@ export default async function SchedulePage({
   const homeworkReviewCountByDate: Record<string, number> = {};
   for (const item of homeworkAwaitingReview) {
     if (!item.submitted_at) continue;
-    const key = toDateParam(new Date(item.submitted_at));
+    const key = toDateParamInZone(new Date(item.submitted_at), timeZone);
     homeworkReviewCountByDate[key] = (homeworkReviewCountByDate[key] ?? 0) + 1;
   }
 
@@ -218,7 +231,7 @@ export default async function SchedulePage({
       studentName: item.student?.name ?? "Unknown student",
       subjectName: item.subject?.name ?? null,
       status: item.status,
-      dateLabel: item.due_date ? `Due ${formatAgendaDate(item.due_date)}` : "No due date",
+      dateLabel: item.due_date ? `Due ${formatAgendaDate(item.due_date, locale)}` : "No due date",
       sortValue: item.due_date ?? "",
     })),
     ...homeworkAwaitingReview.map((item) => ({
@@ -228,7 +241,7 @@ export default async function SchedulePage({
       subjectName: item.subject?.name ?? null,
       status: item.status,
       dateLabel: item.submitted_at
-        ? `Submitted ${new Date(item.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+        ? `Submitted ${new Date(item.submitted_at).toLocaleDateString(locale, { month: "short", day: "numeric", timeZone })}`
         : "Submitted",
       sortValue: item.submitted_at ?? "",
     })),
@@ -264,6 +277,8 @@ export default async function SchedulePage({
       homeworkReviewCountByDate={homeworkReviewCountByDate}
       agendaLessons={agendaLessons}
       agendaHomework={agendaHomework}
+      timeZone={timeZone}
+      locale={locale}
     />
   );
 }

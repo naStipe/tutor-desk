@@ -16,12 +16,13 @@ type DatePickerProps = {
   maxDate?: Date;
   clearable?: boolean;
   className?: string;
+  locale?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 };
 
-function formatLabel(dateParam: string) {
-  return parseDateParam(dateParam).toLocaleDateString("en-US", {
+function formatLabel(dateParam: string, locale: string) {
+  return parseDateParam(dateParam).toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -39,6 +40,7 @@ export function DatePicker({
   maxDate,
   clearable = true,
   className,
+  locale = "en-US",
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
 }: DatePickerProps) {
@@ -94,7 +96,7 @@ export function DatePicker({
         >
           <span className={`flex items-center gap-2 truncate ${current ? "" : "text-ink-subtle"}`}>
             <CalendarIcon className="h-4 w-4 shrink-0 text-ink-subtle" />
-            {current ? formatLabel(current) : placeholder}
+            {current ? formatLabel(current, locale) : placeholder}
           </span>
         </button>
         {clearable && current && (

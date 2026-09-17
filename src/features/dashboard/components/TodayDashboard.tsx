@@ -63,6 +63,7 @@ export type DashboardAnalytics = {
 
 export type TodayDashboardProps = {
   firstName: string;
+  locale: string;
   lessons: TodayLesson[];
   homework: HomeworkAttentionItem[];
   unbilled: { count: number; oldestDate: string | null };
@@ -103,7 +104,15 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   );
 }
 
-function GreetingHeader({ now, firstName }: { now: Date; firstName: string }) {
+function GreetingHeader({
+  now,
+  firstName,
+  locale,
+}: {
+  now: Date;
+  firstName: string;
+  locale: string;
+}) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-6">
       <div>
@@ -111,7 +120,7 @@ function GreetingHeader({ now, firstName }: { now: Date; firstName: string }) {
           suppressHydrationWarning
           className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--td2-text-muted)]"
         >
-          {formatEyebrowDate(now)}
+          {formatEyebrowDate(now, locale)}
         </p>
         <h1
           suppressHydrationWarning
@@ -316,10 +325,12 @@ function ScheduleAheadCard({
   now,
   lessons,
   upcoming,
+  locale,
 }: {
   now: Date;
   lessons: TodayLesson[];
   upcoming: UpcomingLesson[];
+  locale: string;
 }) {
   const remainingToday = lessons.filter(
     (lesson) => lesson.status !== "cancelled" && new Date(lesson.endTime) > now,
@@ -378,8 +389,8 @@ function ScheduleAheadCard({
                 className="flex items-center gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
               >
                 <span className="w-[52px] shrink-0 font-mono text-[10.5px] text-[var(--td2-text-secondary)]">
-                  {start.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}{" "}
-                  {start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                  {start.toLocaleDateString(locale, { weekday: "short" }).toUpperCase()}{" "}
+                  {start.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-[var(--td2-text-primary)]">
@@ -594,6 +605,7 @@ function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionI
 
 export function TodayDashboard({
   firstName,
+  locale,
   lessons,
   homework,
   unbilled,
@@ -603,7 +615,7 @@ export function TodayDashboard({
 
   return (
     <div className="flex flex-col gap-[18px] p-5 sm:px-[34px] sm:py-[30px] lg:gap-[22px]">
-      <GreetingHeader now={now} firstName={firstName} />
+      <GreetingHeader now={now} firstName={firstName} locale={locale} />
 
       {unbilled.count > 0 && (
         <Link
@@ -621,7 +633,12 @@ export function TodayDashboard({
       </div>
 
       <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2 xl:grid-cols-3 lg:gap-[22px]">
-        <ScheduleAheadCard now={now} lessons={lessons} upcoming={analytics.upcomingAfterToday} />
+        <ScheduleAheadCard
+          now={now}
+          lessons={lessons}
+          upcoming={analytics.upcomingAfterToday}
+          locale={locale}
+        />
         <StudentsOverviewCard students={analytics.studentsOverview} />
         <TermHeatmapCard analytics={analytics} />
       </div>

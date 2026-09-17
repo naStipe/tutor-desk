@@ -17,16 +17,17 @@ import { InviteCard } from "../../../../features/students/components/InviteCard"
 import { StudentForm } from "../../../../features/students/components/StudentForm";
 import { getStudent, listPortalMembers } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
+import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(value: string) {
-  // Fixed locale keeps this readable regardless of the server's OS locale.
-  return new Date(value).toLocaleDateString("en-US", {
+function formatDate(value: string, timeZone: string, locale: string) {
+  return new Date(value).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone,
   });
 }
 
@@ -38,10 +39,11 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const student = await getStudent(supabase, id);
   if (!student) notFound();
 
-  const [rates, subjects, portalAccess] = await Promise.all([
+  const [rates, subjects, portalAccess, { timeZone, locale }] = await Promise.all([
     listRatesForStudent(supabase, id),
     listSubjects(supabase),
     listPortalMembers(supabase, id),
+    getTutorFormatSettings(supabase, student.tutor_id),
   ]);
   const ratedSubjectIds = new Set(rates.map((rate) => rate.subject_id));
   const availableSubjects = subjects.filter((subject) => !ratedSubjectIds.has(subject.id));
@@ -54,8 +56,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         title={student.name}
         description={
           isArchived
-            ? `Archived ${formatDate(student.archived_at as string)}`
-            : `Added ${formatDate(student.created_at)}`
+            ? `Archived ${formatDate(student.archived_at as string, timeZone, locale)}`
+            : `Added ${formatDate(student.created_at, timeZone, locale)}`
         }
         avatar={<Avatar name={student.name} />}
         actions={

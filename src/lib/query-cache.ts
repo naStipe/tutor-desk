@@ -20,7 +20,7 @@ export function cachedForTutor<T>(
 }
 
 export function tutorTag(
-  resource: "students" | "lessons" | "homework" | "subjects" | "rates",
+  resource: "students" | "lessons" | "homework" | "subjects" | "rates" | "profile",
   tutorId: string,
 ) {
   return `${resource}:${tutorId}`;

@@ -25,11 +25,14 @@ export type ListHomework = {
 const selectClass =
   "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25";
 
-function formatDueDate(value: string | null) {
+// due_date is a calendar date with no time-of-day, so it's parsed and displayed in UTC rather
+// than any particular timezone, keeping the date stable regardless of the viewer's clock.
+function formatDueDate(value: string | null, locale: string) {
   if (!value) return "No due date";
-  const date = new Date(`${value}T00:00:00`);
-  const isOverdue = date.getTime() < new Date().setHours(0, 0, 0, 0);
-  const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = new Date(`${value}T00:00:00Z`);
+  const todayUtcMidnight = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z");
+  const isOverdue = date.getTime() < todayUtcMidnight.getTime();
+  const label = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
@@ -42,6 +45,7 @@ export function HomeworkListView({
   page,
   pageSize,
   totalCount,
+  locale,
 }: {
   homework: ListHomework[];
   students: { id: string; name: string }[];
@@ -51,6 +55,7 @@ export function HomeworkListView({
   page: number;
   pageSize: number;
   totalCount: number;
+  locale: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -123,7 +128,7 @@ export function HomeworkListView({
                 <p className="truncate text-sm font-medium text-ink">{item.title}</p>
                 <p className="truncate text-sm text-ink-muted">
                   {item.studentName}
-                  {item.subjectName ? ` · ${item.subjectName}` : ""} · {formatDueDate(item.dueDate)}
+                  {item.subjectName ? ` · ${item.subjectName}` : ""} · {formatDueDate(item.dueDate, locale)}
                 </p>
               </div>
               <HomeworkStatusBadge status={item.status} />

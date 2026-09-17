@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
+import { tutorTag } from "../../lib/query-cache";
 import { updateTutorProfile } from "./data";
 import { tutorProfileSettingsSchema } from "./schemas";
 
@@ -37,6 +38,7 @@ export async function updateTutorProfileAction(
     return { error: error instanceof Error ? error.message : "Unable to save settings." };
   }
 
+  revalidateTag(tutorTag("profile", user.id));
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   return { message: "Settings saved." };

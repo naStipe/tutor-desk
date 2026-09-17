@@ -72,6 +72,8 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           lessonId={lesson.id}
           studentName={lesson.student?.name ?? "Unknown student"}
           subjectName={lesson.subject?.name ?? null}
+          timeZone={timeZone}
+          locale={locale}
           defaultValues={{
             studentId: lesson.student_id,
             subjectId: lesson.subject_id ?? undefined,
@@ -96,6 +98,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           lessonId={lesson.id}
           studentId={lesson.student_id}
           homework={lessonHomework}
+          locale={locale}
         />
       </Card>
 

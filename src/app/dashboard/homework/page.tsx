@@ -3,6 +3,7 @@ import { HomeworkListView } from "../../../features/homework/components/Homework
 import { listHomeworkPage } from "../../../features/homework/data";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
+import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 import { createTokenClient } from "../../../lib/supabase/token-client";
@@ -27,7 +28,7 @@ export default async function HomeworkPage({
   const subjectId = first(params.subject);
   const page = Math.max(1, Number(first(params.page)) || 1);
 
-  const [{ homework, totalCount }, students, subjects] = await Promise.all([
+  const [{ homework, totalCount }, students, subjects, { locale }] = await Promise.all([
     cachedForTutor(
       "homework-page",
       [user.id, studentId ?? "", subjectId ?? "", String(page)],
@@ -41,6 +42,7 @@ export default async function HomeworkPage({
     cachedForTutor("subjects", [user.id], [tutorTag("subjects", user.id)], 120, () =>
       listSubjects(client),
     ),
+    getTutorFormatSettings(client, user.id),
   ]);
 
   const listItems = homework.map((item) => ({
@@ -64,6 +66,7 @@ export default async function HomeworkPage({
       page={page}
       pageSize={PAGE_SIZE}
       totalCount={totalCount}
+      locale={locale}
     />
   );
 }

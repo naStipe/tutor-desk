@@ -11,15 +11,19 @@ import {
 } from "../../../features/homework/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { PortalSubmissionForm } from "../../../features/portal/components/PortalSubmissionForm";
+import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
-function formatDueDate(value: string | null) {
+// due_date is a calendar date with no time-of-day, so it's parsed and displayed in UTC rather
+// than any particular timezone, keeping the date stable regardless of the viewer's clock.
+function formatDueDate(value: string | null, locale: string) {
   if (!value) return "No due date";
-  const date = new Date(`${value}T00:00:00`);
-  const isOverdue = date.getTime() < new Date().setHours(0, 0, 0, 0);
-  const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = new Date(`${value}T00:00:00Z`);
+  const todayUtcMidnight = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const isOverdue = date.getTime() < todayUtcMidnight.getTime();
+  const label = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
@@ -36,11 +40,10 @@ export default async function PortalHomeworkPage({
   const student = await requirePortalStudent(supabase, studentId);
 
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
-  const { homework, totalCount } = await listHomeworkPage(supabase, {
-    studentId: student.id,
-    page,
-    pageSize: PAGE_SIZE,
-  });
+  const [{ homework, totalCount }, { locale }] = await Promise.all([
+    listHomeworkPage(supabase, { studentId: student.id, page, pageSize: PAGE_SIZE }),
+    getTutorFormatSettings(supabase, student.tutor_id),
+  ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   function pageHref(target: number) {
@@ -80,7 +83,7 @@ export default async function PortalHomeworkPage({
                   <p className="truncate text-sm font-medium text-ink">{item.title}</p>
                   <p className="truncate text-sm text-ink-muted">
                     {item.subject?.name ? `${item.subject.name} · ` : ""}
-                    {formatDueDate(item.due_date)}
+                    {formatDueDate(item.due_date, locale)}
                   </p>
                   {item.description && (
                     <p className="mt-1 text-sm text-ink-muted">{item.description}</p>

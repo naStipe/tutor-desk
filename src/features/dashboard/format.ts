@@ -1,12 +1,12 @@
-const LOCALE = "en-US";
+const DEFAULT_LOCALE = "en-US";
 
 /** No per-tutor setting for this yet; a fixed target keeps the goal progress bar meaningful. */
 export const WEEKLY_GOAL_HOURS = 6;
 
-export function formatEyebrowDate(date: Date) {
-  const weekday = date.toLocaleDateString(LOCALE, { weekday: "long" });
+export function formatEyebrowDate(date: Date, locale = DEFAULT_LOCALE) {
+  const weekday = date.toLocaleDateString(locale, { weekday: "long" });
   const day = date.getDate();
-  const month = date.toLocaleDateString(LOCALE, { month: "long" });
+  const month = date.toLocaleDateString(locale, { month: "long" });
   return `${weekday} · ${day} ${month}`;
 }
 

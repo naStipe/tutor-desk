@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { TodayDashboard } from "../../features/dashboard/components/TodayDashboard";
 import { getTodayDashboardData } from "../../features/dashboard/data";
 import { ensureUpcomingLessonsGenerated } from "../../features/lessons/recurrence";
+import { getTutorFormatSettings } from "../../features/tutor-profile/data";
 import { firstNameFromEmail } from "../../lib/display-name";
 import { cachedForTutor, tutorTag } from "../../lib/query-cache";
 import { getCurrentUser } from "../../lib/supabase/current-user";
@@ -9,12 +10,12 @@ import { createTokenClient } from "../../lib/supabase/token-client";
 
 export const dynamic = "force-dynamic";
 
-function weekLabels(trendStart: Date, weeks: number) {
+function weekLabels(trendStart: Date, weeks: number, locale: string) {
   const labels: string[] = [];
   for (let i = 0; i < weeks - 1; i++) {
     const date = new Date(trendStart);
     date.setDate(date.getDate() + i * 7);
-    labels.push(date.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase());
+    labels.push(date.toLocaleDateString(locale, { month: "short", day: "2-digit" }).toUpperCase());
   }
   labels.push("THIS WK");
   return labels;
@@ -36,20 +37,26 @@ export default async function DashboardPage() {
     () => ensureUpcomingLessonsGenerated(client, user.id),
   );
 
-  const { todaysLessons, homeworkAttention, unbilled, weekLoad, analytics } = generatedNewLessons
-    ? await getTodayDashboardData(client)
-    : await cachedForTutor(
-        "today-dashboard",
-        [user.id],
-        [
-          tutorTag("lessons", user.id),
-          tutorTag("homework", user.id),
-          tutorTag("students", user.id),
-          tutorTag("subjects", user.id),
-        ],
-        30,
-        () => getTodayDashboardData(client),
-      );
+  const [{ todaysLessons, homeworkAttention, unbilled, weekLoad, analytics }, { locale }] =
+    await Promise.all([
+      generatedNewLessons
+        ? getTodayDashboardData(client)
+        : cachedForTutor(
+            "today-dashboard",
+            [user.id],
+            [
+              tutorTag("lessons", user.id),
+              tutorTag("homework", user.id),
+              tutorTag("students", user.id),
+              tutorTag("subjects", user.id),
+            ],
+            30,
+            () => getTodayDashboardData(client),
+          ),
+      cachedForTutor("format-settings", [user.id], [tutorTag("profile", user.id)], 300, () =>
+        getTutorFormatSettings(client, user.id),
+      ),
+    ]);
 
   const lessons = todaysLessons.map((lesson) => ({
     id: lesson.id,
@@ -79,13 +86,14 @@ export default async function DashboardPage() {
   return (
     <TodayDashboard
       firstName={firstNameFromEmail(user.email ?? "")}
+      locale={locale}
       lessons={lessons}
       homework={homework}
       unbilled={unbilled}
       weekLoad={weekLoad}
       analytics={{
         hoursTrend: analytics.hoursTrend,
-        weekLabels: weekLabels(analytics.trendStart, analytics.hoursTrend.length),
+        weekLabels: weekLabels(analytics.trendStart, analytics.hoursTrend.length, locale),
         monthHours: analytics.monthHours,
         monthVsPrevPct: analytics.monthVsPrevPct,
         subjectSplit: analytics.subjectSplit,

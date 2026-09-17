@@ -59,6 +59,7 @@ type LessonFormProps = {
   submitLabel: string;
   pendingLabel: string;
   onCancel?: () => void;
+  locale?: string;
 };
 
 export function LessonForm({
@@ -73,6 +74,7 @@ export function LessonForm({
   submitLabel,
   pendingLabel,
   onCancel,
+  locale = "en-US",
 }: LessonFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const [dateParam, setDateParam] = useState(defaultValues?.dateParam ?? toDateParam(new Date()));
@@ -249,7 +251,12 @@ export function LessonForm({
               errors={state.fieldErrors?.repeatUntil}
               hint="Leave blank to keep repeating until you cancel it."
             >
-              <DatePicker id="repeatUntil" name="repeatUntil" minDate={startOfDay(new Date())} />
+              <DatePicker
+                id="repeatUntil"
+                name="repeatUntil"
+                minDate={startOfDay(new Date())}
+                locale={locale}
+              />
             </Field>
           )}
         </div>

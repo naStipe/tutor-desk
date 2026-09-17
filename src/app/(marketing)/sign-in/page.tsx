@@ -35,8 +35,8 @@ export default async function SignInPage({
       <AuthForm
         action={signInAction}
         googleAction={signInWithGoogleAction}
-        heading="Tutor sign in"
-        description="Access your TutorDesk workspace."
+        heading="Sign in"
+        description="Access your TutorDesk workspace or student portal."
         submitLabel="Sign in"
         pendingLabel="Signing in…"
         alternateText="Need an account?"

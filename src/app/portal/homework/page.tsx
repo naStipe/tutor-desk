@@ -3,7 +3,11 @@ import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
 import { PageHeader } from "../../../components/PageHeader";
 import { HomeworkStatusBadge } from "../../../features/homework/components/HomeworkStatusBadge";
-import { listHomework } from "../../../features/homework/data";
+import {
+  getSignedAttachmentUrl,
+  listAttachments,
+  listHomework,
+} from "../../../features/homework/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { PortalSubmissionForm } from "../../../features/portal/components/PortalSubmissionForm";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
@@ -29,6 +33,21 @@ export default async function PortalHomeworkPage({
   const student = await requirePortalStudent(supabase, studentId);
 
   const homework = await listHomework(supabase, { studentId: student.id });
+  const attachmentsByHomework = new Map(
+    await Promise.all(
+      homework.map(async (item) => {
+        const rows = await listAttachments(supabase, item.id);
+        const withUrls = await Promise.all(
+          rows.map(async (row) => ({
+            id: row.id,
+            file_name: row.file_name,
+            url: await getSignedAttachmentUrl(supabase, row.storage_path).catch(() => null),
+          })),
+        );
+        return [item.id, withUrls] as const;
+      }),
+    ),
+  );
 
   return (
     <div className="space-y-6">
@@ -50,6 +69,40 @@ export default async function PortalHomeworkPage({
                   {item.description && (
                     <p className="mt-1 text-sm text-ink-muted">{item.description}</p>
                   )}
+                  {Array.isArray(item.links) && item.links.length > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {(item.links as { label: string | null; url: string }[]).map((link) => (
+                        <li key={link.url}>
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-brand hover:text-brand-strong hover:underline"
+                          >
+                            {link.label || link.url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {(attachmentsByHomework.get(item.id)?.length ?? 0) > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {attachmentsByHomework.get(item.id)!.map((attachment) =>
+                        attachment.url ? (
+                          <li key={attachment.id}>
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm text-brand hover:text-brand-strong hover:underline"
+                            >
+                              {attachment.file_name}
+                            </a>
+                          </li>
+                        ) : null,
+                      )}
+                    </ul>
+                  )}
                   {item.status === "reviewed" && item.feedback_text && (
                     <p className="mt-1 text-sm text-ink-muted">Feedback: {item.feedback_text}</p>
                   )}
@@ -57,8 +110,12 @@ export default async function PortalHomeworkPage({
                 <HomeworkStatusBadge status={item.status} />
               </div>
 
-              {item.status === "assigned" && student.role === "learner" && (
-                <PortalSubmissionForm homeworkId={item.id} />
+              {item.status !== "reviewed" && student.role === "learner" && (
+                <PortalSubmissionForm
+                  homeworkId={item.id}
+                  defaultValue={item.submission_text ?? ""}
+                  isResubmission={item.status === "submitted"}
+                />
               )}
             </Card>
           ))}

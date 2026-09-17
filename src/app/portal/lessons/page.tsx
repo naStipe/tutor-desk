@@ -8,6 +8,7 @@ import { formatFullDateTime } from "../../../features/lessons/date-utils";
 import { listPortalLessons } from "../../../features/portal/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
+import { formatMoney } from "../../../lib/formatting";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export default async function PortalLessonsPage({
   if (!user) redirect("/sign-in");
   const student = await requirePortalStudent(supabase, studentId);
 
-  const [lessons, { timeZone }] = await Promise.all([
+  const [lessons, { timeZone, locale }] = await Promise.all([
     listPortalLessons(supabase, student.id),
     getTutorFormatSettings(supabase, student.tutor_id),
   ]);
@@ -48,8 +49,12 @@ export default async function PortalLessonsPage({
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-subtle">
+                  Price
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-subtle">
                   Payment
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-subtle" />
               </tr>
             </thead>
             <tbody>
@@ -62,8 +67,25 @@ export default async function PortalLessonsPage({
                   <td className="px-4 py-3">
                     <StatusBadge status={lesson.status} />
                   </td>
+                  <td className="px-4 py-3 text-ink-muted">
+                    {lesson.price != null
+                      ? formatMoney(lesson.price, lesson.currency ?? "USD", locale)
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3">
                     <PaymentBadge status={lesson.payment_status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    {lesson.status === "scheduled" && lesson.meeting_url && (
+                      <a
+                        href={lesson.meeting_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-medium text-brand hover:text-brand-strong hover:underline"
+                      >
+                        Join
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))}

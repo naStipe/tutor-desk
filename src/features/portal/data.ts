@@ -1,6 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/supabase/database.types";
 
+export type PortalRole = "learner" | "guardian" | "payer";
+
+export type PortalStudent = {
+  id: string;
+  name: string;
+  tutor_id: string;
+  role: PortalRole;
+};
+
 export type PortalLesson = {
   id: string;
   student_id: string;
@@ -17,17 +26,26 @@ export type PortalLesson = {
   paid_at: string | null;
 };
 
+/** Every student this signed-in user can see in the portal, and their role for each. */
+export async function listPortalStudents(supabase: SupabaseClient<Database>) {
+  const { data, error } = await supabase.rpc("portal_list_students");
+  if (error) throw new Error(`Unable to load your student profile: ${error.message}`);
+  return (data ?? []) as PortalStudent[];
+}
+
 /**
- * Reads for the signed-in student, scoped through portal_list_lessons (see
- * supabase/migrations/20260917000000_portal_column_privacy.sql) so tutor-private lesson notes
- * never leave the database for a portal session.
+ * Reads for one student this signed-in user has portal access to, scoped through
+ * portal_list_lessons (see supabase/migrations/20260917000100_portal_membership.sql) so
+ * tutor-private lesson notes never leave the database for a portal session.
  */
 export async function listPortalLessons(
   supabase: SupabaseClient<Database>,
+  studentId: string,
   range?: { start?: string; end?: string },
   limit = 200,
 ) {
   const { data, error } = await supabase.rpc("portal_list_lessons", {
+    p_student_id: studentId,
     p_start: range?.start,
     p_end: range?.end,
     p_limit: limit,

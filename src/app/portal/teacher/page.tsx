@@ -11,10 +11,15 @@ import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortalTeacherPage() {
+export default async function PortalTeacherPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ student?: string }>;
+}) {
+  const { student: studentId } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase);
+  const student = await requirePortalStudent(supabase, studentId);
 
   const [tutorProfile, subjects] = await Promise.all([
     getTutorProfile(supabase, student.tutor_id),

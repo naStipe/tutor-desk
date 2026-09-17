@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { PortalShell } from "../../components/PortalShell";
-import { requirePortalStudent } from "../../features/portal/resolve";
+import { listPortalStudents } from "../../features/portal/data";
 import { getCurrentUser } from "../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,8 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const student = await requirePortalStudent(supabase);
+  const students = await listPortalStudents(supabase);
+  if (students.length === 0) redirect("/sign-in");
 
-  return <PortalShell studentName={student.name}>{children}</PortalShell>;
+  return <PortalShell students={students}>{children}</PortalShell>;
 }

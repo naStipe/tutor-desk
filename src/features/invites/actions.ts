@@ -13,7 +13,7 @@ function fields(formData: FormData) {
 }
 
 async function acceptInvite(supabase: SupabaseClient<Database>, token: string) {
-  const { error } = await supabase.rpc("accept_student_invite", { p_token: token });
+  const { error } = await supabase.rpc("accept_portal_invite", { p_token: token });
   if (error) throw new Error(error.message);
 }
 

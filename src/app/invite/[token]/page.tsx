@@ -8,7 +8,7 @@ import {
   acceptInviteSignUpAction,
   confirmAcceptInviteAction,
 } from "../../../features/invites/actions";
-import { getLinkedStudentId } from "../../../features/students/data";
+import { hasPortalMembership } from "../../../features/students/data";
 import { createClient } from "../../../lib/supabase/server";
 
 export default async function InvitePage({
@@ -27,8 +27,8 @@ export default async function InvitePage({
   } = await supabase.auth.getUser();
 
   if (user) {
-    const linkedStudentId = await getLinkedStudentId(supabase, user.id).catch(() => null);
-    if (linkedStudentId) redirect("/portal");
+    const hasPortalAccess = await hasPortalMembership(supabase).catch(() => false);
+    if (hasPortalAccess) redirect("/portal");
 
     return (
       <main className="relative flex min-h-screen items-center justify-center p-6">

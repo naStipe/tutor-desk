@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { AuthForm } from "../../../features/auth/components/AuthForm";
 import { signInAction, signInWithGoogleAction } from "../../../features/auth/actions";
-import { getLinkedStudentId } from "../../../features/students/data";
+import { hasPortalMembership } from "../../../features/students/data";
 import { createClient } from "../../../lib/supabase/server";
 
 export default async function SignInPage({
@@ -13,8 +13,8 @@ export default async function SignInPage({
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (data.user) {
-    const linkedStudentId = await getLinkedStudentId(supabase, data.user.id).catch(() => null);
-    redirect(linkedStudentId ? "/portal" : "/dashboard");
+    const hasPortalAccess = await hasPortalMembership(supabase).catch(() => false);
+    redirect(hasPortalAccess ? "/portal" : "/dashboard");
   }
 
   const { error, notice: noticeParam } = await searchParams;

@@ -310,6 +310,85 @@ export type Database = {
           },
         ]
       }
+      portal_invite: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          role: string
+          student_id: string
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at: string
+          id?: string
+          revoked_at?: string | null
+          role: string
+          student_id: string
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          role?: string
+          student_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_invite_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_membership: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          student_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          student_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          student_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_membership_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student: {
         Row: {
           archived_at: string | null
@@ -318,15 +397,12 @@ export type Database = {
           default_hourly_rate: number | null
           email: string | null
           id: string
-          invite_token_expires_at: string | null
-          invite_token_hash: string | null
           name: string
           notes: string | null
           phone: string | null
           telegram: string | null
           tutor_id: string
           updated_at: string
-          user_id: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -335,15 +411,12 @@ export type Database = {
           default_hourly_rate?: number | null
           email?: string | null
           id?: string
-          invite_token_expires_at?: string | null
-          invite_token_hash?: string | null
           name: string
           notes?: string | null
           phone?: string | null
           telegram?: string | null
           tutor_id: string
           updated_at?: string
-          user_id?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -352,15 +425,12 @@ export type Database = {
           default_hourly_rate?: number | null
           email?: string | null
           id?: string
-          invite_token_expires_at?: string | null
-          invite_token_hash?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
           telegram?: string | null
           tutor_id?: string
           updated_at?: string
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -497,17 +567,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_student_invite: { Args: { p_token: string }; Returns: string }
-      portal_get_student: {
-        Args: never
-        Returns: {
-          id: string
-          name: string
-          tutor_id: string
-        }[]
-      }
+      accept_portal_invite: { Args: { p_token: string }; Returns: string }
       portal_list_lessons: {
-        Args: { p_end?: string; p_limit?: number; p_start?: string }
+        Args: {
+          p_end?: string
+          p_limit?: number
+          p_start?: string
+          p_student_id: string
+        }
         Returns: {
           currency: string
           end_time: string
@@ -522,6 +589,15 @@ export type Database = {
           student_id: string
           subject_id: string
           subject_name: string
+        }[]
+      }
+      portal_list_students: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          role: string
+          tutor_id: string
         }[]
       }
       submit_homework: {

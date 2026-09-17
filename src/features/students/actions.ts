@@ -8,9 +8,10 @@ import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
 import {
   archiveStudent,
+  createPortalInvite,
   createStudent,
   deleteStudent,
-  setStudentInviteToken,
+  type PortalRole,
   updateStudent,
 } from "./data";
 import { studentInputSchema } from "./schemas";
@@ -98,6 +99,7 @@ export async function updateStudentAction(
 
 export async function generateStudentInviteAction(
   studentId: string,
+  role: PortalRole = "learner",
 ): Promise<{ token: string } | { error: string }> {
   const { supabase } = await requireTutorId();
 
@@ -106,7 +108,7 @@ export async function generateStudentInviteAction(
   const expiresAt = new Date(Date.now() + INVITE_TTL_MS).toISOString();
 
   try {
-    await setStudentInviteToken(supabase, studentId, tokenHash, expiresAt);
+    await createPortalInvite(supabase, studentId, role, tokenHash, expiresAt);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to create invite." };
   }

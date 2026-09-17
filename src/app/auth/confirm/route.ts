@@ -1,7 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getLinkedStudentId } from "../../../features/students/data";
+import { hasPortalMembership } from "../../../features/students/data";
 import { ensureCurrentTutorProfile } from "../../../features/tutor-profile/data";
 import { getEnv } from "../../../lib/env";
 import { createClient } from "../../../lib/supabase/server";
@@ -61,13 +61,13 @@ export async function GET(request: NextRequest) {
   const inviteMatch = next.match(INVITE_COMPLETE_PATTERN);
   if (inviteMatch) {
     const token = inviteMatch[1];
-    const { error: rpcError } = await supabase.rpc("accept_student_invite", { p_token: token });
+    const { error: rpcError } = await supabase.rpc("accept_portal_invite", { p_token: token });
     if (rpcError) return NextResponse.redirect(new URL(`/invite/${token}?error=invite`, siteUrl));
     return NextResponse.redirect(new URL("/portal", siteUrl));
   }
 
-  const linkedStudentId = await getLinkedStudentId(supabase, userId).catch(() => null);
-  if (linkedStudentId) return NextResponse.redirect(new URL("/portal", siteUrl));
+  const hasPortalAccess = await hasPortalMembership(supabase).catch(() => false);
+  if (hasPortalAccess) return NextResponse.redirect(new URL("/portal", siteUrl));
 
   try {
     await ensureCurrentTutorProfile(supabase, userId);

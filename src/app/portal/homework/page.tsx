@@ -18,10 +18,15 @@ function formatDueDate(value: string | null) {
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
-export default async function PortalHomeworkPage() {
+export default async function PortalHomeworkPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ student?: string }>;
+}) {
+  const { student: studentId } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase);
+  const student = await requirePortalStudent(supabase, studentId);
 
   const homework = await listHomework(supabase, { studentId: student.id });
 
@@ -52,7 +57,9 @@ export default async function PortalHomeworkPage() {
                 <HomeworkStatusBadge status={item.status} />
               </div>
 
-              {item.status === "assigned" && <PortalSubmissionForm homeworkId={item.id} />}
+              {item.status === "assigned" && student.role === "learner" && (
+                <PortalSubmissionForm homeworkId={item.id} />
+              )}
             </Card>
           ))}
         </div>

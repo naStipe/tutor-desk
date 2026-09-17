@@ -15,7 +15,7 @@ import {
 import { ConfirmDeleteForm } from "../../../../features/students/components/ConfirmDeleteForm";
 import { InviteCard } from "../../../../features/students/components/InviteCard";
 import { StudentForm } from "../../../../features/students/components/StudentForm";
-import { getStudent } from "../../../../features/students/data";
+import { getStudent, listPortalMembers } from "../../../../features/students/data";
 import { listSubjects } from "../../../../features/subjects/data";
 import { createClient } from "../../../../lib/supabase/server";
 
@@ -38,9 +38,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
   const student = await getStudent(supabase, id);
   if (!student) notFound();
 
-  const [rates, subjects] = await Promise.all([
+  const [rates, subjects, portalAccess] = await Promise.all([
     listRatesForStudent(supabase, id),
     listSubjects(supabase),
+    listPortalMembers(supabase, id),
   ]);
   const ratedSubjectIds = new Set(rates.map((rate) => rate.subject_id));
   const availableSubjects = subjects.filter((subject) => !ratedSubjectIds.has(subject.id));
@@ -85,7 +86,11 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         </div>
       </Card>
 
-      <InviteCard studentId={student.id} linked={student.user_id !== null} />
+      <InviteCard
+        studentId={student.id}
+        members={portalAccess.members}
+        pendingInvites={portalAccess.pendingInvites}
+      />
 
       <Card className="space-y-4">
         <div>

@@ -25,20 +25,22 @@ export const dynamic = "force-dynamic";
 
 type View = "day" | "week" | "month";
 
-function buildHref(view: View, date: Date) {
-  return `/portal/schedule?view=${view}&date=${toDateParam(date)}`;
+function buildHref(view: View, date: Date, studentId: string, showStudent: boolean) {
+  const studentQuery = showStudent ? `&student=${studentId}` : "";
+  return `/portal/schedule?view=${view}&date=${toDateParam(date)}${studentQuery}`;
 }
 
-function buildBaseHref(view: View) {
-  return `/portal/schedule?view=${view}`;
+function buildBaseHref(view: View, studentId: string, showStudent: boolean) {
+  const studentQuery = showStudent ? `&student=${studentId}` : "";
+  return `/portal/schedule?view=${view}${studentQuery}`;
 }
 
 export default async function PortalSchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string }>;
+  searchParams: Promise<{ view?: string; date?: string; student?: string }>;
 }) {
-  const { view: viewParam, date: dateParam } = await searchParams;
+  const { view: viewParam, date: dateParam, student: studentIdParam } = await searchParams;
   const view: View = viewParam === "day" ? "day" : viewParam === "month" ? "month" : "week";
   const anchor = parseDateParam(dateParam);
 
@@ -53,10 +55,11 @@ export default async function PortalSchedulePage({
 
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
-  const student = await requirePortalStudent(supabase);
+  const student = await requirePortalStudent(supabase, studentIdParam);
+  const showStudent = studentIdParam != null;
 
   const [lessons, homeworkDue, homeworkAwaitingReview] = await Promise.all([
-    listPortalLessons(supabase, {
+    listPortalLessons(supabase, student.id, {
       start: rangeStart.toISOString(),
       end: rangeEnd.toISOString(),
     }),
@@ -95,12 +98,12 @@ export default async function PortalSchedulePage({
   const monthAnchor = startOfMonth(anchor);
   const prevHref =
     view === "month"
-      ? buildHref("month", addMonths(monthAnchor, -1))
-      : buildHref(view, addDays(rangeStart, -step));
+      ? buildHref("month", addMonths(monthAnchor, -1), student.id, showStudent)
+      : buildHref(view, addDays(rangeStart, -step), student.id, showStudent);
   const nextHref =
     view === "month"
-      ? buildHref("month", addMonths(monthAnchor, 1))
-      : buildHref(view, addDays(rangeStart, step));
+      ? buildHref("month", addMonths(monthAnchor, 1), student.id, showStudent)
+      : buildHref(view, addDays(rangeStart, step), student.id, showStudent);
 
   const description =
     view === "day"
@@ -128,12 +131,12 @@ export default async function PortalSchedulePage({
       description={description}
       prevHref={prevHref}
       nextHref={nextHref}
-      todayHref={buildHref(view === "month" ? "month" : view, new Date())}
-      dayHref={buildHref("day", anchor)}
-      weekHref={buildHref("week", anchor)}
-      monthHref={buildHref("month", anchor)}
-      monthBaseHref={buildBaseHref("month")}
-      dayBaseHref={buildBaseHref("day")}
+      todayHref={buildHref(view === "month" ? "month" : view, new Date(), student.id, showStudent)}
+      dayHref={buildHref("day", anchor, student.id, showStudent)}
+      weekHref={buildHref("week", anchor, student.id, showStudent)}
+      monthHref={buildHref("month", anchor, student.id, showStudent)}
+      monthBaseHref={buildBaseHref("month", student.id, showStudent)}
+      dayBaseHref={buildBaseHref("day", student.id, showStudent)}
       view={view}
       dayStartValues={days.map(toLocalMidnightValue)}
       lessons={calendarLessons}

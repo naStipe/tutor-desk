@@ -5,7 +5,7 @@ import type { StudentInput } from "./schemas";
 export type Student = Database["public"]["Tables"]["student"]["Row"];
 
 const STUDENT_COLUMNS =
-  "id, tutor_id, user_id, name, email, phone, telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
+  "id, tutor_id, name, email, phone, telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
 
 export async function listActiveStudents(supabase: SupabaseClient<Database>) {
   const { data, error } = await supabase
@@ -104,28 +104,50 @@ export async function deleteStudent(supabase: SupabaseClient<Database>, id: stri
   if (error) throw new Error(`Unable to delete student: ${error.message}`);
 }
 
-/** The student row (if any) whose portal account is this signed-in user. */
-export async function getLinkedStudentId(supabase: SupabaseClient<Database>, userId: string) {
-  const { data, error } = await supabase
-    .from("student")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
+/** Whether this signed-in user already has a portal account linked to any student. */
+export async function hasPortalMembership(supabase: SupabaseClient<Database>) {
+  const { data, error } = await supabase.rpc("portal_list_students");
   if (error) throw new Error(`Unable to check linked student: ${error.message}`);
-  return data?.id ?? null;
+  return (data ?? []).length > 0;
 }
 
-export async function setStudentInviteToken(
+export type PortalRole = "learner" | "guardian" | "payer";
+
+/** Portal memberships (and any outstanding invite) for one student, for the tutor's own view. */
+export async function listPortalMembers(supabase: SupabaseClient<Database>, studentId: string) {
+  const [{ data: members, error: membersError }, { data: invites, error: invitesError }] =
+    await Promise.all([
+      supabase
+        .from("portal_membership")
+        .select("id, role, created_at")
+        .eq("student_id", studentId),
+      supabase
+        .from("portal_invite")
+        .select("id, role, email, expires_at")
+        .eq("student_id", studentId)
+        .is("accepted_at", null)
+        .is("revoked_at", null)
+        .gt("expires_at", new Date().toISOString()),
+    ]);
+
+  if (membersError) throw new Error(`Unable to load portal access: ${membersError.message}`);
+  if (invitesError) throw new Error(`Unable to load pending invites: ${invitesError.message}`);
+  return { members: members ?? [], pendingInvites: invites ?? [] };
+}
+
+export async function createPortalInvite(
   supabase: SupabaseClient<Database>,
   studentId: string,
+  role: PortalRole,
   tokenHash: string,
   expiresAt: string,
 ) {
-  const { error } = await supabase
-    .from("student")
-    .update({ invite_token_hash: tokenHash, invite_token_expires_at: expiresAt })
-    .eq("id", studentId);
+  const { error } = await supabase.from("portal_invite").insert({
+    student_id: studentId,
+    role,
+    token_hash: tokenHash,
+    expires_at: expiresAt,
+  });
 
   if (error) throw new Error(`Unable to create invite: ${error.message}`);
 }

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { signOutAction } from "../features/auth/actions";
 import { ThemeToggle } from "./ThemeToggle";
@@ -15,13 +15,23 @@ const NAV_ITEMS = [
 ];
 
 export function PortalShell({
-  studentName,
+  students,
   children,
 }: {
-  studentName: string;
+  students: { id: string; name: string; role: string }[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const selected = students.find((student) => student.id === searchParams.get("student")) ?? students[0];
+  const showSwitcher = students.length > 1;
+  const query = showSwitcher && selected ? `?student=${selected.id}` : "";
+
+  function handleSwitch(nextId: string) {
+    router.push(`${pathname}?student=${nextId}`);
+  }
 
   return (
     <div className="min-h-screen bg-[var(--td2-bg-page)]">
@@ -41,9 +51,26 @@ export function PortalShell({
             </span>
           </span>
           <div className="flex items-center gap-2">
-            <span className="hidden text-sm text-[var(--td2-text-muted)] sm:inline">
-              {studentName}
-            </span>
+            {showSwitcher ? (
+              <label className="hidden sm:block">
+                <span className="sr-only">Viewing student</span>
+                <select
+                  value={selected?.id}
+                  onChange={(event) => handleSwitch(event.target.value)}
+                  className="rounded-lg border border-[var(--td2-border-rail)] bg-transparent px-2 py-1 text-sm text-[var(--td2-text-muted)]"
+                >
+                  {students.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <span className="hidden text-sm text-[var(--td2-text-muted)] sm:inline">
+                {selected?.name}
+              </span>
+            )}
             <ThemeToggle />
             <form action={signOutAction}>
               <button
@@ -61,7 +88,7 @@ export function PortalShell({
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={`${item.href}${query}`}
                 aria-current={active ? "page" : undefined}
                 className={`shrink-0 rounded-[10px] border px-3 py-1.5 text-sm transition-colors ${
                   active

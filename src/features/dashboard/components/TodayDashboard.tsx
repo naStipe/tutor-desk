@@ -1,7 +1,8 @@
 "use client";
 
+import { animate } from "motion";
 import Link from "next/link";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import {
   formatDuration,
   formatEyebrowDate,
@@ -10,6 +11,7 @@ import {
   greetingWord,
   WEEKLY_GOAL_HOURS,
 } from "../format";
+import { prefersReducedMotion } from "../../../lib/motion";
 
 export type TodayLesson = {
   id: string;
@@ -83,12 +85,43 @@ function useNow(intervalMs: number) {
 function Card({
   className = "",
   children,
+  index = 0,
 }: {
   className?: string;
   children: React.ReactNode;
+  index?: number;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: entrance plays once on mount; index only sets its stagger delay
+  useEffect(() => {
+    if (prefersReducedMotion() || !ref.current) return;
+    animate(
+      ref.current,
+      { opacity: [0, 1], y: [10, 0] },
+      { type: "spring", bounce: 0, duration: 0.45, delay: index * 0.06 },
+    );
+  }, []);
+
   return (
     <div
+      ref={ref}
+      onPointerEnter={() => {
+        if (prefersReducedMotion() || !ref.current) return;
+        animate(
+          ref.current,
+          { y: -3, boxShadow: "0 10px 24px rgba(0,0,0,0.07)" },
+          { type: "spring", bounce: 0.15, duration: 0.35 },
+        );
+      }}
+      onPointerLeave={() => {
+        if (prefersReducedMotion() || !ref.current) return;
+        animate(
+          ref.current,
+          { y: 0, boxShadow: "0 0px 0px rgba(0,0,0,0)" },
+          { type: "spring", bounce: 0.2, duration: 0.4 },
+        );
+      }}
       className={`rounded-[16px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[22px_24px] ${className}`}
     >
       {children}
@@ -165,7 +198,7 @@ const HoursTrendCard = memo(function HoursTrendCard({
   const goalPct = Math.min(100, Math.round((weekHours / WEEKLY_GOAL_HOURS) * 100));
 
   return (
-    <Card>
+    <Card index={0}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Eyebrow>Teaching hours · last 8 weeks</Eyebrow>
@@ -237,7 +270,7 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
   let cumulative = 0;
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col" index={1}>
       <Eyebrow>Subject split · this month</Eyebrow>
       {items.length === 0 ? (
         <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">No lessons logged this month yet.</p>
@@ -360,7 +393,7 @@ function ScheduleAheadCard({
   );
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col" index={0}>
       <div className="flex items-baseline justify-between">
         <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
           Next few days
@@ -437,7 +470,7 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
 }) {
   const shown = students.slice(0, 5);
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col" index={1}>
       <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">Students</h2>
       {shown.length === 0 ? (
         <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">No active students yet.</p>
@@ -500,7 +533,7 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
   const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col" index={2}>
       <div className="flex items-baseline justify-between">
         <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
           Term heatmap

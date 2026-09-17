@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import {
   formatDuration,
   formatEyebrowDate,
@@ -144,7 +144,11 @@ function buildLinePath(values: number[], width: number, height: number, topPad =
   return { linePath, areaPath, points, last };
 }
 
-function HoursTrendCard({ analytics }: { analytics: DashboardAnalytics }) {
+const HoursTrendCard = memo(function HoursTrendCard({
+  analytics,
+}: {
+  analytics: DashboardAnalytics;
+}) {
   const width = 520;
   const height = 150;
   const { linePath, areaPath, last } = buildLinePath(analytics.hoursTrend, width, height);
@@ -210,12 +214,16 @@ function HoursTrendCard({ analytics }: { analytics: DashboardAnalytics }) {
       </div>
     </Card>
   );
-}
+});
 
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * 42;
 const DONUT_OPACITIES = [1, 0.6, 0.32, 0.16];
 
-function SubjectSplitCard({ analytics }: { analytics: DashboardAnalytics }) {
+const SubjectSplitCard = memo(function SubjectSplitCard({
+  analytics,
+}: {
+  analytics: DashboardAnalytics;
+}) {
   const items = analytics.subjectSplit.slice(0, 4);
   let cumulative = 0;
 
@@ -289,7 +297,7 @@ function SubjectSplitCard({ analytics }: { analytics: DashboardAnalytics }) {
       )}
     </Card>
   );
-}
+});
 
 function SchedulePill({ label }: { label: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY" }) {
   const base = "shrink-0 rounded-[7px] px-[9px] py-[4px] font-mono text-[9px] tracking-[0.08em]";
@@ -411,7 +419,11 @@ const STATUS_LABEL: Record<StudentOverview["status"], string> = {
   "caught-up": "All caught up",
 };
 
-function StudentsOverviewCard({ students }: { students: StudentOverview[] }) {
+const StudentsOverviewCard = memo(function StudentsOverviewCard({
+  students,
+}: {
+  students: StudentOverview[];
+}) {
   const shown = students.slice(0, 5);
   return (
     <Card className="flex flex-col">
@@ -459,7 +471,7 @@ function StudentsOverviewCard({ students }: { students: StudentOverview[] }) {
       </p>
     </Card>
   );
-}
+});
 
 function heatCellStyle(hours: number, max: number) {
   if (max <= 0 || hours <= 0) return { background: "var(--td2-bg-inset)" };
@@ -468,7 +480,11 @@ function heatCellStyle(hours: number, max: number) {
   return { background: "var(--td2-accent)", opacity };
 }
 
-function TermHeatmapCard({ analytics }: { analytics: DashboardAnalytics }) {
+const TermHeatmapCard = memo(function TermHeatmapCard({
+  analytics,
+}: {
+  analytics: DashboardAnalytics;
+}) {
   const max = Math.max(1, ...analytics.heatmap.flat());
   const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -533,7 +549,7 @@ function TermHeatmapCard({ analytics }: { analytics: DashboardAnalytics }) {
       </div>
     </Card>
   );
-}
+});
 
 function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionItem[] }) {
   if (items.length === 0) return null;

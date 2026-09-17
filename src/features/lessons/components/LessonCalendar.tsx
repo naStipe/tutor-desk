@@ -87,7 +87,13 @@ export function LessonCalendar({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const days = useMemo(() => dayStartValues.map((value) => new Date(value)), [dayStartValues]);
-  const now = useMemo(() => new Date(), []);
+  // Refresh once a minute so the "now" line and today/past-day highlighting stay accurate in a
+  // long-open session instead of freezing at whenever the calendar first mounted.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   const [lessons, setLessons] = useState(initialLessons);
   useEffect(() => setLessons(initialLessons), [initialLessons]);

@@ -5,7 +5,7 @@ import type { StudentInput } from "./schemas";
 export type Student = Database["public"]["Tables"]["student"]["Row"];
 
 const STUDENT_COLUMNS =
-  "id, tutor_id, name, email, phone, telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
+  "id, tutor_id, name, email, phone, telegram, guardian_name, guardian_email, guardian_phone, guardian_telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
 
 export async function listActiveStudents(supabase: SupabaseClient<Database>) {
   const { data, error } = await supabase
@@ -53,6 +53,10 @@ export async function createStudent(
       email: input.email ?? null,
       phone: input.phone ?? null,
       telegram: input.telegram ?? null,
+      guardian_name: input.guardianName ?? null,
+      guardian_email: input.guardianEmail ?? null,
+      guardian_phone: input.guardianPhone ?? null,
+      guardian_telegram: input.guardianTelegram ?? null,
       notes: input.notes ?? null,
       default_hourly_rate: input.defaultHourlyRate ?? null,
       default_currency: input.defaultHourlyRate ? input.defaultCurrency : null,
@@ -76,6 +80,10 @@ export async function updateStudent(
       email: input.email ?? null,
       phone: input.phone ?? null,
       telegram: input.telegram ?? null,
+      guardian_name: input.guardianName ?? null,
+      guardian_email: input.guardianEmail ?? null,
+      guardian_phone: input.guardianPhone ?? null,
+      guardian_telegram: input.guardianTelegram ?? null,
       notes: input.notes ?? null,
       default_hourly_rate: input.defaultHourlyRate ?? null,
       default_currency: input.defaultHourlyRate ? input.defaultCurrency : null,

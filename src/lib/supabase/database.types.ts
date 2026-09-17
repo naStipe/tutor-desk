@@ -396,6 +396,10 @@ export type Database = {
           default_currency: string | null
           default_hourly_rate: number | null
           email: string | null
+          guardian_email: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          guardian_telegram: string | null
           id: string
           name: string
           notes: string | null
@@ -410,6 +414,10 @@ export type Database = {
           default_currency?: string | null
           default_hourly_rate?: number | null
           email?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_telegram?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -424,6 +432,10 @@ export type Database = {
           default_currency?: string | null
           default_hourly_rate?: number | null
           email?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_telegram?: string | null
           id?: string
           name?: string
           notes?: string | null

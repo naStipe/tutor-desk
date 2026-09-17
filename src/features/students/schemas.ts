@@ -21,6 +21,12 @@ export const studentInputSchema = z.object({
   ),
   phone: optionalTrimmed(z.string().trim().max(40, "Phone number is too long")),
   telegram: optionalTrimmed(z.string().trim().max(100, "Telegram username is too long")),
+  guardianName: optionalTrimmed(z.string().trim().max(200, "Name is too long")),
+  guardianEmail: optionalTrimmed(
+    z.string().trim().email("Enter a valid email address").max(320).toLowerCase(),
+  ),
+  guardianPhone: optionalTrimmed(z.string().trim().max(40, "Phone number is too long")),
+  guardianTelegram: optionalTrimmed(z.string().trim().max(100, "Telegram username is too long")),
   notes: optionalTrimmed(z.string().trim().max(4000, "Notes are too long")),
   defaultHourlyRate: optionalNumber,
   defaultCurrency: z.enum(CURRENCIES).default("RUB"),

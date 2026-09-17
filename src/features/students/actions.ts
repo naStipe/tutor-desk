@@ -29,6 +29,10 @@ function fields(formData: FormData) {
     email: formData.get("email"),
     phone: formData.get("phone"),
     telegram: formData.get("telegram"),
+    guardianName: formData.get("guardianName"),
+    guardianEmail: formData.get("guardianEmail"),
+    guardianPhone: formData.get("guardianPhone"),
+    guardianTelegram: formData.get("guardianTelegram"),
     notes: formData.get("notes"),
     defaultHourlyRate: formData.get("defaultHourlyRate"),
     defaultCurrency: formData.get("defaultCurrency") ?? "RUB",
@@ -93,7 +97,7 @@ export async function updateStudentAction(
 
   revalidateTag(tutorTag("students", tutorId));
   revalidatePath("/dashboard/students");
-  revalidatePath(`/dashboard/students/${id}`);
+  revalidatePath(`/dashboard/students/${id}`, "layout");
   redirect(`/dashboard/students/${id}`);
 }
 

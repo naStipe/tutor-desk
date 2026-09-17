@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "../../../../components/Avatar";
-import { Button } from "../../../../components/Button";
 import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
 import { deleteRateAction, upsertRateAction } from "../../../../features/rates/actions";
@@ -13,6 +12,7 @@ import {
   updateStudentAction,
 } from "../../../../features/students/actions";
 import { ConfirmDeleteForm } from "../../../../features/students/components/ConfirmDeleteForm";
+import { ConfirmSubmitForm } from "../../../../components/ConfirmSubmitForm";
 import { InviteCard } from "../../../../features/students/components/InviteCard";
 import { StudentForm } from "../../../../features/students/components/StudentForm";
 import { getStudent, listPortalMembers } from "../../../../features/students/data";
@@ -161,12 +161,14 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
               Archived students are hidden from your active roster and their scheduled lessons are
               cancelled. This does not delete their data.
             </p>
-            <form action={archiveStudentAction} className="mt-3">
+            <ConfirmSubmitForm
+              action={archiveStudentAction}
+              confirmMessage={`Archive ${student.name}? This immediately cancels all of their scheduled lessons.`}
+              label="Archive student"
+              className="mt-3"
+            >
               <input type="hidden" name="id" value={student.id} />
-              <Button type="submit" variant="danger">
-                Archive student
-              </Button>
-            </form>
+            </ConfirmSubmitForm>
           </div>
         )}
 

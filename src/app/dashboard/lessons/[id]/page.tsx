@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Avatar } from "../../../../components/Avatar";
 import { Button } from "../../../../components/Button";
 import { Card } from "../../../../components/Card";
+import { ConfirmSubmitForm } from "../../../../components/ConfirmSubmitForm";
 import { PageHeader } from "../../../../components/PageHeader";
 import {
   cancelSeriesAction,
@@ -172,13 +173,14 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             This lesson is part of a weekly series. Cancelling the series stops future occurrences
             without touching past or completed lessons.
           </p>
-          <form action={cancelSeriesAction}>
+          <ConfirmSubmitForm
+            action={cancelSeriesAction}
+            confirmMessage="Cancel all remaining lessons in this series? Past and completed lessons are not affected."
+            label="Cancel remaining lessons in this series"
+          >
             <input type="hidden" name="seriesId" value={lesson.series_id} />
             <input type="hidden" name="lessonId" value={lesson.id} />
-            <Button type="submit" variant="danger">
-              Cancel remaining lessons in this series
-            </Button>
-          </form>
+          </ConfirmSubmitForm>
         </Card>
       )}
     </div>

@@ -27,6 +27,7 @@ export function LessonStatusActions({
   const [isPending, startTransition] = useTransition();
 
   function applyStatus(next: LessonStatus) {
+    if (next === "cancelled" && !window.confirm("Cancel this lesson?")) return;
     setPendingStatus(next);
     startTransition(async () => {
       setOptimisticStatus(next);

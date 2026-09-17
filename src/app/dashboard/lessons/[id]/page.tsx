@@ -129,7 +129,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
             <Select
               name="paymentMethod"
               defaultValue={lesson.payment_method ?? "invoice"}
-              className="flex w-40 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25"
+              className="flex w-40 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100"
               options={PAYMENT_METHODS.map((method) => ({
                 value: method,
                 label: PAYMENT_METHOD_LABELS[method],

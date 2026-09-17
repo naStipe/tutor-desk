@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -23,7 +23,7 @@ export type ListHomework = {
 };
 
 const selectClass =
-  "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25";
+  "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100";
 
 // due_date is a calendar date with no time-of-day, so it's parsed and displayed in UTC rather
 // than any particular timezone, keeping the date stable regardless of the viewer's clock.
@@ -121,7 +121,7 @@ export function HomeworkListView({
             <Link
               key={item.id}
               href={`/dashboard/homework/${item.id}`}
-              className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-surface-muted"
+              className="flex items-center gap-4 px-5 py-4 transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-[0.99] active:bg-surface-muted motion-reduce:active:scale-100"
             >
               <Avatar name={item.studentName} size="sm" />
               <div className="min-w-0 flex-1">

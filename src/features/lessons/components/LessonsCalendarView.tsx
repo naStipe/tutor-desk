@@ -18,10 +18,10 @@ import { MonthCalendar } from "./MonthCalendar";
 import { type AgendaHomework, type AgendaLesson, ScheduleAgenda } from "./ScheduleAgenda";
 
 const navLinkClass =
-  "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
+  "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-95 motion-reduce:active:scale-100";
 const toggleActiveClass = "rounded-md bg-brand px-3 py-1 text-sm font-medium text-on-brand";
 const toggleInactiveClass =
-  "rounded-md px-3 py-1 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-muted";
+  "rounded-md px-3 py-1 text-sm font-medium text-ink-muted transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-95 motion-reduce:active:scale-100";
 
 type Prefill = { dateParam: string; minutes: number; durationMinutes: number };
 type View = "day" | "week" | "month";

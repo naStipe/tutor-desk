@@ -131,7 +131,7 @@ function GreetingHeader({
       </div>
       <Link
         href="/dashboard/schedule?create=1"
-        className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110"
+        className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 active:duration-75 active:brightness-95 motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
       >
         + New lesson
       </Link>
@@ -386,7 +386,7 @@ function ScheduleAheadCard({
               <Link
                 key={item.id}
                 href={`/dashboard/lessons/${item.id}`}
-                className="flex items-center gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
+                className="flex items-center gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 transition-[background-color,transform] duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.99] active:bg-[var(--td2-bg-row-hover)] motion-reduce:active:scale-100"
               >
                 <span className="w-[52px] shrink-0 font-mono text-[10.5px] text-[var(--td2-text-secondary)]">
                   {start.toLocaleDateString(locale, { weekday: "short" }).toUpperCase()}{" "}
@@ -449,7 +449,7 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
               <Link
                 key={student.id}
                 href={`/dashboard/students/${student.id}`}
-                className="flex items-center gap-2.5 border-t border-[var(--td2-border-hairline)] py-2.5 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
+                className="flex items-center gap-2.5 border-t border-[var(--td2-border-hairline)] py-2.5 first:border-t-0 transition-[background-color,transform] duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.99] active:bg-[var(--td2-bg-row-hover)] motion-reduce:active:scale-100"
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12.5px] font-medium text-[var(--td2-text-primary)]">
@@ -579,7 +579,7 @@ function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionI
           <Link
             key={id}
             href={`/dashboard/homework/${id}`}
-            className="flex items-center justify-between gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 hover:bg-[var(--td2-bg-row-hover)]"
+            className="flex items-center justify-between gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 transition-[background-color,transform] duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.99] active:bg-[var(--td2-bg-row-hover)] motion-reduce:active:scale-100"
           >
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-[var(--td2-text-primary)]">{title}</p>
@@ -620,7 +620,7 @@ export function TodayDashboard({
       {unbilled.count > 0 && (
         <Link
           href="/dashboard/lessons"
-          className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] hover:bg-[var(--td2-bg-row-hover)]"
+          className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />
           {unbilled.count} unbilled lesson{unbilled.count === 1 ? "" : "s"}

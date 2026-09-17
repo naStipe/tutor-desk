@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Card } from "../../../components/Card";
 import { HomeworkStatusBadge } from "../../homework/components/HomeworkStatusBadge";
 import { formatAgendaDateTime } from "../date-utils";
@@ -53,7 +53,7 @@ export function ScheduleAgenda({
               <li key={lesson.id}>
                 <Link
                   href={`/dashboard/lessons/${lesson.id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface-muted"
+                  className="flex items-center justify-between gap-3 px-4 py-3 transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-[0.99] active:bg-surface-muted motion-reduce:active:scale-100"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{lesson.studentName}</p>
@@ -85,7 +85,7 @@ export function ScheduleAgenda({
               <li key={item.id}>
                 <Link
                   href={`/dashboard/homework/${item.id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface-muted"
+                  className="flex items-center justify-between gap-3 px-4 py-3 transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-[0.99] active:bg-surface-muted motion-reduce:active:scale-100"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{item.title}</p>

@@ -46,7 +46,7 @@ export default async function StudentSchedulePage({
         <Link
           key={lesson.id}
           href={`/dashboard/lessons/${lesson.id}`}
-          className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 transition-colors hover:bg-surface-muted"
+          className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-[0.99] active:bg-surface-muted motion-reduce:active:scale-100"
         >
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-ink">

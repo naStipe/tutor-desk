@@ -116,7 +116,7 @@ export function TimeSlotGrid({
                     ? "Doesn't fit before the next lesson"
                     : undefined
               }
-              className={`flex h-11 items-center justify-center rounded-md border px-2 text-center text-xs font-medium leading-tight transition-all duration-150 ${
+              className={`flex h-11 items-center justify-center rounded-md border px-2 text-center text-xs font-medium leading-tight transition-all duration-150 active:scale-95 motion-reduce:active:scale-100 ${
                 isSelected
                   ? "border-brand bg-brand text-on-brand"
                   : slot.reason === "available"

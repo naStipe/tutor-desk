@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   addDays,
@@ -55,7 +55,7 @@ export function MonthCalendar({
           type="button"
           onClick={() => canGoPrev && onMonthChange(addMonths(month, -1))}
           disabled={!canGoPrev}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-[background-color,color,transform] duration-100 hover:bg-surface-muted hover:text-ink active:scale-90 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 motion-reduce:active:scale-100"
           aria-label="Previous month"
         >
           &larr;
@@ -65,7 +65,7 @@ export function MonthCalendar({
           type="button"
           onClick={() => canGoNext && onMonthChange(addMonths(month, 1))}
           disabled={!canGoNext}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-[background-color,color,transform] duration-100 hover:bg-surface-muted hover:text-ink active:scale-90 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 motion-reduce:active:scale-100"
           aria-label="Next month"
         >
           &rarr;
@@ -98,7 +98,7 @@ export function MonthCalendar({
               type="button"
               disabled={Boolean(isDisabled)}
               onClick={() => onSelectDate(dateParam)}
-              className={`relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-sm transition-all duration-150 sm:h-16 ${
+              className={`relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-sm transition-all duration-150 sm:h-16 active:scale-95 motion-reduce:hover:scale-100 motion-reduce:active:scale-100 ${
                 isSelected
                   ? "bg-brand font-semibold text-on-brand shadow-sm shadow-brand/30"
                   : isToday
@@ -106,7 +106,7 @@ export function MonthCalendar({
                     : isPast
                       ? "text-ink-subtle/70 hover:bg-surface-muted"
                       : "text-ink hover:bg-surface-muted hover:scale-[1.03]"
-              } ${!inMonth ? "text-ink-subtle/40" : ""} ${isDisabled ? "cursor-not-allowed opacity-30 hover:scale-100" : ""}`}
+              } ${!inMonth ? "text-ink-subtle/40" : ""} ${isDisabled ? "cursor-not-allowed opacity-30 hover:scale-100 active:scale-100" : ""}`}
             >
               <span>{day.getDate()}</span>
               {(count > 0 || homeworkCount > 0 || reviewCount > 0) && (

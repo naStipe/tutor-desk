@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -55,7 +55,7 @@ export function RateForm({
             name="subjectId"
             value={subjectId}
             onChange={setSubjectId}
-            className="flex w-44 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25"
+            className="flex w-44 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100"
             options={
               subjectOptions.length === 0
                 ? [{ value: "", label: "No subjects left", disabled: true }]
@@ -78,7 +78,7 @@ export function RateForm({
           name="currency"
           value={currency}
           onChange={setCurrency}
-          className="flex w-24 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25"
+          className="flex w-24 items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100"
           options={CURRENCIES.map((code) => ({ value: code, label: code }))}
         />
 

@@ -95,7 +95,7 @@ export function LessonDateTimePicker({
             key={preset}
             type="button"
             onClick={() => onChangeDuration(preset)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-[color,background-color,transform] duration-100 active:scale-95 motion-reduce:active:scale-100 ${
               durationMinutes === preset
                 ? "border-brand bg-brand/10 text-brand"
                 : "border-border text-ink-muted hover:bg-surface-muted"

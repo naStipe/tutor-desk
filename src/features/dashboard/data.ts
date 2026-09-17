@@ -235,7 +235,7 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
       heatmap,
       studentsOverview,
       upcomingAfterToday,
-      studentNames: new Map((students ?? []).map((s) => [s.id, s.name])),
+      studentNames: Object.fromEntries((students ?? []).map((s) => [s.id, s.name])),
     },
   };
 }

@@ -80,7 +80,7 @@ export default async function DashboardPage() {
 
   const upcomingAfterToday = analytics.upcomingAfterToday.map((lesson) => ({
     ...lesson,
-    studentName: analytics.studentNames.get(lesson.studentId) ?? "Unknown student",
+    studentName: analytics.studentNames[lesson.studentId] ?? "Unknown student",
   }));
 
   return (

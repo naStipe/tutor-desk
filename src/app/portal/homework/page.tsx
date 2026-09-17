@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
@@ -6,7 +7,7 @@ import { HomeworkStatusBadge } from "../../../features/homework/components/Homew
 import {
   getSignedAttachmentUrl,
   listAttachments,
-  listHomework,
+  listHomeworkPage,
 } from "../../../features/homework/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { PortalSubmissionForm } from "../../../features/portal/components/PortalSubmissionForm";
@@ -22,17 +23,32 @@ function formatDueDate(value: string | null) {
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
+const PAGE_SIZE = 15;
+
 export default async function PortalHomeworkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ student?: string }>;
+  searchParams: Promise<{ student?: string; page?: string }>;
 }) {
-  const { student: studentId } = await searchParams;
+  const { student: studentId, page: pageParam } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
   const student = await requirePortalStudent(supabase, studentId);
 
-  const homework = await listHomework(supabase, { studentId: student.id, limit: 100 });
+  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+  const { homework, totalCount } = await listHomeworkPage(supabase, {
+    studentId: student.id,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(target: number) {
+    const params = new URLSearchParams();
+    if (studentId) params.set("student", studentId);
+    params.set("page", String(target));
+    return `/portal/homework?${params.toString()}`;
+  }
   const attachmentsByHomework = new Map(
     await Promise.all(
       homework.map(async (item) => {
@@ -119,6 +135,28 @@ export default async function PortalHomeworkPage({
               )}
             </Card>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          {page > 1 ? (
+            <Link href={pageHref(page - 1)} className="text-brand hover:text-brand-strong hover:underline">
+              &larr; Previous
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-ink-muted">
+            Page {page} of {totalPages}
+          </span>
+          {page < totalPages ? (
+            <Link href={pageHref(page + 1)} className="text-brand hover:text-brand-strong hover:underline">
+              Next &rarr;
+            </Link>
+          ) : (
+            <span />
+          )}
         </div>
       )}
     </div>

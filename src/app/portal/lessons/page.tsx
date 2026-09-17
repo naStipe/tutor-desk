@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
@@ -5,7 +6,7 @@ import { PageHeader } from "../../../components/PageHeader";
 import { PaymentBadge } from "../../../features/lessons/components/PaymentBadge";
 import { StatusBadge } from "../../../features/lessons/components/StatusBadge";
 import { formatFullDateTime } from "../../../features/lessons/date-utils";
-import { listPortalLessons } from "../../../features/portal/data";
+import { countPortalLessons, listPortalLessons } from "../../../features/portal/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { formatMoney } from "../../../lib/formatting";
@@ -13,20 +14,32 @@ import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 25;
+
 export default async function PortalLessonsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ student?: string }>;
+  searchParams: Promise<{ student?: string; page?: string }>;
 }) {
-  const { student: studentId } = await searchParams;
+  const { student: studentId, page: pageParam } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
   const student = await requirePortalStudent(supabase, studentId);
 
-  const [lessons, { timeZone, locale }] = await Promise.all([
-    listPortalLessons(supabase, student.id),
+  const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+  const [lessons, totalCount, { timeZone, locale }] = await Promise.all([
+    listPortalLessons(supabase, student.id, undefined, PAGE_SIZE, (page - 1) * PAGE_SIZE),
+    countPortalLessons(supabase, student.id),
     getTutorFormatSettings(supabase, student.tutor_id),
   ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(target: number) {
+    const params = new URLSearchParams();
+    if (studentId) params.set("student", studentId);
+    params.set("page", String(target));
+    return `/portal/lessons?${params.toString()}`;
+  }
 
   return (
     <div className="space-y-6">
@@ -92,6 +105,28 @@ export default async function PortalLessonsPage({
             </tbody>
           </table>
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          {page > 1 ? (
+            <Link href={pageHref(page - 1)} className="text-brand hover:text-brand-strong hover:underline">
+              &larr; Previous
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-ink-muted">
+            Page {page} of {totalPages}
+          </span>
+          {page < totalPages ? (
+            <Link href={pageHref(page + 1)} className="text-brand hover:text-brand-strong hover:underline">
+              Next &rarr;
+            </Link>
+          ) : (
+            <span />
+          )}
+        </div>
       )}
     </div>
   );

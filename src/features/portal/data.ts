@@ -43,14 +43,31 @@ export async function listPortalLessons(
   studentId: string,
   range?: { start?: string; end?: string },
   limit = 200,
+  offset = 0,
 ) {
   const { data, error } = await supabase.rpc("portal_list_lessons", {
     p_student_id: studentId,
     p_start: range?.start,
     p_end: range?.end,
     p_limit: limit,
+    p_offset: offset,
   });
 
   if (error) throw new Error(`Unable to load lessons: ${error.message}`);
   return (data ?? []) as PortalLesson[];
+}
+
+export async function countPortalLessons(
+  supabase: SupabaseClient<Database>,
+  studentId: string,
+  range?: { start?: string; end?: string },
+) {
+  const { data, error } = await supabase.rpc("portal_count_lessons", {
+    p_student_id: studentId,
+    p_start: range?.start,
+    p_end: range?.end,
+  });
+
+  if (error) throw new Error(`Unable to count lessons: ${error.message}`);
+  return data ?? 0;
 }

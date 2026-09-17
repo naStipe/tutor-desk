@@ -568,10 +568,15 @@ export type Database = {
     }
     Functions: {
       accept_portal_invite: { Args: { p_token: string }; Returns: string }
+      portal_count_lessons: {
+        Args: { p_end?: string; p_start?: string; p_student_id: string }
+        Returns: number
+      }
       portal_list_lessons: {
         Args: {
           p_end?: string
           p_limit?: number
+          p_offset?: number
           p_start?: string
           p_student_id: string
         }

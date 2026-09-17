@@ -6,7 +6,7 @@ import {
   formatMinutesOfDay,
   formatWeekdayShort,
   isSameDay,
-  minutesSinceMidnight,
+  minutesSinceMidnightInZone,
   startOfDay,
   toDateParam,
 } from "../date-utils";
@@ -38,11 +38,13 @@ export function StudentLessonCalendar({
   lessons,
   homeworkDueCountByDate,
   homeworkAwaitingFeedbackCountByDate,
+  timeZone,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
   homeworkDueCountByDate?: Record<string, number>;
   homeworkAwaitingFeedbackCountByDate?: Record<string, number>;
+  timeZone?: string;
 }) {
   const days = useMemo(() => dayStartValues.map((value) => new Date(value)), [dayStartValues]);
   // Refresh once a minute so the "now" line and today highlighting stay accurate in a
@@ -141,7 +143,8 @@ export function StudentLessonCalendar({
           {days.map((day) => {
             const isToday = isSameDay(day, now);
             const isPastDay = startOfDay(day) < startOfDay(now);
-            const nowLineTop = ((minutesSinceMidnight(now) - START_HOUR * 60) / 60) * PX_PER_HOUR;
+            const nowLineTop =
+              ((minutesSinceMidnightInZone(now, timeZone) - START_HOUR * 60) / 60) * PX_PER_HOUR;
             const pastOverlayHeight = isPastDay
               ? GRID_HEIGHT
               : isToday
@@ -179,7 +182,7 @@ export function StudentLessonCalendar({
                     15,
                     Math.round((end.getTime() - start.getTime()) / 60000),
                   );
-                  const startMinutes = clampMinutes(minutesSinceMidnight(start));
+                  const startMinutes = clampMinutes(minutesSinceMidnightInZone(start, timeZone));
                   const top = ((startMinutes - START_HOUR * 60) / 60) * PX_PER_HOUR;
                   const height = Math.max((durationMinutes / 60) * PX_PER_HOUR, 22);
                   const compact = height < 40;

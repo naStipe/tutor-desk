@@ -205,6 +205,7 @@ export function LessonsCalendarView({
                 highlightLessonId={highlightLessonId}
                 homeworkDueCountByDate={homeworkDueCountByDate}
                 homeworkReviewCountByDate={homeworkReviewCountByDate}
+                timeZone={timeZone}
                 onSlotClick={(dayIndex, startMinutes, endMinutes) => {
                   const day = new Date(dayStartValues[dayIndex]);
                   setCreatePrefill({
@@ -246,6 +247,7 @@ export function LessonsCalendarView({
             highlightLessonId={highlightLessonId}
             homeworkDueCountByDate={homeworkDueCountByDate}
             homeworkReviewCountByDate={homeworkReviewCountByDate}
+            timeZone={timeZone}
             onSlotClick={(dayIndex, startMinutes, endMinutes) => {
               const day = new Date(dayStartValues[dayIndex]);
               setCreatePrefill({

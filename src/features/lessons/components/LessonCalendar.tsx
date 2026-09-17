@@ -17,9 +17,10 @@ import {
   formatMinutesOfDay,
   formatWeekdayShort,
   isSameDay,
-  minutesSinceMidnight,
+  minutesSinceMidnightInZone,
   startOfDay,
   toDateParam,
+  zonedMinutesToDate,
 } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 
@@ -74,6 +75,7 @@ export function LessonCalendar({
   highlightLessonId,
   homeworkDueCountByDate,
   homeworkReviewCountByDate,
+  timeZone,
   onSlotClick,
 }: {
   dayStartValues: string[];
@@ -82,6 +84,7 @@ export function LessonCalendar({
   highlightLessonId?: string | null;
   homeworkDueCountByDate?: Record<string, number>;
   homeworkReviewCountByDate?: Record<string, number>;
+  timeZone?: string;
   onSlotClick: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 }) {
   const router = useRouter();
@@ -115,13 +118,13 @@ export function LessonCalendar({
     let earliestHour = DEFAULT_START_HOUR;
     let latestHour = DEFAULT_END_HOUR;
     for (const lesson of lessons) {
-      const start = minutesSinceMidnight(new Date(lesson.startTime)) / 60;
-      const end = minutesSinceMidnight(new Date(lesson.endTime)) / 60;
+      const start = minutesSinceMidnightInZone(new Date(lesson.startTime), timeZone) / 60;
+      const end = minutesSinceMidnightInZone(new Date(lesson.endTime), timeZone) / 60;
       earliestHour = Math.min(earliestHour, Math.floor(start));
       latestHour = Math.max(latestHour, Math.ceil(end));
     }
     return { startHour: earliestHour, endHour: latestHour };
-  }, [lessons]);
+  }, [lessons, timeZone]);
   const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
   const HOURS = useMemo(
     () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
@@ -180,7 +183,7 @@ export function LessonCalendar({
       startClientX: event.clientX,
       startClientY: event.clientY,
       originDayIndex: dayIndex,
-      originStartMinutes: minutesSinceMidnight(start),
+      originStartMinutes: minutesSinceMidnightInZone(start, timeZone),
       durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
       moved: false,
       armed: !isTouch,
@@ -260,8 +263,7 @@ export function LessonCalendar({
     }
 
     const day = days[finalDayIndex];
-    const newStart = new Date(day);
-    newStart.setMinutes(finalStartMinutes);
+    const newStart = zonedMinutesToDate(toDateParam(day), finalStartMinutes, timeZone);
     const newEnd = new Date(newStart.getTime() + drag.durationMinutes * 60000);
 
     const previousLessons = lessons;
@@ -397,7 +399,8 @@ export function LessonCalendar({
           {days.map((day, dayIndex) => {
             const isToday = isSameDay(day, now);
             const isPastDay = startOfDay(day) < startOfDay(now);
-            const nowLineTop = ((minutesSinceMidnight(now) - START_HOUR * 60) / 60) * PX_PER_HOUR;
+            const nowLineTop =
+              ((minutesSinceMidnightInZone(now, timeZone) - START_HOUR * 60) / 60) * PX_PER_HOUR;
             const pastOverlayHeight = isPastDay
               ? GRID_HEIGHT
               : isToday
@@ -409,8 +412,8 @@ export function LessonCalendar({
             const dayLayout = layoutDayIntervals(
               dayLessons.map((lesson) => ({
                 id: lesson.id,
-                startMinutes: minutesSinceMidnight(new Date(lesson.startTime)),
-                endMinutes: minutesSinceMidnight(new Date(lesson.endTime)),
+                startMinutes: minutesSinceMidnightInZone(new Date(lesson.startTime), timeZone),
+                endMinutes: minutesSinceMidnightInZone(new Date(lesson.endTime), timeZone),
               })),
             );
 
@@ -451,7 +454,7 @@ export function LessonCalendar({
                   );
                   const startMinutes = isDragging
                     ? dragPreview.startMinutes
-                    : clampMinutes(minutesSinceMidnight(start));
+                    : clampMinutes(minutesSinceMidnightInZone(start, timeZone));
                   const top = ((startMinutes - START_HOUR * 60) / 60) * PX_PER_HOUR;
                   const height = Math.max((durationMinutes / 60) * PX_PER_HOUR, 22);
                   const compact = height < 40;

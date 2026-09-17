@@ -136,6 +136,61 @@ export function minutesSinceMidnight(date: Date) {
   return date.getHours() * 60 + date.getMinutes();
 }
 
+/**
+ * Minutes since midnight as the given timezone sees it, not the browser's own timezone.
+ * Falls back to the browser-local reading when no timezone is known yet.
+ */
+export function minutesSinceMidnightInZone(date: Date, timeZone?: string) {
+  if (!timeZone) return minutesSinceMidnight(date);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? 0);
+  return hour * 60 + minute;
+}
+
+function timeZoneOffsetMinutes(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0);
+  const asUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
+  return (asUtc - date.getTime()) / 60000;
+}
+
+/**
+ * Inverse of `minutesSinceMidnightInZone`: turns a wall-clock date + minutes-since-midnight, as
+ * the given timezone sees it, back into the actual instant. Needed so dragging a lesson block
+ * (positioned using the tutor's timezone) writes back the time the tutor actually saw on screen.
+ */
+export function zonedMinutesToDate(dateParam: string, minutes: number, timeZone?: string) {
+  if (!timeZone) return combineDateAndMinutes(dateParam, minutes);
+  const [year, month, day] = dateParam.split("-").map(Number);
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  const utcGuess = Date.UTC(year, (month ?? 1) - 1, day ?? 1, hour, minute);
+  const offset = timeZoneOffsetMinutes(new Date(utcGuess), timeZone);
+  return new Date(utcGuess - offset * 60000);
+}
+
 export function formatHourLabel(hour: number) {
   const period = hour < 12 || hour === 24 ? "AM" : "PM";
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;

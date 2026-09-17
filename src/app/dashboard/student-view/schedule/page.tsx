@@ -20,6 +20,7 @@ import {
   listHomeworkDueInRange,
 } from "../../../../features/homework/data";
 import { resolveViewedStudent } from "../../../../features/student-view/resolve";
+import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
 import { getCurrentUser } from "../../../../lib/supabase/current-user";
 import { createTokenClient } from "../../../../lib/supabase/token-client";
@@ -73,7 +74,7 @@ export default async function StudentViewSchedulePage({
     );
   }
 
-  const [lessons, homeworkDue, homeworkAwaitingReview] = await Promise.all([
+  const [lessons, homeworkDue, homeworkAwaitingReview, { timeZone, locale }] = await Promise.all([
     cachedForTutor(
       "student-view-lessons-range",
       [user.id, selected.id, rangeStart.toISOString(), rangeEnd.toISOString()],
@@ -110,6 +111,7 @@ export default async function StudentViewSchedulePage({
           { studentId: selected.id },
         ),
     ),
+    getTutorFormatSettings(client, user.id),
   ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
@@ -144,10 +146,10 @@ export default async function StudentViewSchedulePage({
 
   const description =
     view === "day"
-      ? formatDayHeading(rangeStart)
+      ? formatDayHeading(rangeStart, timeZone, locale)
       : view === "month"
-        ? formatMonthHeading(anchor)
-        : formatWeekRange(rangeStart);
+        ? formatMonthHeading(anchor, timeZone, locale)
+        : formatWeekRange(rangeStart, timeZone, locale);
 
   const homeworkDueCountByDate: Record<string, number> = {};
   for (const item of homeworkDue) {
@@ -181,6 +183,7 @@ export default async function StudentViewSchedulePage({
       monthAnchorValue={toLocalMidnightValue(anchor)}
       homeworkDueCountByDate={homeworkDueCountByDate}
       homeworkReviewCountByDate={homeworkReviewCountByDate}
+      timeZone={timeZone}
     />
   );
 }

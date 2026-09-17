@@ -42,7 +42,7 @@ export default async function StudentViewHomeworkPage({
     [user.id, selected.id],
     [tutorTag("homework", user.id)],
     30,
-    () => listHomework(client, { studentId: selected.id }),
+    () => listHomework(client, { studentId: selected.id, limit: 100 }),
   );
 
   return (

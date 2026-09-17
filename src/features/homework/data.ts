@@ -15,7 +15,7 @@ const HOMEWORK_COLUMNS =
 
 export async function listHomework(
   supabase: SupabaseClient<Database>,
-  filters?: { studentId?: string; subjectId?: string },
+  filters?: { studentId?: string; subjectId?: string; limit?: number },
 ) {
   let query = supabase
     .from("homework")
@@ -25,6 +25,7 @@ export async function listHomework(
 
   if (filters?.studentId) query = query.eq("student_id", filters.studentId);
   if (filters?.subjectId) query = query.eq("subject_id", filters.subjectId);
+  if (filters?.limit) query = query.limit(filters.limit);
 
   const { data, error } = await query;
 

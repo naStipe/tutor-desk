@@ -35,10 +35,10 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
   const prevMonthStart = new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1);
 
   const [
-    todaysLessons,
     weekLessons,
     homeworkAttention,
-    completedLessons,
+    unbilledCountResult,
+    oldestUnbilledResult,
     trendResult,
     prevMonthResult,
     overdueHomeworkResult,
@@ -46,15 +46,23 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     upcomingResult,
     subjectsResult,
   ] = await Promise.all([
-    listLessonsInRange(supabase, { start: dayStart.toISOString(), end: dayEnd.toISOString() }),
+    // Today is a subset of this week, so the "Today" list is filtered from this in-memory
+    // instead of running a second, near-identical range query.
     listLessonsInRange(supabase, { start: weekStart.toISOString(), end: weekEnd.toISOString() }),
     listHomeworkNeedingAttention(supabase, 5),
     supabase
       .from("lesson")
-      .select("id, start_time")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "completed")
+      .eq("payment_status", "unpaid"),
+    supabase
+      .from("lesson")
+      .select("start_time")
       .eq("status", "completed")
       .eq("payment_status", "unpaid")
-      .order("start_time", { ascending: true }),
+      .order("start_time", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
     supabase
       .from("lesson")
       .select("id, start_time, end_time, status, student_id, subject_id")
@@ -83,8 +91,10 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     supabase.from("subject").select("id, name"),
   ]);
 
-  if (completedLessons.error)
-    throw new Error(`Unable to load unbilled lessons: ${completedLessons.error.message}`);
+  if (unbilledCountResult.error)
+    throw new Error(`Unable to load unbilled lessons: ${unbilledCountResult.error.message}`);
+  if (oldestUnbilledResult.error)
+    throw new Error(`Unable to load unbilled lessons: ${oldestUnbilledResult.error.message}`);
   if (trendResult.error) throw new Error(`Unable to load lesson trend: ${trendResult.error.message}`);
   if (prevMonthResult.error)
     throw new Error(`Unable to load lesson trend: ${prevMonthResult.error.message}`);
@@ -93,6 +103,11 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
   if (upcomingResult.error)
     throw new Error(`Unable to load upcoming lessons: ${upcomingResult.error.message}`);
   if (subjectsResult.error) throw new Error(`Unable to load subjects: ${subjectsResult.error.message}`);
+
+  const todaysLessons = weekLessons.filter((lesson) => {
+    const start = new Date(lesson.start_time);
+    return start >= dayStart && start < dayEnd;
+  });
 
   const perDayMinutes = [0, 0, 0, 0, 0, 0, 0];
   let totalMinutes = 0;
@@ -108,10 +123,9 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     loadCount += 1;
   }
 
-  const completedRows = completedLessons.data ?? [];
   const unbilled = {
-    count: completedRows.length,
-    oldestDate: completedRows[0]?.start_time ?? null,
+    count: unbilledCountResult.count ?? 0,
+    oldestDate: oldestUnbilledResult.data?.start_time ?? null,
   };
 
   // Weekly totals (for the trend chart + heatmap) and the same broken down per day and per

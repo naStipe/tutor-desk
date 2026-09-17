@@ -32,7 +32,7 @@ export default async function PortalHomeworkPage({
   if (!user) redirect("/sign-in");
   const student = await requirePortalStudent(supabase, studentId);
 
-  const homework = await listHomework(supabase, { studentId: student.id });
+  const homework = await listHomework(supabase, { studentId: student.id, limit: 100 });
   const attachmentsByHomework = new Map(
     await Promise.all(
       homework.map(async (item) => {

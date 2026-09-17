@@ -9,13 +9,18 @@ import {
   createLesson,
   createLessonSeries,
   getFirstLessonForSeries,
+  listLessonSlotsInRange,
   updateLesson,
   updateLessonPayment,
   updateLessonStatus,
   updateLessonTime,
 } from "./data";
-import { toDateParam } from "./date-utils";
+import { addDays, startOfDay, toDateParam } from "./date-utils";
+import { buildRatesByStudent } from "./rates-map";
 import { ensureUpcomingLessonsGenerated } from "./recurrence";
+import { listRatesForTutor } from "../rates/data";
+import { listActiveStudents } from "../students/data";
+import { listSubjects } from "../subjects/data";
 import {
   lessonInputSchema,
   lessonStatusSchema,
@@ -233,4 +238,41 @@ export async function cancelSeriesAction(formData: FormData) {
     redirect(`/dashboard/lessons/${lessonId}`);
   }
   redirect("/dashboard/lessons");
+}
+
+/**
+ * Editing a lesson needs the student/subject/rate catalogs and a picker window of lesson slots,
+ * but most page visits never open the edit form — fetch these lazily when the user clicks Edit
+ * instead of on every page load.
+ */
+export async function getLessonEditDataAction(currentStudent: { id: string; name: string }) {
+  const { supabase } = await requireTutorId();
+  const pickerStart = addDays(startOfDay(new Date()), -7);
+  const pickerEnd = addDays(startOfDay(new Date()), 120);
+
+  const [activeStudents, subjects, rates, pickerLessonRows] = await Promise.all([
+    listActiveStudents(supabase),
+    listSubjects(supabase),
+    listRatesForTutor(supabase),
+    listLessonSlotsInRange(supabase, {
+      start: pickerStart.toISOString(),
+      end: pickerEnd.toISOString(),
+    }),
+  ]);
+
+  const students = activeStudents.some((student) => student.id === currentStudent.id)
+    ? activeStudents
+    : [currentStudent, ...activeStudents];
+
+  return {
+    students: students.map((student) => ({ id: student.id, name: student.name })),
+    subjects: subjects.map((subject) => ({ id: subject.id, name: subject.name })),
+    ratesByStudent: buildRatesByStudent(rates, activeStudents),
+    pickerLessons: pickerLessonRows.map((row) => ({
+      id: row.id,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      status: row.status,
+    })),
+  };
 }

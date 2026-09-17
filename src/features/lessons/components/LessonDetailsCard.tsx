@@ -1,30 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "../../../components/Button";
 import type { LessonActionState } from "../actions";
+import { getLessonEditDataAction } from "../actions";
 import { formatTimeRange, minutesSinceMidnight, toDateParam } from "../date-utils";
 import type { PaymentMethod, PaymentStatus } from "../schemas";
 import type { PickerLesson } from "./LessonDateTimePicker";
 import { LessonForm, type RatesByStudent } from "./LessonForm";
 
+type EditData = {
+  students: { id: string; name: string }[];
+  subjects: { id: string; name: string }[];
+  ratesByStudent: RatesByStudent;
+  pickerLessons: PickerLesson[];
+};
+
 export function LessonDetailsCard({
   action,
   lessonId,
-  students,
-  subjects,
-  ratesByStudent,
-  pickerLessons,
   defaultValues,
   studentName,
   subjectName,
 }: {
   action: (state: LessonActionState, formData: FormData) => Promise<LessonActionState>;
   lessonId: string;
-  students: { id: string; name: string }[];
-  subjects: { id: string; name: string }[];
-  ratesByStudent: RatesByStudent;
-  pickerLessons: PickerLesson[];
   defaultValues: {
     studentId: string;
     subjectId?: string;
@@ -41,15 +41,29 @@ export function LessonDetailsCard({
   subjectName: string | null;
 }) {
   const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState<EditData | null>(null);
+  const [isPending, startTransition] = useTransition();
   const startTime = new Date(defaultValues.startTimeIso);
   const endTime = new Date(startTime.getTime() + defaultValues.durationMinutes * 60000);
+
+  function openEditor() {
+    setEditing(true);
+    if (editData) return;
+    startTransition(async () => {
+      const data = await getLessonEditDataAction({
+        id: defaultValues.studentId,
+        name: studentName,
+      });
+      setEditData(data);
+    });
+  }
 
   if (!editing) {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink">Details</h2>
-          <Button type="button" variant="secondary" onClick={() => setEditing(true)}>
+          <Button type="button" variant="secondary" onClick={openEditor}>
             Edit
           </Button>
         </div>
@@ -75,16 +89,25 @@ export function LessonDetailsCard({
     );
   }
 
+  if (isPending || !editData) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-sm font-semibold text-ink">Edit details</h2>
+        <p className="text-sm text-ink-muted">Loading…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-ink">Edit details</h2>
       <LessonForm
         action={action}
         lessonId={lessonId}
-        students={students}
-        subjects={subjects}
-        ratesByStudent={ratesByStudent}
-        pickerLessons={pickerLessons}
+        students={editData.students}
+        subjects={editData.subjects}
+        ratesByStudent={editData.ratesByStudent}
+        pickerLessons={editData.pickerLessons}
         defaultValues={{
           ...defaultValues,
           dateParam: toDateParam(startTime),

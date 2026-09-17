@@ -258,6 +258,12 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[var(--td2-bg-page)]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
+      >
+        Skip to content
+      </a>
       <div className="flex min-h-screen">
         <aside className="hidden w-[232px] shrink-0 flex-col gap-[26px] border-r border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)] px-[18px] py-[26px] lg:flex">
           <div className="flex items-center justify-between">
@@ -347,6 +353,7 @@ export function AppShell({
           )}
 
           <main
+            id="main-content"
             className={
               pathname === "/dashboard" ? "flex-1" : "flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10"
             }

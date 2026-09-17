@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useId, useRef } from "react";
 import { XIcon } from "./icons";
 
 /**
@@ -22,6 +22,7 @@ export function Modal({
   className?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -34,6 +35,7 @@ export function Modal({
     // biome-ignore lint/a11y/useKeyWithClickEvents: onClick only detects a backdrop click (target === the dialog itself); <dialog> already has native Esc handling for the keyboard case.
     <dialog
       ref={dialogRef}
+      aria-labelledby={titleId}
       onClose={onClose}
       onClick={(event) => {
         // A click that lands on the <dialog> element itself (not a descendant) means it hit the
@@ -44,7 +46,9 @@ export function Modal({
     >
       <div className="flex max-h-[90vh] flex-col">
         <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5">
-          <h3 className="text-sm font-semibold text-ink">{title}</h3>
+          <h3 id={titleId} className="text-sm font-semibold text-ink">
+            {title}
+          </h3>
           <button
             type="button"
             onClick={onClose}

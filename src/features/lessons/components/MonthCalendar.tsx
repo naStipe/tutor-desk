@@ -55,7 +55,7 @@ export function MonthCalendar({
           type="button"
           onClick={() => canGoPrev && onMonthChange(addMonths(month, -1))}
           disabled={!canGoPrev}
-          className="rounded-full p-1.5 text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Previous month"
         >
           &larr;
@@ -65,7 +65,7 @@ export function MonthCalendar({
           type="button"
           onClick={() => canGoNext && onMonthChange(addMonths(month, 1))}
           disabled={!canGoNext}
-          className="rounded-full p-1.5 text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Next month"
         >
           &rarr;

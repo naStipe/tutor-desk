@@ -86,7 +86,10 @@ export function InviteCard({
         </ul>
       )}
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      <div aria-live="polite">
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {link && copied && <p className="sr-only">Link copied to clipboard.</p>}
+      </div>
 
       {link ? (
         <div className="space-y-2">

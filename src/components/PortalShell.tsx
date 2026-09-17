@@ -35,6 +35,12 @@ export function PortalShell({
 
   return (
     <div className="min-h-screen bg-[var(--td2-bg-page)]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
+      >
+        Skip to content
+      </a>
       <header className="border-b border-[var(--td2-border-rail)] bg-[var(--td2-bg-rail)]">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
           <span className="flex items-center gap-1.5">
@@ -103,7 +109,9 @@ export function PortalShell({
         </nav>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:py-10">{children}</main>
+      <main id="main-content" className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:py-10">
+        {children}
+      </main>
     </div>
   );
 }

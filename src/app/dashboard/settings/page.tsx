@@ -30,6 +30,8 @@ export default async function SettingsPage() {
                 ? String(profile.default_hourly_rate)
                 : "",
             paymentInstructions: profile?.payment_instructions ?? "",
+            contactEmail: profile?.contact_email ?? "",
+            contactPhone: profile?.contact_phone ?? "",
           }}
         />
       </Card>

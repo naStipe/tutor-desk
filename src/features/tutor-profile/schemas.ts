@@ -18,6 +18,11 @@ export const tutorProfileSettingsSchema = z.object({
     return value;
   }, z.coerce.number().min(0, "Rate can't be negative").optional()),
   paymentInstructions: z.preprocess(emptyToUndefined, z.string().trim().max(2000).optional()),
+  contactEmail: z.preprocess(
+    emptyToUndefined,
+    z.string().trim().email("Enter a valid email").max(255).optional(),
+  ),
+  contactPhone: z.preprocess(emptyToUndefined, z.string().trim().max(40).optional()),
 });
 
 export type TutorProfileSettingsInput = z.infer<typeof tutorProfileSettingsSchema>;

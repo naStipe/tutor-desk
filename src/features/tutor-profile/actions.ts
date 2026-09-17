@@ -23,6 +23,8 @@ export async function updateTutorProfileAction(
     currency: formData.get("currency"),
     defaultHourlyRate: formData.get("defaultHourlyRate"),
     paymentInstructions: formData.get("paymentInstructions"),
+    contactEmail: formData.get("contactEmail"),
+    contactPhone: formData.get("contactPhone"),
   });
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
 

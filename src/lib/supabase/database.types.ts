@@ -148,6 +148,51 @@ export type Database = {
           },
         ]
       }
+      homework_comment: {
+        Row: {
+          author_id: string
+          author_role: string
+          body: string
+          created_at: string
+          homework_id: string
+          id: string
+          tutor_id: string
+        }
+        Insert: {
+          author_id: string
+          author_role: string
+          body: string
+          created_at?: string
+          homework_id: string
+          id?: string
+          tutor_id: string
+        }
+        Update: {
+          author_id?: string
+          author_role?: string
+          body?: string
+          created_at?: string
+          homework_id?: string
+          id?: string
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_comment_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homework"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_comment_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       lesson: {
         Row: {
           created_at: string
@@ -540,6 +585,8 @@ export type Database = {
       }
       tutor_profile: {
         Row: {
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           currency: string
           default_hourly_rate: number | null
@@ -551,6 +598,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           currency?: string
           default_hourly_rate?: number | null
@@ -562,6 +611,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           currency?: string
           default_hourly_rate?: number | null
@@ -615,6 +666,14 @@ export type Database = {
           name: string
           role: string
           tutor_id: string
+        }[]
+      }
+      portal_unpaid_summary: {
+        Args: { p_student_id: string }
+        Returns: {
+          count: number
+          currency: string
+          total: number
         }[]
       }
       submit_homework: {

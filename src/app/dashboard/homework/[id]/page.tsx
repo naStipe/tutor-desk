@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { Avatar } from "../../../../components/Avatar";
 import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
-import { updateHomeworkAction } from "../../../../features/homework/actions";
+import { addHomeworkCommentAction, updateHomeworkAction } from "../../../../features/homework/actions";
 import { AttachmentsCard } from "../../../../features/homework/components/AttachmentsCard";
 import { FeedbackForm } from "../../../../features/homework/components/FeedbackForm";
+import { HomeworkDiscussionThread } from "../../../../features/homework/components/HomeworkDiscussionThread";
 import { HomeworkForm } from "../../../../features/homework/components/HomeworkForm";
 import { HomeworkStatusBadge } from "../../../../features/homework/components/HomeworkStatusBadge";
 import { SubmissionForm } from "../../../../features/homework/components/SubmissionForm";
@@ -13,6 +14,7 @@ import {
   getHomework,
   getSignedAttachmentUrl,
   listAttachments,
+  listHomeworkComments,
 } from "../../../../features/homework/data";
 import { formatTimeRange } from "../../../../features/lessons/date-utils";
 import { listLessonsForSelect } from "../../../../features/lessons/data";
@@ -41,13 +43,18 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
 
   const supabase = await createClient();
-  const [homework, activeStudents, lessons, subjects] = await Promise.all([
+  const [homework, activeStudents, lessons, subjects, comments] = await Promise.all([
     getHomework(supabase, id),
     listActiveStudents(supabase),
     listLessonsForSelect(supabase),
     listSubjects(supabase),
+    listHomeworkComments(supabase, id),
   ]);
   if (!homework) notFound();
+
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
 
   const { timeZone, locale } = await getTutorFormatSettings(supabase, homework.tutor_id);
 
@@ -176,6 +183,24 @@ export default async function HomeworkDetailPage({ params }: { params: Promise<{
           </div>
         </Card>
       )}
+
+      <Card>
+        <h2 className="text-sm font-semibold text-ink">Discussion</h2>
+        <div className="mt-4">
+          <HomeworkDiscussionThread
+            homeworkId={homework.id}
+            action={addHomeworkCommentAction}
+            locale={locale}
+            comments={comments.map((comment) => ({
+              id: comment.id,
+              authorRole: comment.author_role as "tutor" | "learner" | "guardian" | "payer",
+              body: comment.body,
+              createdAt: comment.created_at,
+              isSelf: comment.author_id === currentUser?.id,
+            }))}
+          />
+        </div>
+      </Card>
     </div>
   );
 }

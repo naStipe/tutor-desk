@@ -57,6 +57,15 @@ export async function listPortalLessons(
   return (data ?? []) as PortalLesson[];
 }
 
+export type PortalUnpaidSummary = { currency: string; total: number; count: number };
+
+/** Aggregate-only: sums unpaid completed lessons in the database instead of downloading every row. */
+export async function getPortalUnpaidSummary(supabase: SupabaseClient<Database>, studentId: string) {
+  const { data, error } = await supabase.rpc("portal_unpaid_summary", { p_student_id: studentId });
+  if (error) throw new Error(`Unable to load amount due: ${error.message}`);
+  return (data ?? []) as PortalUnpaidSummary[];
+}
+
 export async function countPortalLessons(
   supabase: SupabaseClient<Database>,
   studentId: string,

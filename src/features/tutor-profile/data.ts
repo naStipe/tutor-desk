@@ -48,7 +48,9 @@ export async function getTutorFormatSettings(supabase: SupabaseClient<Database>,
 export async function getTutorProfile(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase
     .from("tutor_profile")
-    .select("user_id, name, timezone, locale, currency, default_hourly_rate, payment_instructions")
+    .select(
+      "user_id, name, timezone, locale, currency, default_hourly_rate, payment_instructions, contact_email, contact_phone",
+    )
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -70,6 +72,8 @@ export async function updateTutorProfile(
       currency: input.currency,
       default_hourly_rate: input.defaultHourlyRate ?? null,
       payment_instructions: input.paymentInstructions ?? null,
+      contact_email: input.contactEmail ?? null,
+      contact_phone: input.contactPhone ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);

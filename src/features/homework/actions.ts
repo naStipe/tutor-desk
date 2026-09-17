@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
+import { z } from "zod";
 import {
   createAttachment,
   createHomework,
+  createHomeworkComment,
   deleteAttachment,
   HOMEWORK_ATTACHMENTS_BUCKET,
   recordFeedback,
@@ -177,6 +179,40 @@ export async function deleteHomeworkAttachmentAction(formData: FormData): Promis
   if (typeof homeworkId === "string" && homeworkId !== "") {
     revalidatePath(`/dashboard/homework/${homeworkId}`);
   }
+}
+
+const commentSchema = z.object({
+  body: z.string().trim().min(1, "Enter a message").max(4000),
+});
+
+export async function addHomeworkCommentAction(
+  _state: HomeworkActionState,
+  formData: FormData,
+): Promise<HomeworkActionState> {
+  const homeworkId = formData.get("homeworkId");
+  if (typeof homeworkId !== "string" || homeworkId === "") {
+    return { error: "Missing homework reference." };
+  }
+
+  const parsed = commentSchema.safeParse({ body: formData.get("body") });
+  if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
+
+  const { supabase, tutorId } = await requireTutorId();
+
+  try {
+    await createHomeworkComment(supabase, {
+      tutorId,
+      homeworkId,
+      authorId: tutorId,
+      authorRole: "tutor",
+      body: parsed.data.body,
+    });
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Unable to post comment." };
+  }
+
+  revalidatePath(`/dashboard/homework/${homeworkId}`);
+  return {};
 }
 
 export async function recordFeedbackAction(

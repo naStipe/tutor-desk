@@ -8,6 +8,7 @@ import { signOutAction } from "../features/auth/actions";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_ITEMS = [
+  { href: "/portal", label: "Home" },
   { href: "/portal/schedule", label: "Schedule" },
   { href: "/portal/lessons", label: "Lessons" },
   { href: "/portal/homework", label: "Homework" },
@@ -90,7 +91,8 @@ export function PortalShell({
         </div>
         <nav className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 pb-2 sm:px-6">
           {NAV_ITEMS.map((item) => {
-            const active = pathname.startsWith(item.href);
+            const active =
+              item.href === "/portal" ? pathname === "/portal" : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

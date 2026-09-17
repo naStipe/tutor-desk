@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button, LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
 import { Modal } from "../../../components/Modal";
@@ -10,7 +10,7 @@ import { PageHeader } from "../../../components/PageHeader";
 import type { RatesByStudent } from "./LessonForm";
 import { LessonForm } from "./LessonForm";
 import type { PickerLesson } from "./LessonDateTimePicker";
-import { createLessonAction } from "../actions";
+import { createLessonAction, getScheduleCreateDataAction } from "../actions";
 import { toDateParam } from "../date-utils";
 import { CalendarLegend } from "./CalendarLegend";
 import { LessonCalendar, type CalendarLesson } from "./LessonCalendar";
@@ -39,9 +39,6 @@ export function LessonsCalendarView({
   dayStartValues,
   lessons,
   students,
-  subjects,
-  ratesByStudent,
-  pickerLessons,
   initialCreate,
   highlightLessonId,
   monthCountByDate,
@@ -65,9 +62,6 @@ export function LessonsCalendarView({
   dayStartValues: string[];
   lessons: CalendarLesson[];
   students: { id: string; name: string }[];
-  subjects: { id: string; name: string }[];
-  ratesByStudent: RatesByStudent;
-  pickerLessons: PickerLesson[];
   initialCreate: boolean;
   highlightLessonId: string | null;
   monthCountByDate: Record<string, number>;
@@ -85,6 +79,23 @@ export function LessonsCalendarView({
       ? { dateParam: toDateParam(new Date()), minutes: 9 * 60, durationMinutes: 60 }
       : null,
   );
+  const [createData, setCreateData] = useState<{
+    subjects: { id: string; name: string }[];
+    ratesByStudent: RatesByStudent;
+    pickerLessons: PickerLesson[];
+  } | null>(null);
+  const [isLoadingCreateData, startLoadingCreateData] = useTransition();
+
+  // The "New lesson" form needs subjects/rates/the conflict picker, but most schedule visits
+  // never open it — fetch that data only once the modal is actually open instead of on every
+  // page load.
+  useEffect(() => {
+    if (!createPrefill || createData) return;
+    startLoadingCreateData(async () => {
+      const data = await getScheduleCreateDataAction();
+      setCreateData(data);
+    });
+  }, [createPrefill, createData]);
 
   function closeModal() {
     setCreatePrefill(null);
@@ -254,26 +265,31 @@ export function LessonsCalendarView({
         onClose={closeModal}
         title="Schedule lesson"
       >
-        {createPrefill && (
-          <LessonForm
-            action={createLessonAction}
-            students={students}
-            subjects={subjects}
-            ratesByStudent={ratesByStudent}
-            pickerLessons={pickerLessons}
-            locale={locale}
-            allowRecurrence
-            defaultValues={{
-              studentId: students[0]?.id ?? "",
-              dateParam: createPrefill.dateParam,
-              minutes: createPrefill.minutes,
-              durationMinutes: createPrefill.durationMinutes,
-              notes: "",
-            }}
-            submitLabel="Schedule lesson"
-            pendingLabel="Scheduling…"
-            onCancel={closeModal}
-          />
+        {createPrefill && (isLoadingCreateData || !createData) ? (
+          <p className="text-sm text-ink-muted">Loading…</p>
+        ) : (
+          createPrefill &&
+          createData && (
+            <LessonForm
+              action={createLessonAction}
+              students={students}
+              subjects={createData.subjects}
+              ratesByStudent={createData.ratesByStudent}
+              pickerLessons={createData.pickerLessons}
+              locale={locale}
+              allowRecurrence
+              defaultValues={{
+                studentId: students[0]?.id ?? "",
+                dateParam: createPrefill.dateParam,
+                minutes: createPrefill.minutes,
+                durationMinutes: createPrefill.durationMinutes,
+                notes: "",
+              }}
+              submitLabel="Schedule lesson"
+              pendingLabel="Scheduling…"
+              onCancel={closeModal}
+            />
+          )
         )}
       </Modal>
     </div>

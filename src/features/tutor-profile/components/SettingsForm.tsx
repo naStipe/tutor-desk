@@ -45,6 +45,8 @@ export function SettingsForm({
     currency: string;
     defaultHourlyRate: string;
     paymentInstructions: string;
+    contactEmail: string;
+    contactPhone: string;
   };
 }) {
   const [state, formAction] = useActionState(action, initialState);
@@ -127,6 +129,37 @@ export function SettingsForm({
             step={0.01}
             inputMode="decimal"
             defaultValue={defaultValues.defaultHourlyRate}
+            className={inputClassName}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field
+          label="Contact email"
+          htmlFor="contactEmail"
+          hint="Shown to students on the Teacher page"
+          errors={state.fieldErrors?.contactEmail}
+        >
+          <input
+            id="contactEmail"
+            name="contactEmail"
+            type="email"
+            defaultValue={defaultValues.contactEmail}
+            className={inputClassName}
+          />
+        </Field>
+
+        <Field
+          label="Contact phone"
+          htmlFor="contactPhone"
+          errors={state.fieldErrors?.contactPhone}
+        >
+          <input
+            id="contactPhone"
+            name="contactPhone"
+            type="tel"
+            defaultValue={defaultValues.contactPhone}
             className={inputClassName}
           />
         </Field>

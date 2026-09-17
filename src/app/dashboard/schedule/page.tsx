@@ -15,16 +15,13 @@ import {
   toDateParamInZone,
   toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
-import { listLessonSlotsInRange, listLessonsInRange } from "../../../features/lessons/data";
-import { buildRatesByStudent } from "../../../features/lessons/rates-map";
+import { listLessonsInRange } from "../../../features/lessons/data";
 import { ensureUpcomingLessonsGenerated } from "../../../features/lessons/recurrence";
 import {
   listHomeworkAwaitingReviewInRange,
   listHomeworkDueInRange,
 } from "../../../features/homework/data";
-import { listRatesForTutor } from "../../../features/rates/data";
 import { listActiveStudents } from "../../../features/students/data";
-import { listSubjects } from "../../../features/subjects/data";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
@@ -38,9 +35,6 @@ function buildHref(view: View, date: Date, highlight?: string) {
   const highlightParam = highlight ? `&highlight=${highlight}` : "";
   return `/dashboard/schedule?view=${view}&date=${toDateParam(date)}${highlightParam}`;
 }
-
-const PICKER_WINDOW_PAST_DAYS = 7;
-const PICKER_WINDOW_FUTURE_DAYS = 120;
 
 export default async function SchedulePage({
   searchParams,
@@ -93,24 +87,8 @@ export default async function SchedulePage({
       end: rangeEnd.toISOString(),
     });
 
-  const pickerStart = addDays(startOfDay(new Date()), -PICKER_WINDOW_PAST_DAYS);
-  const pickerEnd = addDays(startOfDay(new Date()), PICKER_WINDOW_FUTURE_DAYS);
-  const fetchPickerLessons = () =>
-    listLessonSlotsInRange(client, {
-      start: pickerStart.toISOString(),
-      end: pickerEnd.toISOString(),
-    });
-
-  const [
-    lessons,
-    students,
-    subjects,
-    rates,
-    pickerLessons,
-    homeworkDue,
-    homeworkAwaitingReview,
-    { timeZone, locale },
-  ] = await Promise.all([
+  const [lessons, students, homeworkDue, homeworkAwaitingReview, { timeZone, locale }] =
+    await Promise.all([
       generatedNewLessons
         ? fetchLessonsForRange()
         : cachedForTutor(
@@ -123,21 +101,6 @@ export default async function SchedulePage({
       cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 120, () =>
         listActiveStudents(client),
       ),
-      cachedForTutor("subjects", [user.id], [tutorTag("subjects", user.id)], 120, () =>
-        listSubjects(client),
-      ),
-      cachedForTutor("rates", [user.id], [tutorTag("rates", user.id)], 120, () =>
-        listRatesForTutor(client),
-      ),
-      generatedNewLessons
-        ? fetchPickerLessons()
-        : cachedForTutor(
-            "lessons-picker",
-            [user.id, pickerStart.toISOString(), pickerEnd.toISOString()],
-            [tutorTag("lessons", user.id)],
-            30,
-            fetchPickerLessons,
-          ),
       cachedForTutor(
         "homework-due-range",
         [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
@@ -261,14 +224,6 @@ export default async function SchedulePage({
       dayStartValues={days.map(toLocalMidnightValue)}
       lessons={calendarLessons}
       students={students}
-      subjects={subjects.map((subject) => ({ id: subject.id, name: subject.name }))}
-      ratesByStudent={buildRatesByStudent(rates, students)}
-      pickerLessons={pickerLessons.map((lesson) => ({
-        id: lesson.id,
-        startTime: lesson.start_time,
-        endTime: lesson.end_time,
-        status: lesson.status,
-      }))}
       initialCreate={createParam === "1"}
       highlightLessonId={highlightParam ?? null}
       monthCountByDate={countByDate}

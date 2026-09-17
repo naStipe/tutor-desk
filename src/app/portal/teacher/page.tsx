@@ -34,7 +34,29 @@ export default async function PortalTeacherPage({
 
       <Card className="flex items-center gap-4">
         <Avatar name={name} />
-        <p className="truncate text-sm font-semibold text-ink">{name}</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink">{name}</p>
+          {(tutorProfile?.contact_email || tutorProfile?.contact_phone) && (
+            <div className="mt-1 space-y-0.5">
+              {tutorProfile?.contact_email && (
+                <a
+                  href={`mailto:${tutorProfile.contact_email}`}
+                  className="block text-sm text-brand hover:text-brand-strong hover:underline"
+                >
+                  {tutorProfile.contact_email}
+                </a>
+              )}
+              {tutorProfile?.contact_phone && (
+                <a
+                  href={`tel:${tutorProfile.contact_phone}`}
+                  className="block text-sm text-brand hover:text-brand-strong hover:underline"
+                >
+                  {tutorProfile.contact_phone}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
       </Card>
 
       {tutorProfile?.payment_instructions && (

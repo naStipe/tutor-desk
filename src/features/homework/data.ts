@@ -180,6 +180,25 @@ export async function listHomeworkNeedingAttention(supabase: SupabaseClient<Data
   return rows.slice(0, limit);
 }
 
+/** Most recently reviewed homework for a student, for the portal home page's "Recent feedback". */
+export async function listHomeworkRecentFeedback(
+  supabase: SupabaseClient<Database>,
+  studentId: string,
+  limit = 3,
+) {
+  const { data, error } = await supabase
+    .from("homework")
+    .select(HOMEWORK_COLUMNS)
+    .eq("student_id", studentId)
+    .eq("status", "reviewed")
+    .not("feedback_text", "is", null)
+    .order("feedback_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Unable to load recent feedback: ${error.message}`);
+  return data as unknown as HomeworkWithStudent[];
+}
+
 export async function getHomework(supabase: SupabaseClient<Database>, id: string) {
   const { data, error } = await supabase
     .from("homework")
@@ -324,6 +343,40 @@ export async function deleteAttachment(supabase: SupabaseClient<Database>, id: s
 
   if (error) throw new Error(`Unable to delete attachment: ${error.message}`);
   return data;
+}
+
+export type HomeworkComment = Database["public"]["Tables"]["homework_comment"]["Row"];
+
+export async function listHomeworkComments(supabase: SupabaseClient<Database>, homeworkId: string) {
+  const { data, error } = await supabase
+    .from("homework_comment")
+    .select("id, homework_id, author_id, author_role, body, created_at")
+    .eq("homework_id", homeworkId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(`Unable to load comments: ${error.message}`);
+  return data;
+}
+
+export async function createHomeworkComment(
+  supabase: SupabaseClient<Database>,
+  input: {
+    tutorId: string;
+    homeworkId: string;
+    authorId: string;
+    authorRole: "tutor" | "learner" | "guardian" | "payer";
+    body: string;
+  },
+) {
+  const { error } = await supabase.from("homework_comment").insert({
+    tutor_id: input.tutorId,
+    homework_id: input.homeworkId,
+    author_id: input.authorId,
+    author_role: input.authorRole,
+    body: input.body,
+  });
+
+  if (error) throw new Error(`Unable to post comment: ${error.message}`);
 }
 
 export async function getSignedAttachmentUrl(

@@ -3,13 +3,16 @@ import { redirect } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { EmptyState } from "../../../components/EmptyState";
 import { PageHeader } from "../../../components/PageHeader";
+import { HomeworkDiscussionThread } from "../../../features/homework/components/HomeworkDiscussionThread";
 import { HomeworkStatusBadge } from "../../../features/homework/components/HomeworkStatusBadge";
 import {
   getSignedAttachmentUrl,
   listAttachments,
+  listHomeworkComments,
   listHomeworkPage,
 } from "../../../features/homework/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
+import { addPortalHomeworkCommentAction } from "../../../features/portal/actions";
 import { PortalSubmissionForm } from "../../../features/portal/components/PortalSubmissionForm";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
@@ -65,6 +68,11 @@ export default async function PortalHomeworkPage({
         );
         return [item.id, withUrls] as const;
       }),
+    ),
+  );
+  const commentsByHomework = new Map(
+    await Promise.all(
+      homework.map(async (item) => [item.id, await listHomeworkComments(supabase, item.id)] as const),
     ),
   );
 
@@ -136,6 +144,26 @@ export default async function PortalHomeworkPage({
                   isResubmission={item.status === "submitted"}
                 />
               )}
+
+              <details className="mt-4 border-t border-border pt-3">
+                <summary className="cursor-pointer text-sm font-medium text-ink-muted hover:text-ink">
+                  Discussion ({commentsByHomework.get(item.id)?.length ?? 0})
+                </summary>
+                <div className="mt-3">
+                  <HomeworkDiscussionThread
+                    homeworkId={item.id}
+                    action={addPortalHomeworkCommentAction}
+                    locale={locale}
+                    comments={(commentsByHomework.get(item.id) ?? []).map((comment) => ({
+                      id: comment.id,
+                      authorRole: comment.author_role as "tutor" | "learner" | "guardian" | "payer",
+                      body: comment.body,
+                      createdAt: comment.created_at,
+                      isSelf: comment.author_id === user.id,
+                    }))}
+                  />
+                </div>
+              </details>
             </Card>
           ))}
         </div>

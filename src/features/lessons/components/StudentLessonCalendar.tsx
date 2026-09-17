@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   formatHourLabel,
   formatMinutesOfDay,
@@ -45,7 +45,13 @@ export function StudentLessonCalendar({
   homeworkAwaitingFeedbackCountByDate?: Record<string, number>;
 }) {
   const days = useMemo(() => dayStartValues.map((value) => new Date(value)), [dayStartValues]);
-  const now = useMemo(() => new Date(), []);
+  // Refresh once a minute so the "now" line and today highlighting stay accurate in a
+  // long-open session instead of freezing at whenever the calendar first mounted.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(id);
+  }, []);
   const isDayView = days.length === 1;
 
   return (

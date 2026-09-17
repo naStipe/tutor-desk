@@ -276,3 +276,35 @@ export async function getLessonEditDataAction(currentStudent: { id: string; name
     })),
   };
 }
+
+/**
+ * Subjects, rates, and the conflict-picker's 127-day lesson window, for the schedule page's
+ * "New lesson" form. Fetched only when that form actually opens instead of on every schedule
+ * visit — most visits never open it, so the wide picker window was pure waste there.
+ */
+export async function getScheduleCreateDataAction() {
+  const { supabase } = await requireTutorId();
+  const pickerStart = addDays(startOfDay(new Date()), -7);
+  const pickerEnd = addDays(startOfDay(new Date()), 120);
+
+  const [activeStudents, subjects, rates, pickerLessonRows] = await Promise.all([
+    listActiveStudents(supabase),
+    listSubjects(supabase),
+    listRatesForTutor(supabase),
+    listLessonSlotsInRange(supabase, {
+      start: pickerStart.toISOString(),
+      end: pickerEnd.toISOString(),
+    }),
+  ]);
+
+  return {
+    subjects: subjects.map((subject) => ({ id: subject.id, name: subject.name })),
+    ratesByStudent: buildRatesByStudent(rates, activeStudents),
+    pickerLessons: pickerLessonRows.map((row) => ({
+      id: row.id,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      status: row.status,
+    })),
+  };
+}

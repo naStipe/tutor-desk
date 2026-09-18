@@ -154,7 +154,7 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     studentWeeks[wIndex] += minutes;
 
     if (start >= monthStart) {
-      const key = lesson.subject_id ?? "other";
+      const key = lesson.subject_id ?? "no-subject";
       subjectMonthMinutes.set(key, (subjectMonthMinutes.get(key) ?? 0) + minutes);
     }
   }
@@ -175,7 +175,9 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
   const subjectNameById = new Map((subjectsResult.data ?? []).map((s) => [s.id, s.name]));
   const subjectSplit = Array.from(subjectMonthMinutes.entries())
     .map(([id, minutes]) => ({
-      name: id === "other" ? "Other" : (subjectNameById.get(id) ?? "Other"),
+      // "no-subject": the lesson has no subject set. Otherwise the id came from a real
+      // lesson.subject_id — fall back to "Other" only if that subject was since deleted.
+      name: id === "no-subject" ? "No subject" : (subjectNameById.get(id) ?? "Other"),
       hours: minutes / 60,
       percent: monthMinutes > 0 ? Math.round((minutes / monthMinutes) * 100) : 0,
     }))

@@ -58,6 +58,37 @@ export async function getTutorProfile(supabase: SupabaseClient<Database>, userId
   return data;
 }
 
+/**
+ * Fills in the tutor's timezone from their browser the first time they load the app, so most
+ * tutors never have to find the setting themselves. Only applies while the profile is still at
+ * its untouched defaults (timezone is still the "UTC" the row was created with, and it has never
+ * been saved through Settings, i.e. `updated_at` still equals `created_at`) — once a tutor has
+ * explicitly saved settings this becomes a no-op, so it never overwrites a deliberate choice.
+ */
+export async function autoDetectTutorTimezone(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  timezone: string,
+) {
+  const { data: profile, error: readError } = await supabase
+    .from("tutor_profile")
+    .select("timezone, created_at, updated_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readError) throw new Error(`Unable to load tutor profile: ${readError.message}`);
+  if (!profile) return;
+  if (profile.timezone !== FALLBACK_TIMEZONE || profile.updated_at !== profile.created_at) return;
+
+  const { error } = await supabase
+    .from("tutor_profile")
+    .update({ timezone })
+    .eq("user_id", userId)
+    .eq("timezone", FALLBACK_TIMEZONE)
+    .eq("updated_at", profile.updated_at);
+
+  if (error) throw new Error(`Unable to set timezone: ${error.message}`);
+}
+
 export async function updateTutorProfile(
   supabase: SupabaseClient<Database>,
   userId: string,

@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
-import { updateTutorProfile } from "./data";
+import { createClient } from "../../lib/supabase/server";
+import { autoDetectTutorTimezone, updateTutorProfile } from "./data";
 import { tutorProfileSettingsSchema } from "./schemas";
 
 export type TutorProfileActionState = {
@@ -44,4 +44,21 @@ export async function updateTutorProfileAction(
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   return { message: "Settings saved." };
+}
+
+const SUPPORTED_TIMEZONES =
+  typeof Intl.supportedValuesOf === "function" ? new Set(Intl.supportedValuesOf("timeZone")) : null;
+
+/** Silently fills in the tutor's timezone from their browser; see `autoDetectTutorTimezone`. */
+export async function autoDetectTimezoneAction(timezone: string): Promise<void> {
+  if (SUPPORTED_TIMEZONES && !SUPPORTED_TIMEZONES.has(timezone)) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await autoDetectTutorTimezone(supabase, user.id, timezone);
+  revalidateTag(tutorTag("profile", user.id));
 }

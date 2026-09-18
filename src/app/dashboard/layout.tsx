@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "../../components/AppShell";
 import { countHomeworkNeedingAttention } from "../../features/homework/data";
 import { listActiveStudents } from "../../features/students/data";
+import { TimezoneAutoDetect } from "../../features/tutor-profile/components/TimezoneAutoDetect";
 import { ensureCurrentTutorProfile } from "../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../lib/query-cache";
 import { getCurrentUser } from "../../lib/supabase/current-user";
@@ -38,6 +39,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       homeworkCount={homeworkCount}
       students={students.map((student) => ({ id: student.id, name: student.name }))}
     >
+      <TimezoneAutoDetect />
       {children}
     </AppShell>
   );

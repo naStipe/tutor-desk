@@ -23,6 +23,25 @@ function timezoneOptions() {
   return names.map((name) => ({ value: name, label: name.replace(/_/g, " ") }));
 }
 
+/** "HH:MM" (24h, on the half hour) -> "7:00 AM" for a readable option label. */
+function formatTimeLabel(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  const period = hours < 12 ? "AM" : "PM";
+  const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+  return `${displayHour}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
+// Half-hour increments from 00:00 to 23:30 — the working-hours schema only accepts "HH:MM"
+// within a single day (no 24:00), matching what a native time input could produce anyway.
+const WORKING_HOURS_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const hours = Math.floor(i / 2)
+    .toString()
+    .padStart(2, "0");
+  const minutes = i % 2 === 0 ? "00" : "30";
+  const value = `${hours}:${minutes}`;
+  return { value, label: formatTimeLabel(value) };
+});
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -55,6 +74,8 @@ export function SettingsForm({
   const [locale, setLocale] = useState(defaultValues.locale);
   const [currency, setCurrency] = useState(defaultValues.currency);
   const [timezoneOpts] = useState(timezoneOptions);
+  const [workingHoursStart, setWorkingHoursStart] = useState(defaultValues.workingHoursStart);
+  const [workingHoursEnd, setWorkingHoursEnd] = useState(defaultValues.workingHoursEnd);
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -173,12 +194,12 @@ export function SettingsForm({
           hint="Bounds the calendar view and when lessons can be scheduled"
           errors={state.fieldErrors?.workingHoursStartMinutes}
         >
-          <input
+          <Select
             id="workingHoursStart"
             name="workingHoursStart"
-            type="time"
-            defaultValue={defaultValues.workingHoursStart}
-            className={inputClassName}
+            value={workingHoursStart}
+            onChange={setWorkingHoursStart}
+            options={WORKING_HOURS_OPTIONS}
           />
         </Field>
 
@@ -187,12 +208,12 @@ export function SettingsForm({
           htmlFor="workingHoursEnd"
           errors={state.fieldErrors?.workingHoursEndMinutes}
         >
-          <input
+          <Select
             id="workingHoursEnd"
             name="workingHoursEnd"
-            type="time"
-            defaultValue={defaultValues.workingHoursEnd}
-            className={inputClassName}
+            value={workingHoursEnd}
+            onChange={setWorkingHoursEnd}
+            options={WORKING_HOURS_OPTIONS}
           />
         </Field>
       </div>

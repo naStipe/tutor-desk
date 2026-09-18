@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "../../../components/Button";
 import type { LessonActionState } from "../actions";
 import { getLessonEditDataAction } from "../actions";
-import { formatTimeRange, minutesSinceMidnight, toDateParam } from "../date-utils";
+import { formatTimeRange, minutesSinceMidnightInZone, toDateParamInZone } from "../date-utils";
 import type { PaymentMethod, PaymentStatus } from "../schemas";
 import type { PickerLesson } from "./LessonDateTimePicker";
 import { LessonForm, type RatesByStudent } from "./LessonForm";
@@ -113,10 +113,11 @@ export function LessonDetailsCard({
         ratesByStudent={editData.ratesByStudent}
         pickerLessons={editData.pickerLessons}
         locale={locale}
+        timeZone={timeZone}
         defaultValues={{
           ...defaultValues,
-          dateParam: toDateParam(startTime),
-          minutes: minutesSinceMidnight(startTime),
+          dateParam: toDateParamInZone(startTime, timeZone),
+          minutes: minutesSinceMidnightInZone(startTime, timeZone),
         }}
         submitLabel="Save changes"
         pendingLabel="Saving…"

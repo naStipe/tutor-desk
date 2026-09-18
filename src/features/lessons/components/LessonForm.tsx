@@ -3,19 +3,19 @@
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../../../components/Button";
-import { Field, inputClassName } from "../../../components/Field";
 import { DatePicker } from "../../../components/DatePicker";
+import { Field, inputClassName } from "../../../components/Field";
 import { Select } from "../../../components/Select";
 import { CURRENCIES } from "../../rates/schemas";
+import type { LessonActionState } from "../actions";
+import { startOfDay, toDateParam, zonedMinutesToDate } from "../date-utils";
+import { DEFAULT_RATE_KEY } from "../rates-map";
 import {
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
   type PaymentMethod,
   type PaymentStatus,
 } from "../schemas";
-import type { LessonActionState } from "../actions";
-import { combineDateAndMinutes, startOfDay, toDateParam } from "../date-utils";
-import { DEFAULT_RATE_KEY } from "../rates-map";
 import { LessonDateTimePicker, type PickerLesson } from "./LessonDateTimePicker";
 
 const initialState: LessonActionState = {};
@@ -60,6 +60,7 @@ type LessonFormProps = {
   pendingLabel: string;
   onCancel?: () => void;
   locale?: string;
+  timeZone?: string;
 };
 
 export function LessonForm({
@@ -75,6 +76,7 @@ export function LessonForm({
   pendingLabel,
   onCancel,
   locale = "en-US",
+  timeZone,
 }: LessonFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const [dateParam, setDateParam] = useState(defaultValues?.dateParam ?? toDateParam(new Date()));
@@ -103,7 +105,8 @@ export function LessonForm({
     setCurrency(rate.currency);
   }, [rate, durationMinutes, priceTouched]);
 
-  const startTime = minutes !== null ? combineDateAndMinutes(dateParam, minutes).toISOString() : "";
+  const startTime =
+    minutes !== null ? zonedMinutesToDate(dateParam, minutes, timeZone).toISOString() : "";
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -160,6 +163,7 @@ export function LessonForm({
           onChangeMinutes={setMinutes}
           onChangeDuration={setDurationMinutes}
           minDate={lessonId ? undefined : startOfDay(new Date())}
+          timeZone={timeZone}
         />
       </Field>
 

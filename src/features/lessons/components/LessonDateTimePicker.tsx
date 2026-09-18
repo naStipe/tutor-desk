@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { inputClassName } from "../../../components/Field";
-import { formatFullDateTime, parseDateParam, startOfDay, toDateParam } from "../date-utils";
+import {
+  formatFullDateTime,
+  parseDateParam,
+  startOfDay,
+  toDateParamInZone,
+  zonedMinutesToDate,
+} from "../date-utils";
 import { MonthCalendar } from "./MonthCalendar";
 import { TimeSlotGrid } from "./TimeSlotGrid";
 
@@ -21,6 +27,7 @@ type LessonDateTimePickerProps = {
   onChangeDuration: (durationMinutes: number) => void;
   minDate?: Date;
   maxDate?: Date;
+  timeZone?: string;
 };
 
 export function LessonDateTimePicker({
@@ -34,6 +41,7 @@ export function LessonDateTimePicker({
   onChangeDuration,
   minDate,
   maxDate,
+  timeZone,
 }: LessonDateTimePickerProps) {
   // Counts (for the month view's per-day badges) include the lesson being edited, so its own
   // day still reads accurately; conflict-checking (for the time slots) excludes it so the lesson
@@ -52,21 +60,21 @@ export function LessonDateTimePicker({
   const countByDate = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const lesson of nonCancelledLessons) {
-      const key = toDateParam(new Date(lesson.startTime));
+      const key = toDateParamInZone(new Date(lesson.startTime), timeZone);
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return counts;
-  }, [nonCancelledLessons]);
+  }, [nonCancelledLessons, timeZone]);
 
   const busyIntervals = useMemo(
     () =>
       conflictLessons
-        .filter((lesson) => toDateParam(new Date(lesson.startTime)) === dateParam)
+        .filter((lesson) => toDateParamInZone(new Date(lesson.startTime), timeZone) === dateParam)
         .map((lesson) => ({
           start: new Date(lesson.startTime).getTime(),
           end: new Date(lesson.endTime).getTime(),
         })),
-    [conflictLessons, dateParam],
+    [conflictLessons, dateParam, timeZone],
   );
 
   function handleSelectDate(nextDateParam: string) {
@@ -76,15 +84,7 @@ export function LessonDateTimePicker({
 
   const selectedSummary =
     minutes !== null
-      ? formatFullDateTime(
-          new Date(
-            parseDateParam(dateParam).getFullYear(),
-            parseDateParam(dateParam).getMonth(),
-            parseDateParam(dateParam).getDate(),
-            Math.floor(minutes / 60),
-            minutes % 60,
-          ).toISOString(),
-        )
+      ? formatFullDateTime(zonedMinutesToDate(dateParam, minutes, timeZone).toISOString(), timeZone)
       : null;
 
   return (
@@ -136,6 +136,7 @@ export function LessonDateTimePicker({
           busyIntervals={busyIntervals}
           selectedMinutes={minutes}
           onSelect={onChangeMinutes}
+          timeZone={timeZone}
         />
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { combineDateAndMinutes, formatMinutesOfDay, minutesSinceMidnight } from "../date-utils";
+import { formatMinutesOfDay, minutesSinceMidnightInZone, zonedMinutesToDate } from "../date-utils";
 
 const DEFAULT_START_MINUTES = 7 * 60;
 const DEFAULT_END_MINUTES = 21 * 60;
@@ -15,6 +15,7 @@ type TimeSlotGridProps = {
   busyIntervals: Interval[];
   selectedMinutes: number | null;
   onSelect: (minutes: number) => void;
+  timeZone?: string;
 };
 
 type SlotReason = "available" | "past" | "occupied" | "no-fit";
@@ -25,6 +26,7 @@ export function TimeSlotGrid({
   busyIntervals,
   selectedMinutes,
   onSelect,
+  timeZone,
 }: TimeSlotGridProps) {
   const [hoveredMinutes, setHoveredMinutes] = useState<number | null>(null);
   const now = new Date();
@@ -38,8 +40,8 @@ export function TimeSlotGrid({
     DEFAULT_END_MINUTES,
     ...(selectedMinutes !== null ? [selectedMinutes, selectedMinutes + durationMinutes] : []),
     ...busyIntervals.flatMap((busy) => [
-      minutesSinceMidnight(new Date(busy.start)),
-      minutesSinceMidnight(new Date(busy.end)),
+      minutesSinceMidnightInZone(new Date(busy.start), timeZone),
+      minutesSinceMidnightInZone(new Date(busy.end), timeZone),
     ]),
   ];
   const startMinutesBound = Math.floor(Math.min(...boundaryMinutes) / SLOT_STEP) * SLOT_STEP;
@@ -50,8 +52,8 @@ export function TimeSlotGrid({
     minutes + durationMinutes <= endMinutesBound;
     minutes += SLOT_STEP
   ) {
-    const slotStart = combineDateAndMinutes(dateParam, minutes);
-    const slotEnd = combineDateAndMinutes(dateParam, minutes + durationMinutes);
+    const slotStart = zonedMinutesToDate(dateParam, minutes, timeZone);
+    const slotEnd = zonedMinutesToDate(dateParam, minutes + durationMinutes, timeZone);
     const isPast = slotStart < now;
     // "occupied": a lesson is already happening at the slot's start time.
     // "no-fit": the slot starts free, but the requested duration runs into a later lesson.

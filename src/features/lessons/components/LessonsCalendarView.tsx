@@ -279,6 +279,7 @@ export function LessonsCalendarView({
               ratesByStudent={createData.ratesByStudent}
               pickerLessons={createData.pickerLessons}
               locale={locale}
+              timeZone={timeZone}
               allowRecurrence
               defaultValues={{
                 studentId: students[0]?.id ?? "",

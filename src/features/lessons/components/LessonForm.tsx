@@ -82,7 +82,9 @@ export function LessonForm({
   const [dateParam, setDateParam] = useState(defaultValues?.dateParam ?? toDateParam(new Date()));
   const [minutes, setMinutes] = useState<number | null>(defaultValues?.minutes ?? null);
   const [studentId, setStudentId] = useState(defaultValues?.studentId ?? students[0]?.id ?? "");
-  const [subjectId, setSubjectId] = useState(defaultValues?.subjectId ?? "");
+  const [subjectId, setSubjectId] = useState(
+    defaultValues?.subjectId ?? (subjects.length === 1 ? subjects[0].id : ""),
+  );
   const [durationMinutes, setDurationMinutes] = useState(defaultValues?.durationMinutes ?? 60);
   const [priceTouched, setPriceTouched] = useState(Boolean(defaultValues?.price));
   const [price, setPrice] = useState(defaultValues?.price ?? "");

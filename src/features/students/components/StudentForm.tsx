@@ -46,6 +46,9 @@ type StudentFormProps = {
   section?: StudentFormSection;
   submitLabel: string;
   pendingLabel: string;
+  /** Tutor's own defaults, used to prefill a new student's billing fields. */
+  tutorDefaultCurrency?: string;
+  tutorDefaultHourlyRate?: string;
 };
 
 export function StudentForm({
@@ -55,9 +58,13 @@ export function StudentForm({
   section = "full",
   submitLabel,
   pendingLabel,
+  tutorDefaultCurrency,
+  tutorDefaultHourlyRate,
 }: StudentFormProps) {
   const [state, formAction] = useActionState(action, initialState);
-  const [defaultCurrency, setDefaultCurrency] = useState(defaultValues?.defaultCurrency ?? "RUB");
+  const [defaultCurrency, setDefaultCurrency] = useState(
+    defaultValues?.defaultCurrency ?? tutorDefaultCurrency ?? "RUB",
+  );
 
   const showIdentity = section === "full" || section === "identity";
   const showContact = section === "full" || section === "contact";
@@ -190,11 +197,7 @@ export function StudentForm({
               />
             </Field>
 
-            <Field
-              label="Email"
-              htmlFor="guardianEmail"
-              errors={state.fieldErrors?.guardianEmail}
-            >
+            <Field label="Email" htmlFor="guardianEmail" errors={state.fieldErrors?.guardianEmail}>
               <input
                 id="guardianEmail"
                 name="guardianEmail"
@@ -205,11 +208,7 @@ export function StudentForm({
               />
             </Field>
 
-            <Field
-              label="Phone"
-              htmlFor="guardianPhone"
-              errors={state.fieldErrors?.guardianPhone}
-            >
+            <Field label="Phone" htmlFor="guardianPhone" errors={state.fieldErrors?.guardianPhone}>
               <input
                 id="guardianPhone"
                 name="guardianPhone"
@@ -253,7 +252,7 @@ export function StudentForm({
               min={0}
               step="0.01"
               inputMode="decimal"
-              defaultValue={defaultValues?.defaultHourlyRate}
+              defaultValue={defaultValues?.defaultHourlyRate ?? tutorDefaultHourlyRate}
               className={inputClassName}
             />
           </Field>

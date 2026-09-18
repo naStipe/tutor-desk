@@ -11,9 +11,8 @@ import type { TutorProfileActionState } from "../actions";
 const initialState: TutorProfileActionState = {};
 
 const LOCALE_OPTIONS = [
+  { value: "en-US", label: "English (en-US)" },
   { value: "ru-RU", label: "Russian (ru-RU)" },
-  { value: "en-US", label: "English — US (en-US)" },
-  { value: "en-GB", label: "English — UK (en-GB)" },
   { value: "de-DE", label: "German (de-DE)" },
   { value: "es-ES", label: "Spanish (es-ES)" },
 ];

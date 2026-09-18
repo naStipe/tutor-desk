@@ -4,8 +4,8 @@ import { EmptyState } from "../../../../components/EmptyState";
 import { PageHeader } from "../../../../components/PageHeader";
 import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
 import { StatusBadge } from "../../../../features/lessons/components/StatusBadge";
-import { formatFullDateTime } from "../../../../features/lessons/date-utils";
 import { listLessonsForStudent } from "../../../../features/lessons/data";
+import { formatFullDateTime } from "../../../../features/lessons/date-utils";
 import { resolveViewedStudent } from "../../../../features/student-view/resolve";
 import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
@@ -35,7 +35,7 @@ export default async function StudentViewLessonsPage({
     );
   }
 
-  const [lessons, { timeZone }] = await Promise.all([
+  const [lessons, { timeZone, locale }] = await Promise.all([
     cachedForTutor(
       "student-view-lessons",
       [user.id, selected.id],
@@ -78,7 +78,7 @@ export default async function StudentViewLessonsPage({
               {lessons.map((lesson) => (
                 <tr key={lesson.id} className="border-b border-border/60 last:border-0">
                   <td className="px-4 py-3 text-ink">
-                    {formatFullDateTime(lesson.start_time, timeZone)}
+                    {formatFullDateTime(lesson.start_time, timeZone, locale)}
                   </td>
                   <td className="px-4 py-3 text-ink-muted">{lesson.subject?.name ?? "—"}</td>
                   <td className="px-4 py-3">

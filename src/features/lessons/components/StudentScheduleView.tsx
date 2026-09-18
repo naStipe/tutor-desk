@@ -37,6 +37,7 @@ export function StudentScheduleView({
   homeworkDueCountByDate,
   homeworkReviewCountByDate,
   timeZone,
+  locale,
 }: {
   studentName: string;
   description: string;
@@ -58,6 +59,7 @@ export function StudentScheduleView({
   homeworkDueCountByDate: Record<string, number>;
   homeworkReviewCountByDate: Record<string, number>;
   timeZone?: string;
+  locale?: string;
 }) {
   const router = useRouter();
 
@@ -115,6 +117,8 @@ export function StudentScheduleView({
             homeworkCountByDate={homeworkDueCountByDate}
             reviewCountByDate={homeworkReviewCountByDate}
             reviewLabel="awaiting feedback"
+            timeZone={timeZone}
+            locale={locale}
           />
         </Card>
       ) : (
@@ -124,6 +128,7 @@ export function StudentScheduleView({
           homeworkDueCountByDate={homeworkDueCountByDate}
           homeworkAwaitingFeedbackCountByDate={homeworkReviewCountByDate}
           timeZone={timeZone}
+          locale={locale}
         />
       )}
     </div>

@@ -25,6 +25,8 @@ type MonthCalendarProps = {
   reviewLabel?: string;
   minDate?: Date;
   maxDate?: Date;
+  timeZone?: string;
+  locale?: string;
 };
 
 export function MonthCalendar({
@@ -39,6 +41,8 @@ export function MonthCalendar({
   reviewLabel = "ready for review",
   minDate,
   maxDate,
+  timeZone,
+  locale,
 }: MonthCalendarProps) {
   const monthStart = startOfMonth(month);
   const gridStart = startOfWeek(monthStart);
@@ -60,7 +64,9 @@ export function MonthCalendar({
         >
           &larr;
         </button>
-        <p className="text-sm font-semibold tracking-wide text-ink">{formatMonthHeading(month)}</p>
+        <p className="text-sm font-semibold tracking-wide text-ink">
+          {formatMonthHeading(month, timeZone, locale)}
+        </p>
         <button
           type="button"
           onClick={() => canGoNext && onMonthChange(addMonths(month, 1))}

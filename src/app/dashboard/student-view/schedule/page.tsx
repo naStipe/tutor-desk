@@ -1,6 +1,12 @@
 import { redirect } from "next/navigation";
 import { EmptyState } from "../../../../components/EmptyState";
 import {
+  listHomeworkAwaitingReviewInRange,
+  listHomeworkDueInRange,
+} from "../../../../features/homework/data";
+import { StudentScheduleView } from "../../../../features/lessons/components/StudentScheduleView";
+import { listLessonsInRange } from "../../../../features/lessons/data";
+import {
   addDays,
   addMonths,
   formatDayHeading,
@@ -13,12 +19,6 @@ import {
   toDateParam,
   toLocalMidnightValue,
 } from "../../../../features/lessons/date-utils";
-import { listLessonsInRange } from "../../../../features/lessons/data";
-import { StudentScheduleView } from "../../../../features/lessons/components/StudentScheduleView";
-import {
-  listHomeworkAwaitingReviewInRange,
-  listHomeworkDueInRange,
-} from "../../../../features/homework/data";
 import { resolveViewedStudent } from "../../../../features/student-view/resolve";
 import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
@@ -184,6 +184,7 @@ export default async function StudentViewSchedulePage({
       homeworkDueCountByDate={homeworkDueCountByDate}
       homeworkReviewCountByDate={homeworkReviewCountByDate}
       timeZone={timeZone}
+      locale={locale}
     />
   );
 }

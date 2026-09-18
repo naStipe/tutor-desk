@@ -39,12 +39,14 @@ export function StudentLessonCalendar({
   homeworkDueCountByDate,
   homeworkAwaitingFeedbackCountByDate,
   timeZone,
+  locale,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
   homeworkDueCountByDate?: Record<string, number>;
   homeworkAwaitingFeedbackCountByDate?: Record<string, number>;
   timeZone?: string;
+  locale?: string;
 }) {
   const days = useMemo(() => dayStartValues.map((value) => new Date(value)), [dayStartValues]);
   // Refresh once a minute so the "now" line and today highlighting stay accurate in a
@@ -82,7 +84,7 @@ export function StudentLessonCalendar({
               <p
                 className={`text-xs font-medium uppercase tracking-wide ${isPast ? "text-ink-subtle/70" : "text-ink-subtle"}`}
               >
-                {formatWeekdayShort(day)}
+                {formatWeekdayShort(day, timeZone, locale)}
                 {isPast && !isToday ? " · Past" : ""}
               </p>
               <p

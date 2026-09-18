@@ -22,12 +22,14 @@ export function NextLessonCard({
   subjectName,
   meetingUrl,
   timeZone,
+  locale,
 }: {
   startTime: string;
   endTime: string;
   subjectName: string | null;
   meetingUrl: string | null;
   timeZone: string;
+  locale?: string;
 }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -50,10 +52,15 @@ export function NextLessonCard({
           </span>
         )}
       </div>
-      <p className="text-sm text-ink-muted">{formatFullDateTime(startTime, timeZone)}</p>
+      <p className="text-sm text-ink-muted">{formatFullDateTime(startTime, timeZone, locale)}</p>
       {subjectName && <p className="text-sm text-ink-subtle">{subjectName}</p>}
       {meetingUrl && !hasEnded && (
-        <a href={meetingUrl} target="_blank" rel="noreferrer" className={buttonClassName("primary", "w-fit")}>
+        <a
+          href={meetingUrl}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonClassName("primary", "w-fit")}
+        >
           Join lesson
         </a>
       )}

@@ -6,8 +6,8 @@ import { Button, LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
 import { PageHeader } from "../../../components/PageHeader";
 import { Select } from "../../../components/Select";
-import { formatFullDateTime } from "../date-utils";
 import type { LessonListSortKey } from "../data";
+import { formatFullDateTime } from "../date-utils";
 import type { LessonStatus } from "../schemas";
 import { PaymentBadge } from "./PaymentBadge";
 import { StatusBadge } from "./StatusBadge";
@@ -49,6 +49,8 @@ export function LessonsListView({
   page,
   pageSize,
   totalCount,
+  timeZone,
+  locale,
 }: {
   lessons: ListLesson[];
   students: { id: string; name: string }[];
@@ -62,6 +64,8 @@ export function LessonsListView({
   page: number;
   pageSize: number;
   totalCount: number;
+  timeZone?: string;
+  locale?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -196,7 +200,7 @@ export function LessonsListView({
                         href={`/dashboard/lessons/${lesson.id}`}
                         className="text-ink hover:underline"
                       >
-                        {formatFullDateTime(lesson.startTime)}
+                        {formatFullDateTime(lesson.startTime, timeZone, locale)}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-ink-muted">{lesson.studentName}</td>

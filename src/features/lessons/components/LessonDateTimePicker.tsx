@@ -28,6 +28,7 @@ type LessonDateTimePickerProps = {
   minDate?: Date;
   maxDate?: Date;
   timeZone?: string;
+  locale?: string;
 };
 
 export function LessonDateTimePicker({
@@ -42,6 +43,7 @@ export function LessonDateTimePicker({
   minDate,
   maxDate,
   timeZone,
+  locale,
 }: LessonDateTimePickerProps) {
   // Counts (for the month view's per-day badges) include the lesson being edited, so its own
   // day still reads accurately; conflict-checking (for the time slots) excludes it so the lesson
@@ -84,7 +86,11 @@ export function LessonDateTimePicker({
 
   const selectedSummary =
     minutes !== null
-      ? formatFullDateTime(zonedMinutesToDate(dateParam, minutes, timeZone).toISOString(), timeZone)
+      ? formatFullDateTime(
+          zonedMinutesToDate(dateParam, minutes, timeZone).toISOString(),
+          timeZone,
+          locale,
+        )
       : null;
 
   return (
@@ -125,6 +131,8 @@ export function LessonDateTimePicker({
           countByDate={countByDate}
           minDate={minDate}
           maxDate={maxDate}
+          timeZone={timeZone}
+          locale={locale}
         />
       </div>
 

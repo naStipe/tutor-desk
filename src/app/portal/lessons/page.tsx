@@ -74,7 +74,7 @@ export default async function PortalLessonsPage({
               {lessons.map((lesson) => (
                 <tr key={lesson.id} className="border-b border-border/60 last:border-0">
                   <td className="px-4 py-3 text-ink">
-                    {formatFullDateTime(lesson.start_time, timeZone)}
+                    {formatFullDateTime(lesson.start_time, timeZone, locale)}
                   </td>
                   <td className="px-4 py-3 text-ink-muted">{lesson.subject_name ?? "—"}</td>
                   <td className="px-4 py-3">
@@ -110,7 +110,10 @@ export default async function PortalLessonsPage({
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="text-brand hover:text-brand-strong hover:underline">
+            <Link
+              href={pageHref(page - 1)}
+              className="text-brand hover:text-brand-strong hover:underline"
+            >
               &larr; Previous
             </Link>
           ) : (
@@ -120,7 +123,10 @@ export default async function PortalLessonsPage({
             Page {page} of {totalPages}
           </span>
           {page < totalPages ? (
-            <Link href={pageHref(page + 1)} className="text-brand hover:text-brand-strong hover:underline">
+            <Link
+              href={pageHref(page + 1)}
+              className="text-brand hover:text-brand-strong hover:underline"
+            >
               Next &rarr;
             </Link>
           ) : (

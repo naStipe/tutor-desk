@@ -3,11 +3,8 @@ import { redirect } from "next/navigation";
 import { Avatar } from "../../components/Avatar";
 import { Card } from "../../components/Card";
 import { PageHeader } from "../../components/PageHeader";
+import { listHomeworkDueInRange, listHomeworkRecentFeedback } from "../../features/homework/data";
 import { addDays } from "../../features/lessons/date-utils";
-import {
-  listHomeworkDueInRange,
-  listHomeworkRecentFeedback,
-} from "../../features/homework/data";
 import { NextLessonCard } from "../../features/portal/components/NextLessonCard";
 import { getPortalUnpaidSummary, listPortalLessons } from "../../features/portal/data";
 import { requirePortalStudent } from "../../features/portal/resolve";
@@ -34,22 +31,28 @@ export default async function PortalHomePage({
   const lookaheadEnd = addDays(now, LOOKAHEAD_DAYS);
   const homeworkDueEnd = addDays(now, HOMEWORK_DUE_WINDOW_DAYS);
 
-  const [upcomingLessons, homeworkDue, recentFeedback, unpaidSummary, tutorProfile, { timeZone, locale }] =
-    await Promise.all([
-      listPortalLessons(supabase, student.id, {
-        start: now.toISOString(),
-        end: lookaheadEnd.toISOString(),
-      }),
-      listHomeworkDueInRange(
-        supabase,
-        { start: now.toISOString(), end: homeworkDueEnd.toISOString() },
-        { studentId: student.id },
-      ),
-      listHomeworkRecentFeedback(supabase, student.id, 3),
-      getPortalUnpaidSummary(supabase, student.id),
-      getTutorProfile(supabase, student.tutor_id),
-      getTutorFormatSettings(supabase, student.tutor_id),
-    ]);
+  const [
+    upcomingLessons,
+    homeworkDue,
+    recentFeedback,
+    unpaidSummary,
+    tutorProfile,
+    { timeZone, locale },
+  ] = await Promise.all([
+    listPortalLessons(supabase, student.id, {
+      start: now.toISOString(),
+      end: lookaheadEnd.toISOString(),
+    }),
+    listHomeworkDueInRange(
+      supabase,
+      { start: now.toISOString(), end: homeworkDueEnd.toISOString() },
+      { studentId: student.id },
+    ),
+    listHomeworkRecentFeedback(supabase, student.id, 3),
+    getPortalUnpaidSummary(supabase, student.id),
+    getTutorProfile(supabase, student.tutor_id),
+    getTutorFormatSettings(supabase, student.tutor_id),
+  ]);
 
   const nextLesson = upcomingLessons
     .filter((lesson) => lesson.status === "scheduled")
@@ -59,7 +62,10 @@ export default async function PortalHomePage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Hi, ${student.name.split(" ")[0]}`} description={`Timezone: ${timeZone}`} />
+      <PageHeader
+        title={`Hi, ${student.name.split(" ")[0]}`}
+        description={`Timezone: ${timeZone}`}
+      />
 
       {nextLesson ? (
         <NextLessonCard
@@ -68,6 +74,7 @@ export default async function PortalHomePage({
           subjectName={nextLesson.subject_name}
           meetingUrl={nextLesson.meeting_url}
           timeZone={timeZone}
+          locale={locale}
         />
       ) : (
         <Card>
@@ -92,7 +99,8 @@ export default async function PortalHomePage({
                     {item.title}
                     {item.due_date && (
                       <span className="ml-2 text-xs text-ink-subtle">
-                        Due {new Date(`${item.due_date}T00:00:00Z`).toLocaleDateString(locale, {
+                        Due{" "}
+                        {new Date(`${item.due_date}T00:00:00Z`).toLocaleDateString(locale, {
                           month: "short",
                           day: "numeric",
                           timeZone: "UTC",
@@ -114,7 +122,10 @@ export default async function PortalHomePage({
             <ul className="mt-3 space-y-3">
               {recentFeedback.map((item) => (
                 <li key={item.id}>
-                  <Link href="/portal/homework" className="text-sm font-medium text-ink hover:text-brand">
+                  <Link
+                    href="/portal/homework"
+                    className="text-sm font-medium text-ink hover:text-brand"
+                  >
                     {item.title}
                   </Link>
                   <p className="mt-0.5 line-clamp-2 text-sm text-ink-muted">{item.feedback_text}</p>
@@ -153,7 +164,10 @@ export default async function PortalHomePage({
             <p className="text-sm text-ink-subtle">Your tutor</p>
           </div>
         </div>
-        <Link href="/portal/teacher" className="text-sm text-brand hover:text-brand-strong hover:underline">
+        <Link
+          href="/portal/teacher"
+          className="text-sm text-brand hover:text-brand-strong hover:underline"
+        >
           Contact &rarr;
         </Link>
       </Card>

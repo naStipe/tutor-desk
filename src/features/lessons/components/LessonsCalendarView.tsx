@@ -7,13 +7,13 @@ import { Button, LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
 import { Modal } from "../../../components/Modal";
 import { PageHeader } from "../../../components/PageHeader";
-import type { RatesByStudent } from "./LessonForm";
-import { LessonForm } from "./LessonForm";
-import type { PickerLesson } from "./LessonDateTimePicker";
 import { createLessonAction, getScheduleCreateDataAction } from "../actions";
 import { toDateParam } from "../date-utils";
 import { CalendarLegend } from "./CalendarLegend";
-import { LessonCalendar, type CalendarLesson } from "./LessonCalendar";
+import { type CalendarLesson, LessonCalendar } from "./LessonCalendar";
+import type { PickerLesson } from "./LessonDateTimePicker";
+import type { RatesByStudent } from "./LessonForm";
+import { LessonForm } from "./LessonForm";
 import { MonthCalendar } from "./MonthCalendar";
 import { type AgendaHomework, type AgendaLesson, ScheduleAgenda } from "./ScheduleAgenda";
 
@@ -180,9 +180,16 @@ export function LessonsCalendarView({
               countByDate={monthCountByDate}
               homeworkCountByDate={homeworkDueCountByDate}
               reviewCountByDate={homeworkReviewCountByDate}
+              timeZone={timeZone}
+              locale={locale}
             />
           </Card>
-          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} locale={locale} />
+          <ScheduleAgenda
+            lessons={agendaLessons}
+            homework={agendaHomework}
+            timeZone={timeZone}
+            locale={locale}
+          />
         </>
       ) : view === "day" ? (
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
@@ -206,6 +213,7 @@ export function LessonsCalendarView({
                 homeworkDueCountByDate={homeworkDueCountByDate}
                 homeworkReviewCountByDate={homeworkReviewCountByDate}
                 timeZone={timeZone}
+                locale={locale}
                 onSlotClick={(dayIndex, startMinutes, endMinutes) => {
                   const day = new Date(dayStartValues[dayIndex]);
                   setCreatePrefill({
@@ -248,6 +256,7 @@ export function LessonsCalendarView({
             homeworkDueCountByDate={homeworkDueCountByDate}
             homeworkReviewCountByDate={homeworkReviewCountByDate}
             timeZone={timeZone}
+            locale={locale}
             onSlotClick={(dayIndex, startMinutes, endMinutes) => {
               const day = new Date(dayStartValues[dayIndex]);
               setCreatePrefill({
@@ -258,7 +267,12 @@ export function LessonsCalendarView({
             }}
           />
 
-          <ScheduleAgenda lessons={agendaLessons} homework={agendaHomework} timeZone={timeZone} locale={locale} />
+          <ScheduleAgenda
+            lessons={agendaLessons}
+            homework={agendaHomework}
+            timeZone={timeZone}
+            locale={locale}
+          />
         </>
       )}
 

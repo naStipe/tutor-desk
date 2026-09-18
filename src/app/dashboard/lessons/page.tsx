@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { LessonsListView } from "../../../features/lessons/components/LessonsListView";
-import { listLessonsPage, type LessonListSortKey } from "../../../features/lessons/data";
+import { type LessonListSortKey, listLessonsPage } from "../../../features/lessons/data";
 import { LESSON_STATUSES, type LessonStatus } from "../../../features/lessons/schemas";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
+import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 import { createTokenClient } from "../../../lib/supabase/token-client";
@@ -33,7 +34,7 @@ export default async function LessonsPage({
   const sortDir = first(params.dir) === "asc" ? "asc" : "desc";
   const page = Math.max(1, Number(first(params.page)) || 1);
 
-  const [{ lessons, totalCount }, students, subjects] = await Promise.all([
+  const [{ lessons, totalCount }, students, subjects, { timeZone, locale }] = await Promise.all([
     cachedForTutor(
       "lessons-page",
       [user.id, status ?? "", studentId ?? "", subjectId ?? "", sortKey, sortDir, String(page)],
@@ -55,6 +56,9 @@ export default async function LessonsPage({
     ),
     cachedForTutor("subjects", [user.id], [tutorTag("subjects", user.id)], 120, () =>
       listSubjects(client),
+    ),
+    cachedForTutor("format-settings", [user.id], [tutorTag("profile", user.id)], 300, () =>
+      getTutorFormatSettings(client, user.id),
     ),
   ]);
 
@@ -85,6 +89,8 @@ export default async function LessonsPage({
       page={page}
       pageSize={PAGE_SIZE}
       totalCount={totalCount}
+      timeZone={timeZone}
+      locale={locale}
     />
   );
 }

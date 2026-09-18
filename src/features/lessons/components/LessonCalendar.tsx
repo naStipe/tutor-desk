@@ -76,6 +76,7 @@ export function LessonCalendar({
   homeworkDueCountByDate,
   homeworkReviewCountByDate,
   timeZone,
+  locale,
   onSlotClick,
 }: {
   dayStartValues: string[];
@@ -85,6 +86,7 @@ export function LessonCalendar({
   homeworkDueCountByDate?: Record<string, number>;
   homeworkReviewCountByDate?: Record<string, number>;
   timeZone?: string;
+  locale?: string;
   onSlotClick: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 }) {
   const router = useRouter();
@@ -337,7 +339,7 @@ export function LessonCalendar({
               <p
                 className={`text-xs font-medium uppercase tracking-wide ${isPast ? "text-ink-subtle/70" : "text-ink-subtle"}`}
               >
-                {formatWeekdayShort(day)}
+                {formatWeekdayShort(day, timeZone, locale)}
                 {isPast && !isToday ? " · Past" : ""}
               </p>
               <p

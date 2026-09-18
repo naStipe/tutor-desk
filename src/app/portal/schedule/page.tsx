@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 import {
+  listHomeworkAwaitingReviewInRange,
+  listHomeworkDueInRange,
+} from "../../../features/homework/data";
+import { StudentScheduleView } from "../../../features/lessons/components/StudentScheduleView";
+import {
   addDays,
   addMonths,
   formatDayHeading,
@@ -12,13 +17,9 @@ import {
   toDateParam,
   toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
-import { StudentScheduleView } from "../../../features/lessons/components/StudentScheduleView";
-import {
-  listHomeworkAwaitingReviewInRange,
-  listHomeworkDueInRange,
-} from "../../../features/homework/data";
 import { listPortalLessons } from "../../../features/portal/data";
 import { requirePortalStudent } from "../../../features/portal/resolve";
+import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +59,7 @@ export default async function PortalSchedulePage({
   const student = await requirePortalStudent(supabase, studentIdParam);
   const showStudent = studentIdParam != null;
 
-  const [lessons, homeworkDue, homeworkAwaitingReview] = await Promise.all([
+  const [lessons, homeworkDue, homeworkAwaitingReview, { timeZone, locale }] = await Promise.all([
     listPortalLessons(supabase, student.id, {
       start: rangeStart.toISOString(),
       end: rangeEnd.toISOString(),
@@ -73,6 +74,7 @@ export default async function PortalSchedulePage({
       { start: rangeStart.toISOString(), end: rangeEnd.toISOString() },
       { studentId: student.id },
     ),
+    getTutorFormatSettings(supabase, student.tutor_id),
   ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
@@ -107,10 +109,10 @@ export default async function PortalSchedulePage({
 
   const description =
     view === "day"
-      ? formatDayHeading(rangeStart)
+      ? formatDayHeading(rangeStart, timeZone, locale)
       : view === "month"
-        ? formatMonthHeading(anchor)
-        : formatWeekRange(rangeStart);
+        ? formatMonthHeading(anchor, timeZone, locale)
+        : formatWeekRange(rangeStart, timeZone, locale);
 
   const homeworkDueCountByDate: Record<string, number> = {};
   for (const item of homeworkDue) {
@@ -144,6 +146,8 @@ export default async function PortalSchedulePage({
       monthAnchorValue={toLocalMidnightValue(anchor)}
       homeworkDueCountByDate={homeworkDueCountByDate}
       homeworkReviewCountByDate={homeworkReviewCountByDate}
+      timeZone={timeZone}
+      locale={locale}
     />
   );
 }

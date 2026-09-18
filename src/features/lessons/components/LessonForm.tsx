@@ -166,6 +166,7 @@ export function LessonForm({
           onChangeDuration={setDurationMinutes}
           minDate={lessonId ? undefined : startOfDay(new Date())}
           timeZone={timeZone}
+          locale={locale}
         />
       </Field>
 

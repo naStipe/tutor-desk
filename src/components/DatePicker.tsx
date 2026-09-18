@@ -132,6 +132,7 @@ export function DatePicker({
             countByDate={{}}
             minDate={minDate}
             maxDate={maxDate}
+            locale={locale}
           />
         </div>
       )}

@@ -5,6 +5,8 @@ import { Button } from "../../../../components/Button";
 import { Card } from "../../../../components/Card";
 import { ConfirmSubmitForm } from "../../../../components/ConfirmSubmitForm";
 import { PageHeader } from "../../../../components/PageHeader";
+import { Select } from "../../../../components/Select";
+import { listHomeworkForLesson } from "../../../../features/homework/data";
 import {
   cancelSeriesAction,
   setLessonPaymentAction,
@@ -14,16 +16,14 @@ import { LessonDetailsCard } from "../../../../features/lessons/components/Lesso
 import { LessonHomeworkCard } from "../../../../features/lessons/components/LessonHomeworkCard";
 import { LessonStatusActions } from "../../../../features/lessons/components/LessonStatusActions";
 import { PaymentBadge } from "../../../../features/lessons/components/PaymentBadge";
-import { Select } from "../../../../components/Select";
-import { formatFullDateTime } from "../../../../features/lessons/date-utils";
 import { getLesson } from "../../../../features/lessons/data";
+import { formatFullDateTime } from "../../../../features/lessons/date-utils";
 import {
   type LessonStatus,
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHODS,
   type PAYMENT_STATUSES,
 } from "../../../../features/lessons/schemas";
-import { listHomeworkForLesson } from "../../../../features/homework/data";
 import { getTutorFormatSettings } from "../../../../features/tutor-profile/data";
 import { formatMoney } from "../../../../lib/formatting";
 import { createClient } from "../../../../lib/supabase/server";
@@ -48,7 +48,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
     <div className="max-w-xl space-y-6">
       <PageHeader
         title={lesson.student?.name ?? "Lesson"}
-        description={formatFullDateTime(lesson.start_time, timeZone)}
+        description={formatFullDateTime(lesson.start_time, timeZone, locale)}
         avatar={<Avatar name={lesson.student?.name ?? "?"} />}
         actions={
           <Link href="/dashboard/lessons" className="text-sm text-ink-muted hover:text-ink">

@@ -48,6 +48,7 @@ export function Select({
   const listId = `${triggerId}-listbox`;
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const selected = options.find((option) => option.value === current);
@@ -70,6 +71,12 @@ export function Select({
   useEffect(() => {
     if (open) optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [open, activeIndex]);
+
+  useEffect(() => {
+    if (open && listRef.current && !prefersReducedMotion()) {
+      animate(listRef.current, { opacity: [0, 1], scale: [0.96, 1], y: [-4, 0] }, SPRING_POP);
+    }
+  }, [open]);
 
   function openAt(index: number) {
     setOpen(true);
@@ -186,10 +193,7 @@ export function Select({
           onKeyDown={handleListKeyDown}
           // biome-ignore lint/a11y/noAutofocus: opening the menu should hand keyboard control to it immediately
           autoFocus
-          ref={(el) => {
-            if (el && !prefersReducedMotion())
-              animate(el, { opacity: [0, 1], scale: [0.96, 1], y: [-4, 0] }, SPRING_POP);
-          }}
+          ref={listRef}
           className="absolute z-50 mt-1 max-h-60 w-full origin-top overflow-auto rounded-lg border border-border bg-surface p-1 shadow-lg shadow-black/10"
         >
           {options.map((option, index) => (

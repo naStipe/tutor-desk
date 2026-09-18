@@ -48,6 +48,21 @@ export async function listLessonsInRange(
   return data as unknown as LessonWithStudent[];
 }
 
+/**
+ * Minimal lesson times used to check upcoming lessons against a candidate working-hours change,
+ * before it's saved — cancelled lessons are excluded since they no longer occupy a time slot.
+ */
+export async function listUpcomingLessonTimes(supabase: SupabaseClient<Database>, fromIso: string) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .select("id, start_time, end_time")
+    .gte("start_time", fromIso)
+    .neq("status", "cancelled");
+
+  if (error) throw new Error(`Unable to load lessons: ${error.message}`);
+  return data;
+}
+
 export async function listLessonSlotsInRange(
   supabase: SupabaseClient<Database>,
   range: { start: string; end: string },

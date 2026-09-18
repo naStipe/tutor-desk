@@ -1,9 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { createClient } from "../../lib/supabase/server";
+import { redirect } from "next/navigation";
 import { tutorTag } from "../../lib/query-cache";
+import { createClient } from "../../lib/supabase/server";
+import { listRatesForTutor } from "../rates/data";
+import { listActiveStudents } from "../students/data";
+import { listSubjects } from "../subjects/data";
+import { getTutorFormatSettings } from "../tutor-profile/data";
 import {
   cancelLessonSeries,
   createLesson,
@@ -15,12 +19,9 @@ import {
   updateLessonStatus,
   updateLessonTime,
 } from "./data";
-import { addDays, startOfDay, toDateParam } from "./date-utils";
+import { addDays, minutesSinceMidnightInZone, startOfDay, toDateParam } from "./date-utils";
 import { buildRatesByStudent } from "./rates-map";
 import { ensureUpcomingLessonsGenerated } from "./recurrence";
-import { listRatesForTutor } from "../rates/data";
-import { listActiveStudents } from "../students/data";
-import { listSubjects } from "../subjects/data";
 import {
   lessonInputSchema,
   lessonStatusSchema,
@@ -68,6 +69,29 @@ function calendarHref(startTimeIso: string, lessonId: string) {
   return `/dashboard/schedule?view=week&date=${date}&highlight=${lessonId}`;
 }
 
+/**
+ * Rejects a lesson that would start before, or run past, the tutor's configured working hours.
+ * Computed as start-minutes + duration rather than reformatting the end instant through the
+ * timezone, so a lesson that would cross midnight is correctly treated as ending "later today"
+ * instead of wrapping around to an early-looking time tomorrow.
+ */
+async function checkWorkingHours(
+  supabase: Awaited<ReturnType<typeof requireTutorId>>["supabase"],
+  tutorId: string,
+  startTimeIso: string,
+  durationMinutes: number,
+): Promise<string | null> {
+  const { timeZone, workingHoursStartMinutes, workingHoursEndMinutes } =
+    await getTutorFormatSettings(supabase, tutorId);
+  const startMinutes = minutesSinceMidnightInZone(new Date(startTimeIso), timeZone);
+  const endMinutes = startMinutes + durationMinutes;
+
+  if (startMinutes < workingHoursStartMinutes || endMinutes > workingHoursEndMinutes) {
+    return "This time is outside your working hours. Adjust the time or update your working hours in Settings.";
+  }
+  return null;
+}
+
 export async function createLessonAction(
   _state: LessonActionState,
   formData: FormData,
@@ -82,6 +106,14 @@ export async function createLessonAction(
   if (!recurrence.success) return { fieldErrors: recurrence.error.flatten().fieldErrors };
 
   const { supabase, tutorId } = await requireTutorId();
+
+  const workingHoursError = await checkWorkingHours(
+    supabase,
+    tutorId,
+    parsed.data.startTime,
+    parsed.data.durationMinutes,
+  );
+  if (workingHoursError) return { error: workingHoursError };
 
   let href: string;
   try {
@@ -129,6 +161,14 @@ export async function updateLessonAction(
 
   const { supabase, tutorId } = await requireTutorId();
 
+  const workingHoursError = await checkWorkingHours(
+    supabase,
+    tutorId,
+    parsed.data.startTime,
+    parsed.data.durationMinutes,
+  );
+  if (workingHoursError) return { error: workingHoursError };
+
   try {
     await updateLesson(supabase, id, parsed.data);
   } catch (error) {
@@ -159,6 +199,12 @@ export async function moveLessonAction(
   }
 
   const { supabase, tutorId } = await requireTutorId();
+
+  const durationMinutes = Math.round(
+    (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000,
+  );
+  const workingHoursError = await checkWorkingHours(supabase, tutorId, startTime, durationMinutes);
+  if (workingHoursError) return { error: workingHoursError };
 
   try {
     const lesson = await updateLessonTime(supabase, id, startTime, endTime);

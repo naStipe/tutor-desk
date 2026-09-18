@@ -46,6 +46,8 @@ export function SettingsForm({
     paymentInstructions: string;
     contactEmail: string;
     contactPhone: string;
+    workingHoursStart: string;
+    workingHoursEnd: string;
   };
 }) {
   const [state, formAction] = useActionState(action, initialState);
@@ -159,6 +161,37 @@ export function SettingsForm({
             name="contactPhone"
             type="tel"
             defaultValue={defaultValues.contactPhone}
+            className={inputClassName}
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field
+          label="Working hours start"
+          htmlFor="workingHoursStart"
+          hint="Bounds the calendar view and when lessons can be scheduled"
+          errors={state.fieldErrors?.workingHoursStartMinutes}
+        >
+          <input
+            id="workingHoursStart"
+            name="workingHoursStart"
+            type="time"
+            defaultValue={defaultValues.workingHoursStart}
+            className={inputClassName}
+          />
+        </Field>
+
+        <Field
+          label="Working hours end"
+          htmlFor="workingHoursEnd"
+          errors={state.fieldErrors?.workingHoursEndMinutes}
+        >
+          <input
+            id="workingHoursEnd"
+            name="workingHoursEnd"
+            type="time"
+            defaultValue={defaultValues.workingHoursEnd}
             className={inputClassName}
           />
         </Field>

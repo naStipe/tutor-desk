@@ -18,6 +18,8 @@ export async function ensureCurrentTutorProfile(
 
 const FALLBACK_TIMEZONE = "UTC";
 const FALLBACK_LOCALE = "en-US";
+const FALLBACK_WORKING_HOURS_START_MINUTES = 7 * 60;
+const FALLBACK_WORKING_HOURS_END_MINUTES = 21 * 60;
 
 export async function getTutorTimezone(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase
@@ -30,11 +32,15 @@ export async function getTutorTimezone(supabase: SupabaseClient<Database>, userI
   return data?.timezone ?? FALLBACK_TIMEZONE;
 }
 
-/** Wall-clock formatting settings for a tutor: their configured timezone and display locale. */
+/**
+ * Wall-clock formatting settings for a tutor: their configured timezone, display locale, and
+ * active working hours (minutes since midnight in that timezone) used to bound the calendar and
+ * reject lessons scheduled outside the working day.
+ */
 export async function getTutorFormatSettings(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase
     .from("tutor_profile")
-    .select("timezone, locale")
+    .select("timezone, locale, working_hours_start_minutes, working_hours_end_minutes")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -42,6 +48,9 @@ export async function getTutorFormatSettings(supabase: SupabaseClient<Database>,
   return {
     timeZone: data?.timezone ?? FALLBACK_TIMEZONE,
     locale: data?.locale ?? FALLBACK_LOCALE,
+    workingHoursStartMinutes:
+      data?.working_hours_start_minutes ?? FALLBACK_WORKING_HOURS_START_MINUTES,
+    workingHoursEndMinutes: data?.working_hours_end_minutes ?? FALLBACK_WORKING_HOURS_END_MINUTES,
   };
 }
 
@@ -49,7 +58,7 @@ export async function getTutorProfile(supabase: SupabaseClient<Database>, userId
   const { data, error } = await supabase
     .from("tutor_profile")
     .select(
-      "user_id, name, timezone, locale, currency, default_hourly_rate, payment_instructions, contact_email, contact_phone",
+      "user_id, name, timezone, locale, currency, default_hourly_rate, payment_instructions, contact_email, contact_phone, working_hours_start_minutes, working_hours_end_minutes",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -105,6 +114,8 @@ export async function updateTutorProfile(
       payment_instructions: input.paymentInstructions ?? null,
       contact_email: input.contactEmail ?? null,
       contact_phone: input.contactPhone ?? null,
+      working_hours_start_minutes: input.workingHoursStartMinutes,
+      working_hours_end_minutes: input.workingHoursEndMinutes,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);

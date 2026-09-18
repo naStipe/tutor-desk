@@ -402,6 +402,24 @@ export type Database = {
           },
         ]
       }
+      portal_invite_attempt: {
+        Row: {
+          attempt_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          attempt_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          attempt_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       portal_membership: {
         Row: {
           created_at: string
@@ -596,6 +614,8 @@ export type Database = {
           timezone: string
           updated_at: string
           user_id: string
+          working_hours_end_minutes: number
+          working_hours_start_minutes: number
         }
         Insert: {
           contact_email?: string | null
@@ -609,6 +629,8 @@ export type Database = {
           timezone?: string
           updated_at?: string
           user_id: string
+          working_hours_end_minutes?: number
+          working_hours_start_minutes?: number
         }
         Update: {
           contact_email?: string | null
@@ -622,6 +644,8 @@ export type Database = {
           timezone?: string
           updated_at?: string
           user_id?: string
+          working_hours_end_minutes?: number
+          working_hours_start_minutes?: number
         }
         Relationships: []
       }

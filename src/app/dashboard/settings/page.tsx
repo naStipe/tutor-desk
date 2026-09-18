@@ -8,6 +8,14 @@ import { getCurrentUser } from "../../../lib/supabase/current-user";
 
 export const dynamic = "force-dynamic";
 
+function minutesToTimeInput(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const mins = (minutes % 60).toString().padStart(2, "0");
+  return `${hours}:${mins}`;
+}
+
 export default async function SettingsPage() {
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
@@ -32,6 +40,8 @@ export default async function SettingsPage() {
             paymentInstructions: profile?.payment_instructions ?? "",
             contactEmail: profile?.contact_email ?? "",
             contactPhone: profile?.contact_phone ?? "",
+            workingHoursStart: minutesToTimeInput(profile?.working_hours_start_minutes ?? 420),
+            workingHoursEnd: minutesToTimeInput(profile?.working_hours_end_minutes ?? 1260),
           }}
         />
       </Card>

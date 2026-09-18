@@ -61,6 +61,8 @@ type LessonFormProps = {
   onCancel?: () => void;
   locale?: string;
   timeZone?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
 };
 
 export function LessonForm({
@@ -77,6 +79,8 @@ export function LessonForm({
   onCancel,
   locale = "en-US",
   timeZone,
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
 }: LessonFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const [dateParam, setDateParam] = useState(defaultValues?.dateParam ?? toDateParam(new Date()));
@@ -167,6 +171,8 @@ export function LessonForm({
           minDate={lessonId ? undefined : startOfDay(new Date())}
           timeZone={timeZone}
           locale={locale}
+          workingHoursStartMinutes={workingHoursStartMinutes}
+          workingHoursEndMinutes={workingHoursEndMinutes}
         />
       </Field>
 

@@ -24,6 +24,8 @@ export function LessonDetailsCard({
   subjectName,
   timeZone,
   locale = "en-US",
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
 }: {
   action: (state: LessonActionState, formData: FormData) => Promise<LessonActionState>;
   lessonId: string;
@@ -43,6 +45,8 @@ export function LessonDetailsCard({
   subjectName: string | null;
   timeZone?: string;
   locale?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<EditData | null>(null);
@@ -114,6 +118,8 @@ export function LessonDetailsCard({
         pickerLessons={editData.pickerLessons}
         locale={locale}
         timeZone={timeZone}
+        workingHoursStartMinutes={workingHoursStartMinutes}
+        workingHoursEndMinutes={workingHoursEndMinutes}
         defaultValues={{
           ...defaultValues,
           dateParam: toDateParamInZone(startTime, timeZone),

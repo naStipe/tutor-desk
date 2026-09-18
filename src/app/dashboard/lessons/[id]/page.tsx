@@ -42,7 +42,8 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
   ]);
   if (!lesson) notFound();
 
-  const { timeZone, locale } = await getTutorFormatSettings(supabase, lesson.tutor_id);
+  const { timeZone, locale, workingHoursStartMinutes, workingHoursEndMinutes } =
+    await getTutorFormatSettings(supabase, lesson.tutor_id);
 
   return (
     <div className="max-w-xl space-y-6">
@@ -74,6 +75,8 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           subjectName={lesson.subject?.name ?? null}
           timeZone={timeZone}
           locale={locale}
+          workingHoursStartMinutes={workingHoursStartMinutes}
+          workingHoursEndMinutes={workingHoursEndMinutes}
           defaultValues={{
             studentId: lesson.student_id,
             subjectId: lesson.subject_id ?? undefined,

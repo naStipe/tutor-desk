@@ -77,6 +77,8 @@ export function LessonCalendar({
   homeworkReviewCountByDate,
   timeZone,
   locale,
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
   onSlotClick,
 }: {
   dayStartValues: string[];
@@ -87,6 +89,8 @@ export function LessonCalendar({
   homeworkReviewCountByDate?: Record<string, number>;
   timeZone?: string;
   locale?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
   onSlotClick: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 }) {
   const router = useRouter();
@@ -117,8 +121,16 @@ export function LessonCalendar({
   // The grid always covers the default window, but expands to fit any lesson that falls
   // outside it instead of clipping/hiding it.
   const { startHour: START_HOUR, endHour: END_HOUR } = useMemo(() => {
-    let earliestHour = DEFAULT_START_HOUR;
-    let latestHour = DEFAULT_END_HOUR;
+    const defaultStartHour =
+      workingHoursStartMinutes !== undefined
+        ? Math.floor(workingHoursStartMinutes / 60)
+        : DEFAULT_START_HOUR;
+    const defaultEndHour =
+      workingHoursEndMinutes !== undefined
+        ? Math.ceil(workingHoursEndMinutes / 60)
+        : DEFAULT_END_HOUR;
+    let earliestHour = defaultStartHour;
+    let latestHour = defaultEndHour;
     for (const lesson of lessons) {
       const start = minutesSinceMidnightInZone(new Date(lesson.startTime), timeZone) / 60;
       const end = minutesSinceMidnightInZone(new Date(lesson.endTime), timeZone) / 60;
@@ -126,7 +138,7 @@ export function LessonCalendar({
       latestHour = Math.max(latestHour, Math.ceil(end));
     }
     return { startHour: earliestHour, endHour: latestHour };
-  }, [lessons, timeZone]);
+  }, [lessons, timeZone, workingHoursStartMinutes, workingHoursEndMinutes]);
   const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
   const HOURS = useMemo(
     () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),

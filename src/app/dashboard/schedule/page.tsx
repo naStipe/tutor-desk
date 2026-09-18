@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
+import {
+  listHomeworkAwaitingReviewInRange,
+  listHomeworkDueInRange,
+} from "../../../features/homework/data";
 import { LessonsCalendarView } from "../../../features/lessons/components/LessonsCalendarView";
+import { listLessonsInRange } from "../../../features/lessons/data";
 import {
   addDays,
   addMonths,
@@ -15,12 +20,7 @@ import {
   toDateParamInZone,
   toLocalMidnightValue,
 } from "../../../features/lessons/date-utils";
-import { listLessonsInRange } from "../../../features/lessons/data";
 import { ensureUpcomingLessonsGenerated } from "../../../features/lessons/recurrence";
-import {
-  listHomeworkAwaitingReviewInRange,
-  listHomeworkDueInRange,
-} from "../../../features/homework/data";
 import { listActiveStudents } from "../../../features/students/data";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
 import { cachedForTutor, tutorTag } from "../../../lib/query-cache";
@@ -87,46 +87,51 @@ export default async function SchedulePage({
       end: rangeEnd.toISOString(),
     });
 
-  const [lessons, students, homeworkDue, homeworkAwaitingReview, { timeZone, locale }] =
-    await Promise.all([
-      generatedNewLessons
-        ? fetchLessonsForRange()
-        : cachedForTutor(
-            "lessons-range",
-            [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
-            [tutorTag("lessons", user.id)],
-            30,
-            fetchLessonsForRange,
-          ),
-      cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 120, () =>
-        listActiveStudents(client),
-      ),
-      cachedForTutor(
-        "homework-due-range",
-        [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
-        [tutorTag("homework", user.id)],
-        30,
-        () =>
-          listHomeworkDueInRange(client, {
-            start: rangeStart.toISOString(),
-            end: rangeEnd.toISOString(),
-          }),
-      ),
-      cachedForTutor(
-        "homework-awaiting-review-range",
-        [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
-        [tutorTag("homework", user.id)],
-        30,
-        () =>
-          listHomeworkAwaitingReviewInRange(client, {
-            start: rangeStart.toISOString(),
-            end: rangeEnd.toISOString(),
-          }),
-      ),
-      cachedForTutor("format-settings", [user.id], [tutorTag("profile", user.id)], 300, () =>
-        getTutorFormatSettings(client, user.id),
-      ),
-    ]);
+  const [
+    lessons,
+    students,
+    homeworkDue,
+    homeworkAwaitingReview,
+    { timeZone, locale, workingHoursStartMinutes, workingHoursEndMinutes },
+  ] = await Promise.all([
+    generatedNewLessons
+      ? fetchLessonsForRange()
+      : cachedForTutor(
+          "lessons-range",
+          [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+          [tutorTag("lessons", user.id)],
+          30,
+          fetchLessonsForRange,
+        ),
+    cachedForTutor("students-active", [user.id], [tutorTag("students", user.id)], 120, () =>
+      listActiveStudents(client),
+    ),
+    cachedForTutor(
+      "homework-due-range",
+      [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+      [tutorTag("homework", user.id)],
+      30,
+      () =>
+        listHomeworkDueInRange(client, {
+          start: rangeStart.toISOString(),
+          end: rangeEnd.toISOString(),
+        }),
+    ),
+    cachedForTutor(
+      "homework-awaiting-review-range",
+      [user.id, rangeStart.toISOString(), rangeEnd.toISOString()],
+      [tutorTag("homework", user.id)],
+      30,
+      () =>
+        listHomeworkAwaitingReviewInRange(client, {
+          start: rangeStart.toISOString(),
+          end: rangeEnd.toISOString(),
+        }),
+    ),
+    cachedForTutor("format-settings", [user.id], [tutorTag("profile", user.id)], 300, () =>
+      getTutorFormatSettings(client, user.id),
+    ),
+  ]);
 
   const days = Array.from({ length: rangeDays }, (_, index) => addDays(rangeStart, index));
   const calendarLessons = lessons.map((lesson) => ({
@@ -234,6 +239,8 @@ export default async function SchedulePage({
       agendaHomework={agendaHomework}
       timeZone={timeZone}
       locale={locale}
+      workingHoursStartMinutes={workingHoursStartMinutes}
+      workingHoursEndMinutes={workingHoursEndMinutes}
     />
   );
 }

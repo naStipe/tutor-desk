@@ -74,7 +74,12 @@ export default async function StudentViewSchedulePage({
     );
   }
 
-  const [lessons, homeworkDue, homeworkAwaitingReview, { timeZone, locale }] = await Promise.all([
+  const [
+    lessons,
+    homeworkDue,
+    homeworkAwaitingReview,
+    { timeZone, locale, workingHoursStartMinutes, workingHoursEndMinutes },
+  ] = await Promise.all([
     cachedForTutor(
       "student-view-lessons-range",
       [user.id, selected.id, rangeStart.toISOString(), rangeEnd.toISOString()],
@@ -185,6 +190,8 @@ export default async function StudentViewSchedulePage({
       homeworkReviewCountByDate={homeworkReviewCountByDate}
       timeZone={timeZone}
       locale={locale}
+      workingHoursStartMinutes={workingHoursStartMinutes}
+      workingHoursEndMinutes={workingHoursEndMinutes}
     />
   );
 }

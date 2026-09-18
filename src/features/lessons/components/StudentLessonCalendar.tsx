@@ -12,11 +12,10 @@ import {
 } from "../date-utils";
 import type { CalendarLesson } from "./LessonCalendar";
 
-const START_HOUR = 7;
-const END_HOUR = 21;
+const DEFAULT_START_HOUR = 7;
+const DEFAULT_END_HOUR = 21;
 const PX_PER_HOUR = 44;
 const GUTTER_PX = 52;
-const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
 const GRID_MAX_HEIGHT_PX = 560;
 
 const STATUS_BLOCK_CLASSES: Record<string, string> = {
@@ -26,12 +25,6 @@ const STATUS_BLOCK_CLASSES: Record<string, string> = {
   no_show: "bg-warning text-on-warning",
 };
 
-function clampMinutes(minutes: number) {
-  return Math.min(Math.max(minutes, START_HOUR * 60), END_HOUR * 60);
-}
-
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
-
 /** Read-only day/week grid for the student-view preview — same look as LessonCalendar, no drag/create. */
 export function StudentLessonCalendar({
   dayStartValues,
@@ -40,6 +33,8 @@ export function StudentLessonCalendar({
   homeworkAwaitingFeedbackCountByDate,
   timeZone,
   locale,
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
 }: {
   dayStartValues: string[];
   lessons: CalendarLesson[];
@@ -47,8 +42,42 @@ export function StudentLessonCalendar({
   homeworkAwaitingFeedbackCountByDate?: Record<string, number>;
   timeZone?: string;
   locale?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
 }) {
   const days = useMemo(() => dayStartValues.map((value) => new Date(value)), [dayStartValues]);
+
+  // The grid always covers the default window, but expands to fit any lesson that falls
+  // outside it instead of clipping/hiding it.
+  const { startHour: START_HOUR, endHour: END_HOUR } = useMemo(() => {
+    const defaultStartHour =
+      workingHoursStartMinutes !== undefined
+        ? Math.floor(workingHoursStartMinutes / 60)
+        : DEFAULT_START_HOUR;
+    const defaultEndHour =
+      workingHoursEndMinutes !== undefined
+        ? Math.ceil(workingHoursEndMinutes / 60)
+        : DEFAULT_END_HOUR;
+    let earliestHour = defaultStartHour;
+    let latestHour = defaultEndHour;
+    for (const lesson of lessons) {
+      const start = minutesSinceMidnightInZone(new Date(lesson.startTime), timeZone) / 60;
+      const end = minutesSinceMidnightInZone(new Date(lesson.endTime), timeZone) / 60;
+      earliestHour = Math.min(earliestHour, Math.floor(start));
+      latestHour = Math.max(latestHour, Math.ceil(end));
+    }
+    return { startHour: earliestHour, endHour: latestHour };
+  }, [lessons, timeZone, workingHoursStartMinutes, workingHoursEndMinutes]);
+  const GRID_HEIGHT = (END_HOUR - START_HOUR) * PX_PER_HOUR;
+  const HOURS = useMemo(
+    () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
+    [START_HOUR, END_HOUR],
+  );
+
+  function clampMinutes(minutes: number) {
+    return Math.min(Math.max(minutes, START_HOUR * 60), END_HOUR * 60);
+  }
+
   // Refresh once a minute so the "now" line and today highlighting stay accurate in a
   // long-open session instead of freezing at whenever the calendar first mounted.
   const [now, setNow] = useState(() => new Date());

@@ -49,6 +49,8 @@ export function LessonsCalendarView({
   agendaHomework,
   timeZone,
   locale,
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
 }: {
   title: string;
   description: string;
@@ -72,6 +74,8 @@ export function LessonsCalendarView({
   agendaHomework: AgendaHomework[];
   timeZone?: string;
   locale?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
 }) {
   const router = useRouter();
   const [createPrefill, setCreatePrefill] = useState<Prefill | null>(
@@ -214,6 +218,8 @@ export function LessonsCalendarView({
                 homeworkReviewCountByDate={homeworkReviewCountByDate}
                 timeZone={timeZone}
                 locale={locale}
+                workingHoursStartMinutes={workingHoursStartMinutes}
+                workingHoursEndMinutes={workingHoursEndMinutes}
                 onSlotClick={(dayIndex, startMinutes, endMinutes) => {
                   const day = new Date(dayStartValues[dayIndex]);
                   setCreatePrefill({
@@ -257,6 +263,8 @@ export function LessonsCalendarView({
             homeworkReviewCountByDate={homeworkReviewCountByDate}
             timeZone={timeZone}
             locale={locale}
+            workingHoursStartMinutes={workingHoursStartMinutes}
+            workingHoursEndMinutes={workingHoursEndMinutes}
             onSlotClick={(dayIndex, startMinutes, endMinutes) => {
               const day = new Date(dayStartValues[dayIndex]);
               setCreatePrefill({
@@ -294,6 +302,8 @@ export function LessonsCalendarView({
               pickerLessons={createData.pickerLessons}
               locale={locale}
               timeZone={timeZone}
+              workingHoursStartMinutes={workingHoursStartMinutes}
+              workingHoursEndMinutes={workingHoursEndMinutes}
               allowRecurrence
               defaultValues={{
                 studentId: students[0]?.id ?? "",

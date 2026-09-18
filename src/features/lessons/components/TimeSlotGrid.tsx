@@ -16,6 +16,8 @@ type TimeSlotGridProps = {
   selectedMinutes: number | null;
   onSelect: (minutes: number) => void;
   timeZone?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
 };
 
 type SlotReason = "available" | "past" | "occupied" | "no-fit";
@@ -27,6 +29,8 @@ export function TimeSlotGrid({
   selectedMinutes,
   onSelect,
   timeZone,
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
 }: TimeSlotGridProps) {
   const [hoveredMinutes, setHoveredMinutes] = useState<number | null>(null);
   const now = new Date();
@@ -36,8 +40,8 @@ export function TimeSlotGrid({
   // currently being edited/selected, and any already-booked lesson on this day, must stay
   // reachable even if they start before 7:00 or run past 21:00.
   const boundaryMinutes = [
-    DEFAULT_START_MINUTES,
-    DEFAULT_END_MINUTES,
+    workingHoursStartMinutes ?? DEFAULT_START_MINUTES,
+    workingHoursEndMinutes ?? DEFAULT_END_MINUTES,
     ...(selectedMinutes !== null ? [selectedMinutes, selectedMinutes + durationMinutes] : []),
     ...busyIntervals.flatMap((busy) => [
       minutesSinceMidnightInZone(new Date(busy.start), timeZone),

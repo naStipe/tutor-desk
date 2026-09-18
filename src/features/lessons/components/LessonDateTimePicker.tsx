@@ -29,6 +29,8 @@ type LessonDateTimePickerProps = {
   maxDate?: Date;
   timeZone?: string;
   locale?: string;
+  workingHoursStartMinutes?: number;
+  workingHoursEndMinutes?: number;
 };
 
 export function LessonDateTimePicker({
@@ -44,6 +46,8 @@ export function LessonDateTimePicker({
   maxDate,
   timeZone,
   locale,
+  workingHoursStartMinutes,
+  workingHoursEndMinutes,
 }: LessonDateTimePickerProps) {
   // Counts (for the month view's per-day badges) include the lesson being edited, so its own
   // day still reads accurately; conflict-checking (for the time slots) excludes it so the lesson
@@ -145,6 +149,8 @@ export function LessonDateTimePicker({
           selectedMinutes={minutes}
           onSelect={onChangeMinutes}
           timeZone={timeZone}
+          workingHoursStartMinutes={workingHoursStartMinutes}
+          workingHoursEndMinutes={workingHoursEndMinutes}
         />
       </div>
 

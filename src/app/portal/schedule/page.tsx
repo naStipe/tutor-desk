@@ -59,7 +59,12 @@ export default async function PortalSchedulePage({
   const student = await requirePortalStudent(supabase, studentIdParam);
   const showStudent = studentIdParam != null;
 
-  const [lessons, homeworkDue, homeworkAwaitingReview, { timeZone, locale }] = await Promise.all([
+  const [
+    lessons,
+    homeworkDue,
+    homeworkAwaitingReview,
+    { timeZone, locale, workingHoursStartMinutes, workingHoursEndMinutes },
+  ] = await Promise.all([
     listPortalLessons(supabase, student.id, {
       start: rangeStart.toISOString(),
       end: rangeEnd.toISOString(),
@@ -148,6 +153,8 @@ export default async function PortalSchedulePage({
       homeworkReviewCountByDate={homeworkReviewCountByDate}
       timeZone={timeZone}
       locale={locale}
+      workingHoursStartMinutes={workingHoursStartMinutes}
+      workingHoursEndMinutes={workingHoursEndMinutes}
     />
   );
 }

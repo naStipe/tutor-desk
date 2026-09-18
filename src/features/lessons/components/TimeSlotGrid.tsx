@@ -129,8 +129,8 @@ export function TimeSlotGrid({
               } ${
                 inSpan && !isSelected
                   ? isPrimaryHover
-                    ? "ring-2 ring-brand ring-inset"
-                    : "ring-2 ring-brand/40 ring-inset"
+                    ? "ring-2 ring-brand ring-inset bg-brand/20"
+                    : "ring-2 ring-brand/40 ring-inset bg-brand/10"
                   : ""
               }`}
             >

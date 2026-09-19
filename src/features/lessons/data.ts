@@ -279,6 +279,11 @@ export async function updateLessonStatus(
   if (error) throw new Error(`Unable to update lesson status: ${error.message}`);
 }
 
+export async function deleteLesson(supabase: SupabaseClient<Database>, id: string) {
+  const { error } = await supabase.from("lesson").delete().eq("id", id);
+  if (error) throw new Error(`Unable to delete lesson: ${error.message}`);
+}
+
 export async function updateLessonPayment(
   supabase: SupabaseClient<Database>,
   id: string,

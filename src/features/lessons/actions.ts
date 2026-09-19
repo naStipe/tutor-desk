@@ -12,6 +12,7 @@ import {
   cancelLessonSeries,
   createLesson,
   createLessonSeries,
+  deleteLesson,
   getFirstLessonForSeries,
   listLessonSlotsInRange,
   updateLesson,
@@ -263,6 +264,20 @@ export async function setLessonPaymentAction(formData: FormData) {
   revalidatePath(`/dashboard/lessons/${id}`);
   revalidatePath("/dashboard");
   redirect(`/dashboard/lessons/${id}`);
+}
+
+export async function deleteLessonAction(formData: FormData) {
+  const id = formData.get("id");
+  if (typeof id !== "string" || id === "") throw new Error("Missing lesson reference.");
+
+  const { supabase, tutorId } = await requireTutorId();
+  await deleteLesson(supabase, id);
+
+  revalidateTag(tutorTag("lessons", tutorId));
+  revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/lessons");
 }
 
 export async function cancelSeriesAction(formData: FormData) {

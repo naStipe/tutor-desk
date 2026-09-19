@@ -9,6 +9,7 @@ import { Select } from "../../../../components/Select";
 import { listHomeworkForLesson } from "../../../../features/homework/data";
 import {
   cancelSeriesAction,
+  deleteLessonAction,
   setLessonPaymentAction,
   updateLessonAction,
 } from "../../../../features/lessons/actions";
@@ -160,6 +161,21 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
           </ConfirmSubmitForm>
         </Card>
       )}
+
+      <Card className="space-y-3">
+        <h2 className="text-sm font-semibold text-ink">Danger zone</h2>
+        <p className="text-sm text-ink-muted">
+          Permanently deletes this lesson and its record — unlike cancelling, this can't be undone.
+          Any homework linked to it is kept, just unlinked.
+        </p>
+        <ConfirmSubmitForm
+          action={deleteLessonAction}
+          confirmMessage="Permanently delete this lesson? This can't be undone."
+          label="Delete lesson"
+        >
+          <input type="hidden" name="id" value={lesson.id} />
+        </ConfirmSubmitForm>
+      </Card>
     </div>
   );
 }

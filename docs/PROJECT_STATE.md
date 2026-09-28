@@ -2,13 +2,10 @@
 
 ## Current Milestone
 
-- Milestone: **Lessons payment-status filter + dashboard "unbilled" deep link**
-- Status: **Implemented; verified**
+- Milestone: **TD-005 — Full visual overhaul: design tokens, dark mode, distinctive brand identity**
+- Status: **Implemented; independent review recommended**
 - Branch: `main`
-- Last updated: 2026-09-28
-
-This entry supersedes the milestone/status lines below (TD-005) as the current top-of-file state;
-older milestone text further down is kept for history and was not re-verified in this task.
+- Last updated: 2026-09-16
 
 ## Current Reality
 
@@ -69,6 +66,19 @@ were restyled to the new tokens but their logic is untouched.
   red/yellow/green: lesson `scheduled`=cyan, `completed`=brand(green), `cancelled`=neutral,
   `no_show`=amber; homework `assigned`=neutral, `submitted`=cyan, `reviewed`=violet. The calendar's
   lesson blocks use the same mapping as solid fills.
+- **Active students list search** (`/dashboard/students`): a debounced text box filters the active
+  student list by name, case-insensitive, partial match, via a `?q=` query param — following the
+  same server-side query-param filter convention already used by the lessons (`?status=`,
+  `?student=`, `?subject=`) and homework (`?student=`, `?subject=`) list pages. `q` is Zod-validated
+  at the server boundary (`studentSearchQuerySchema` in `src/features/students/schemas.ts`, trimmed,
+  capped at 200 chars) before being passed to `listActiveStudents`, which applies a Postgres `ilike`
+  filter on `name` (wildcard characters `%`/`_`/`\` in the search text are escaped so they match
+  literally). The page (`src/app/dashboard/students/page.tsx`) stayed server-rendered and now
+  delegates markup to a new client component, `StudentsListView`
+  (`src/features/students/components/StudentsListView.tsx`), matching the server-page +
+  client-list-view split already used by lessons/homework. Tutor scoping is unchanged: the query
+  still relies solely on RLS (`student.tutor_id`), the same as before this task and the same as
+  lessons/homework — no client-provided tutor/owner ID is ever used.
 - **Home page** (`/`) was rebuilt from a leftover "Supabase foundation" infra-status card into an
   actual product intro matching the new brand (tagline, sign-in/sign-up CTAs, a 3-up feature strip
   for Students/Lessons/Homework). `e2e/app.spec.ts` was updated to match (the old `#status-badge`
@@ -84,45 +94,14 @@ were restyled to the new tokens but their logic is untouched.
 - The design-lab previews are intentionally not connected to Supabase, live tutor data, or product
   actions, and are not linked from the production navigation. They are visual proposals only.
 
-- Correction (verified 2026-09-28): the "recurring lessons ... not implemented" claim previously
-  here is stale/false. `src/features/lessons/data.ts` has `createLessonSeries`,
-  `cancelLessonSeries`, `listActiveLessonSeriesForGeneration`, `insertGeneratedLessons`, and
-  `updateSeriesGeneratedUntil`; `src/features/lessons/recurrence.ts` and the `lesson_series` table
-  migration (`supabase/migrations/20260913170002_create_lesson_series.sql`) exist. Payment tracking
-  is also implemented, not stub: `lesson.payment_status`/`payment_method`/`paid_at` columns,
-  `updateLessonPayment`, and the payment filter added in this task all operate on real schema. This
-  was verified by reading the code, not by re-running the recurring-lesson or payment feature's own
-  tests in this task — invoicing and the student portal were not checked and their status is
-  unverified.
+- Everything listed as not implemented in TD-004 remains not implemented (recurring lessons,
+  invoices, student portal, etc.) — this task was visual/theming only, no feature scope changed.
 - A dedicated mobile-optimized week calendar layout (unchanged from TD-004 — see Known Issues).
 - Per-user theme preference stored server-side; theme choice is `localStorage`-only (per browser,
   not per account), which is consistent with this being a prototype and matches how most SaaS theme
   toggles work before a settings page exists.
 
 ## Verification State
-
-- Payment-status filter (2026-09-28): added `payment=unpaid|paid|all` filter to
-  `listLessonsPage` (`src/features/lessons/data.ts`), a `paymentFilterSchema` Zod enum
-  (`src/features/lessons/schemas.ts`) validating the query param server-side in
-  `src/app/dashboard/lessons/page.tsx`, and a matching `Select` in `LessonsListView.tsx`. The
-  dashboard's "unbilled" link (`TodayDashboard.tsx`) now points to
-  `/dashboard/lessons?status=completed&payment=unpaid`, matching the exact predicate the unbilled
-  count itself uses (`status=completed AND payment_status=unpaid`, confirmed in
-  `src/features/dashboard/data.ts`). No new tutor-ownership check was needed: `listLessonsPage`
-  already relies on Postgres RLS (`lesson_tutor_id` policies in
-  `supabase/migrations/20260913150813_create_lesson.sql`, `using ((select auth.uid()) = tutor_id)`)
-  for every existing filter (status/student/subject), and the new payment filter follows the same
-  pattern — it never receives or trusts a tutor/owner ID from the client, so it cannot cause an
-  IDOR: a tutor can only ever see their own rows regardless of which payment value is requested.
-  Ran `pnpm run lint`, `pnpm run typecheck`, `pnpm run test` (41 tests, 9 files, all passed), and
-  `pnpm run build` (all routes compiled, no errors) — all passed with no findings in the changed
-  files. `pnpm run format:check` (part of `pnpm run verify`) fails, but on ~178 pre-existing
-  diagnostics across files this task did not touch (e.g. `tsconfig.json`, `vitest.config.ts`, an
-  unrelated test file) — confirmed pre-existing by stashing this task's changes and re-running
-  Biome format against the unmodified baseline, which fails identically. Root cause is
-  `core.autocrlf=true` producing CRLF line endings repo-wide on this Windows checkout, which Biome's
-  formatter (LF) rejects; this is an environment/checkout issue unrelated to this ticket's diff, so
-  it was not fixed here (out of scope).
 
 - Design-lab verification (2026-09-16): scoped Biome format/lint, full TypeScript typecheck, and the
   optimized Next.js production build passed. Both mockups compiled as static routes and were
@@ -150,6 +129,18 @@ were restyled to the new tokens but their logic is untouched.
 - `pnpm audit`: not re-run; no new dependencies were added (Manrope loads via `next/font/google`,
   which ships with Next.js).
 
+- **Student search verification (2026-09-28)**: `pnpm run lint` and `pnpm run typecheck` passed
+  clean on the changed files. `pnpm run test` passed (9 test files, 41 tests — no existing test
+  behavior changed). `pnpm run build` passed cleanly (all routes compiled, including
+  `/dashboard/students`). `pnpm run format:check` fails, but on essentially the whole repository
+  (178 errors across 179 files, including files untouched by this task, e.g.
+  `src/features/students/components/StudentForm.tsx`) — every checked-out file on this Windows
+  worktree is CRLF (`core.autocrlf=true`) while Biome's formatter expects LF; this is the pre-existing
+  repo-wide line-ending issue, not introduced or worsened by this task, and (per the task brief) may
+  already be tracked as a separate, parallel fix. No manual/browser walkthrough of the new search box
+  was performed in this session (no authenticated hosted-account session available here); this remains
+  unverified beyond the automated checks above.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -164,9 +155,7 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Fix the pre-existing repo-wide CRLF/Biome format mismatch** (`core.autocrlf=true` on this Windows
-checkout produces CRLF line endings that Biome's formatter, configured for LF, rejects on ~178
-files including files this and prior tasks never touched). Either normalize line endings via
-`.gitattributes` (`* text=auto eol=lf`) plus a one-time repo-wide reformat, or adjust Biome's
-`lineEnding` setting to match the checkout — so `pnpm run verify` (and CI, if it runs on Windows
-runners) can pass cleanly instead of every task needing to carve this failure out as "pre-existing."
+**"Duplicate lesson" shortcut: on a lesson's detail page, a button that pre-fills the new-lesson form
+(same student, subject, duration, price/currency, payment method) for a new date/time, so a tutor
+scheduling a recurring one-off doesn't have to re-enter everything by hand. Small, self-contained UX
+win that reuses the existing lesson form and ownership/RLS patterns.**

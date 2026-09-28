@@ -2,10 +2,41 @@
 
 ## Current Milestone
 
-- Milestone: **TD-005 — Full visual overhaul: design tokens, dark mode, distinctive brand identity**
+- Milestone: **TD-006 — UX audit fixes: unpaid-lessons filter, unarchive student, student search,
+  repo-wide line-ending fix**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
-- Last updated: 2026-09-16
+- Last updated: 2026-09-28
+
+Four small, independently-scoped changes were implemented in parallel (each in its own worktree/
+branch, then merged into `main`) as part of an unsupervised audit-and-fix pass while the owner was
+away, per AGENTS.md's smallest-correct-change discipline:
+
+1. **Unpaid-lessons filter** (`src/features/lessons/`): a `payment=unpaid|paid|all` filter on the
+   lessons list (`paymentFilterSchema` in `schemas.ts`, applied in `listLessonsPage`), and the
+   dashboard's "unbilled" stat now deep-links to `/dashboard/lessons?status=completed&payment=unpaid`
+   instead of an unfiltered list. Ownership relies on the same RLS-only pattern already used by the
+   existing status/student/subject filters (no app-level `tutor_id` filter needed — `lesson`'s RLS
+   `select` policy already scopes every query to `auth.uid()`).
+2. **Unarchive student** (`src/features/students/`): `unarchiveStudentAction` + a "Reactivate" button
+   on `/dashboard/students/archived`, mirroring `archiveStudentAction`'s auth/ownership pattern.
+   Deliberately does not restore lessons cancelled at archive time — only flips the student back to
+   active. No unarchive control was added to the student detail page itself (out of this ticket's
+   scope).
+3. **Student search** (`src/features/students/`): a `?q=` name search box on `/dashboard/students`
+   (case-insensitive, `ilike`, wildcard-escaped, Zod-validated, 300ms-debounced), following the same
+   query-param convention as the lessons/homework filters. No shared `ListFilters` component existed
+   to reuse, so this followed the existing inline-filter-bar style instead of introducing one.
+4. **Repo-wide CRLF fix**: `.gitattributes` (`* text=auto eol=lf`) plus a working-tree renormalize,
+   fixing `pnpm run format:check`/`biome format .` failing on ~178 files on Windows checkouts
+   (`core.autocrlf=true` vs. Biome's LF expectation). Two sibling agents hit this independently before
+   it was fixed. `biome.json` needed no change — LF was already its default.
+
+All four were merged into `main` sequentially (fast-forward or clean auto-merge for code; only
+`docs/PROJECT_STATE.md` itself conflicted each time, resolved by hand into this consolidated entry).
+After merging, `biome format --write .` was re-run once to fix line-ending drift on the newly-merged
+files themselves (Windows `autocrlf` re-introduced CRLF on files each branch had created), committed
+separately as `chore(repo): reformat post-merge line-ending drift on new files`.
 
 ## Current Reality
 
@@ -116,9 +147,13 @@ were restyled to the new tokens but their logic is untouched.
 - `pnpm audit`: not re-run; no new dependencies were added (Manrope loads via `next/font/google`,
   which ships with Next.js).
 
-- Line-ending fix (2026-09-28): `pnpm run format:check`, `lint`, `typecheck`, `test` (9 files, 41
-  tests), and `build` all passed after adding `.gitattributes` and renormalizing the tree. See
-  "Repo Tooling" above.
+- TD-006 post-merge verification (2026-09-28, run against the merged `main`, not just each branch in
+  isolation): `pnpm run format:check` — clean, 179 files. `pnpm run lint` — 0 errors (1 pre-existing
+  unrelated warning + 1 info). `pnpm run typecheck` — clean. `pnpm run test` — 9 files, 41 tests, all
+  passed. `pnpm run build` — passed, all routes compiled (hit the known `.next` webpack-cache
+  corruption issue once — see Known Issues — resolved the usual way: delete `.next`, rebuild).
+- No manual/hosted-browser walkthrough of the four TD-006 changes was performed (no interactive
+  Supabase session in this unsupervised environment) — flagged as unverified pending a manual pass.
 
 ## Known Issues
 
@@ -131,32 +166,22 @@ were restyled to the new tokens but their logic is untouched.
 - The dashboard's time-based greeting and the lesson calendar's "now" indicator both evaluate in the
   server/browser's own time zone rather than an explicit tutor timezone setting (pre-existing,
   documented simplification, not a regression here).
-
-## Repo Tooling
-
-- `.gitattributes` added at repo root (`* text=auto eol=lf`), so every text file normalizes to LF
-  regardless of a Windows checkout's `core.autocrlf=true`. Fixes `pnpm run format:check`/`biome
-  format .` failing repo-wide (~178 files) on Windows, which two sibling-worktree agents hit
-  independently. The tracked blobs were already LF (Biome/Next.js tooling has always expected LF);
-  only Windows working trees were affected. `biome.json` has no `formatter.lineEnding` override, so
-  its LF default was already the intended convention — nothing there needed to change.
-- After adding `.gitattributes`, the working tree was renormalized (`git add --renormalize .`, then
-  each tracked file was deleted and re-checked out so the on-disk bytes actually became LF — staging
-  alone doesn't rewrite working-tree files). This produced zero content diff, confirming the index
-  was already LF.
-- Running `biome format --write .` after that fixed 18 files with genuine pre-existing style nits
-  (long single-line statements Biome now wraps per its 100-char `lineWidth`), unrelated to line
-  endings: `src/app/dashboard/homework/[id]/page.tsx`, `src/app/dashboard/student-view/homework/page.tsx`,
-  `src/app/dashboard/students/[id]/{billing,contacts,homework,page,portal,schedule}.tsx`,
-  `src/app/portal/homework/page.tsx`, `src/components/PortalShell.tsx`,
-  `src/features/dashboard/components/TodayDashboard.tsx`, `src/features/dashboard/data.ts`,
-  `src/features/homework/components/{HomeworkDiscussionThread,HomeworkForm,HomeworkListView}.tsx`,
-  `src/features/portal/data.ts`, `src/features/students/data.ts`, `src/lib/motion.ts`. All changes
-  are pure re-wrapping (line breaks/indentation only) — verified with `git diff` that no code tokens
-  changed.
+- The `.next` build cache occasionally corrupts on this Windows environment after many rapid rebuilds
+  (`TypeError: Cannot read properties of undefined (reading 'length')` in `WasmHash`, or the older
+  `__webpack_modules__[moduleId] is not a function`) — pre-existing, unrelated to any specific code
+  change. Fix: delete `.next` and rebuild.
+- No shared `ListFilters`/search-bar component exists yet — lessons, homework, and now students each
+  inline their own filter bar. Worth extracting if a fourth list gains filters.
+- TD-006's four changes were not manually verified against a live hosted account (no interactive
+  Supabase session available in the unsupervised environment that built them) — recommend a manual
+  browser pass (unpaid filter, reactivate button, student search) before relying on this fully.
 
 ## Next Recommended Task
 
-**Student list search/filter: a small UX win on `/dashboard/students` — a text input to filter the
-existing student list client-side by name (and, if trivial, by subject), with no new data fetching
-or schema change required.**
+**Duplicate-lesson shortcut: a "Duplicate" action on an existing one-off lesson's detail page
+(`src/app/dashboard/lessons/[id]`) that pre-fills the lesson creation form (`LessonForm` in
+`src/features/lessons/`) from the current lesson's student/subject/duration/price, defaulting the
+date/time to the next open slot. Small effort — no schema change, reuses the existing lesson-creation
+form and conflict-checking logic already used by `getScheduleCreateDataAction`. Addresses a real
+audit finding: tutors who add ad-hoc extra sessions with the same student/subject/price currently
+have to refill the whole form from scratch each time.**

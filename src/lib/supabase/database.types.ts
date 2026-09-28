@@ -704,6 +704,14 @@ export type Database = {
         Args: { p_homework_id: string; p_submission_text: string }
         Returns: undefined
       }
+      tutor_unpaid_summary: {
+        Args: { p_student_id: string }
+        Returns: {
+          count: number
+          currency: string
+          total: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

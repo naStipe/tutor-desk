@@ -2,10 +2,97 @@
 
 ## Current Milestone
 
-- Milestone: **TD-010 — In-app homework due-date/overdue nudges (dashboard + portal)**
-- Status: **Implemented; independent review recommended**
+- Milestone: **TD-011 — Per-student running balance on the tutor billing page**
+- Status: **Implemented; independent review recommended; new DB function unverified against the
+  live hosted database**
 - Branch: `main`
 - Last updated: 2026-09-28
+
+The tutor-facing student billing page (`src/app/dashboard/students/[id]/billing/page.tsx`) had no
+single "this student owes $X" figure — TD-006/TD-009 built the unpaid-lessons filter and bulk-pay,
+but a tutor still had to filter the lessons list and add line items by hand to know what to
+invoice. Addresses the "Next Recommended Task" recorded at the end of TD-010. No change to
+invoicing, payment-method editing, or any other billing feature — scope is strictly the new
+"Balance owed" display.
+
+- **New DB aggregate** (`supabase/migrations/20260928010000_tutor_unpaid_summary.sql`): a
+  `tutor_unpaid_summary(p_student_id uuid)` SQL function, grouped by currency, summing
+  `lesson.price` where `status = 'completed' AND payment_status = 'unpaid' AND price is not null`
+  for one student — the same predicate as the dashboard's existing "unbilled" stat. Deliberately
+  mirrors `portal_unpaid_summary` (`supabase/migrations/20260917020000_tutor_contact_and_homework_
+  comments.sql`) in shape (`security definer`, `stable`, same three-column return shape) for
+  consistency, even though a tutor session's own `lesson` SELECT RLS policy (`using ((select
+  auth.uid()) = tutor_id)`, `20260913150813_create_lesson.sql`) would already let a plain
+  `.select("price, currency")` + JS `sum()` work correctly and safely for one student's bounded
+  row count. Chose the DB-aggregate path per the ticket's explicit preference for consistency with
+  the portal's established pattern (same "don't download every row just to add one column" reasoning
+  the portal's migration comment already states), not because JS-side summing would have been
+  unsafe here — a JS sum remains the simpler fallback if this function ever needs to be dropped. The
+  function adds its own `l.tutor_id = auth.uid()` check (defense-in-depth on top of RLS, matching
+  the portal function's own explicit membership check) and is `revoke`d from `anon`/`public`,
+  `grant`ed only to `authenticated`.
+- **Data layer** (`getStudentUnpaidSummary` in `src/features/students/data.ts`): thin wrapper
+  around `supabase.rpc("tutor_unpaid_summary", ...)`, same `{ currency, total, count }[]` shape as
+  `getPortalUnpaidSummary` (`src/features/portal/data.ts`).
+- **UI**: a new "Balance owed" `Card` at the top of the billing page, rendered only when the
+  student has an outstanding balance (`unpaidSummary.length > 0`), one line per currency, using the
+  same `formatMoney(total, currency, locale)` (`src/lib/formatting.ts`) and `getTutorFormatSettings`
+  locale-resolution pattern already used on the lesson detail page and the portal's own "Amount
+  due" card — no new money-formatting logic was written. Links through to
+  `/dashboard/lessons?status=completed&payment=unpaid&student=<id>` (TD-006's existing filter
+  params, confirmed supported by `src/app/dashboard/lessons/page.tsx`'s `student` query param) so a
+  tutor can jump straight to the underlying unpaid rows.
+- **Ownership**: `getStudent` (already RLS-scoped) 404s before any of the new code runs; the new
+  RPC re-checks `tutor_id = auth.uid()` independently of RLS, matching TD-009/TD-010's
+  defense-in-depth precedent. A student id from another tutor's account returns zero rows from the
+  RPC (not an error), same behavior as `portal_unpaid_summary` for a foreign/unauthorized id.
+- No change to `lesson`'s existing columns, constraints, or RLS policies — purely additive
+  (one new function, no table/column change).
+
+No email or push infrastructure exists anywhere in `src/` (confirmed: no mailer dependency), so this
+adds an in-app-only nudge for homework approaching or past its due date, on both sides of the app.
+Addresses the "Next Recommended Task" recorded at the end of TD-009. No schema change — reuses
+`homework`'s existing `due_date` column and `assigned`/`submitted`/`reviewed` status enum.
+
+- **Shared formatters** (`src/lib/formatting.ts`): `formatOverdue`/`formatDueSoon` moved here from
+  `src/features/dashboard/format.ts` (which now just re-exports them) so both the tutor dashboard and
+  the student portal — two different features — format the same due-date language ("2 days overdue",
+  "Due tomorrow") without duplicating the logic. `formatOverdue` already existed; `formatDueSoon` is
+  new, a 3-day "due soon" window (`DUE_SOON_WINDOW_DAYS` in `src/features/homework/data.ts`).
+- **Tutor dashboard** (`src/features/dashboard/components/TodayDashboard.tsx`): the existing "Needs
+  review" card (`NeedsReviewStrip`) is extended rather than replaced. `HomeworkAttentionItem.overdue:
+  boolean` became `reason: "submitted" | "overdue" | "due-soon"`, and `listHomeworkNeedingAttention`
+  (`src/features/homework/data.ts`) now queries a third bucket — `status = "assigned"` and `due_date`
+  within the next 3 days but not yet overdue — alongside its existing submitted/overdue buckets. Each
+  row still links to `/dashboard/homework/[id]`; the action label is now "Review" (submitted),
+  "Nudge" (overdue), or "Remind" (due soon). `countHomeworkNeedingAttention` (sidebar badge) was left
+  untouched on purpose — it still counts only submitted+overdue, so the badge's existing meaning
+  ("needs your action now") doesn't get diluted by upcoming-but-not-yet-due items.
+- **Student portal** (`src/app/portal/page.tsx`): a new `HomeworkDueBanner`
+  (`src/features/portal/components/HomeworkDueBanner.tsx`) renders above `NextLessonCard` on the
+  portal home page whenever the signed-in student has their own `assigned` homework overdue or due
+  within 3 days. It's additive — the existing "Homework due soon" `Card` (14-day lookahead, all
+  statuses, no overdue bucket) is untouched. New data function `listPortalHomeworkDueSoon`
+  (`src/features/homework/data.ts`) mirrors the dashboard's overdue/due-soon query shape but scoped to
+  one `studentId`. Both link through to `/portal/homework`, the student's actual homework list.
+- **Ownership**: tutor-side queries are unfiltered by tutor id in code (same as every other dashboard
+  query) because `homework`'s RLS select policy already scopes every row to `auth.uid() = tutor_id`
+  (or a portal member). Portal-side `listPortalHomeworkDueSoon` is called with `student.id` from
+  `requirePortalStudent(supabase, studentId)` — the exact same "which student is this portal session
+  for" mechanism `listHomeworkDueInRange`/`listPortalLessons` already use on this same page — so a
+  student can never pass another student's id and see their homework: the explicit `.eq("student_id",
+  studentId)` filter and `homework`'s RLS `portal_membership` check both independently enforce it
+  (read directly from `supabase/migrations/20260917035000_merge_duplicate_select_policies.sql`, not
+  assumed).
+- Purely additive UI + data-query work: no schema change, no new due-date logic beyond comparing the
+  existing `due_date` column to `new Date()` (same server/browser-local "now" the dashboard's
+  greeting and calendar already use — see Known Issues; not fixed here, per the ticket's explicit
+  scope). Lesson and payment features are untouched.
+
+## Previous Milestone (TD-010)
+
+- Milestone: **TD-010 — In-app homework due-date/overdue nudges (dashboard + portal)**
+- Status: Implemented; independent review recommended
 
 No email or push infrastructure exists anywhere in `src/` (confirmed: no mailer dependency), so this
 adds an in-app-only nudge for homework approaching or past its due date, on both sides of the app.
@@ -420,6 +507,34 @@ were restyled to the new tokens but their logic is untouched.
   portal account and confirm the banner shows only their own due-soon/overdue items (not another
   student's) and both link through correctly.
 
+- TD-011 verification (2026-09-28): this worktree's branch was already on `main` (had TD-010), so no
+  fast-forward was needed. Hit the same known CRLF-on-disk issue on the first `format:check` (141
+  errors, mostly on files this task never touched); fixed the same documented way — committed this
+  task's changes first as a safety checkpoint, `git rm -r --cached . && git reset --hard HEAD`, then
+  `biome format --write` on the two files this task actually changed (2 real formatting issues in
+  the new code itself, not just CRLF) and squashed the checkpoint plus that formatting fix into one
+  clean commit (`git reset --soft`, local history on this not-yet-shared worktree branch). After
+  that: `pnpm run format:check` — clean, 182 files. `pnpm run lint` — 0 errors (same 1 pre-existing
+  unrelated warning + 1 info as TD-006–TD-010, both in files this task didn't touch). `pnpm run
+  typecheck` — clean. `pnpm run test` — 10 files, 46 tests, all passed (no test logic changed; no
+  new tests added — `getStudentUnpaidSummary` is a thin RPC wrapper with no branching logic of its
+  own, matching the no-new-tests precedent already set for `getPortalUnpaidSummary` itself). `pnpm
+  run build` — passed cleanly after deleting `.next` first, all 39 routes compiled (including the
+  new `/dashboard/students/[id]/billing` bundle at 1.16 kB), no cache corruption hit this run.
+  `pnpm audit` not re-run — no new dependency was added.
+- **New migration not applied to the live hosted Supabase project** (`cmlvtnjoynffrznyelym`) —
+  this unsupervised environment has no DB credentials/MCP write access to that project. The
+  `tutor_unpaid_summary` function in `supabase/migrations/20260928010000_tutor_unpaid_summary.sql`
+  is therefore unverified against the real database: it needs a manual `supabase db push` (or
+  equivalent) against the hosted project, followed by a Supabase advisor check (security +
+  performance), before this feature will actually work in production. Until applied, the billing
+  page's RPC call will fail with a "function does not exist" error at runtime.
+- No manual/hosted-browser walkthrough of the new "Balance owed" card was performed (no interactive
+  Supabase session in this unsupervised environment, and the migration isn't applied yet regardless)
+  — flagged as unverified pending: apply the migration, then seed a completed+unpaid lesson for a
+  real student, open their billing page, and confirm the total/count/link are correct, then repeat
+  with a second currency to confirm the multi-row (grouped-by-currency) case renders correctly.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -466,16 +581,19 @@ were restyled to the new tokens but their logic is untouched.
 - TD-010's dashboard and portal due-date nudges were not manually verified against a live hosted
   account — see Verification State for the specific manual pass recommended before relying on this
   fully.
+- TD-011's `tutor_unpaid_summary` migration has not been applied to the live hosted Supabase
+  project — see Verification State. The billing page's RPC call will error until it is.
 
 ## Next Recommended Task
 
-**Per-student running balance / total owed, on the student detail or billing page
-(`src/app/dashboard/students/[id]/billing`, `src/features/students/`): a summed dollar amount of a
-student's unpaid completed lessons, in their own currency. TD-006 already built the unpaid-lessons
-filter and TD-009 built bulk-pay, but there's still nowhere in the tutor-facing app that shows "this
-student owes $X" as a single number — a tutor currently has to filter the lessons list and add up
-line items by hand to know what to invoice. The portal side already has this (`getPortalUnpaidSummary`
-/ `portal_unpaid_summary` RPC, shown on `/portal` as "Amount due") — the tutor-facing billing page
-likely wants the same aggregate-in-the-database approach (or a thin tutor-side RPC/query reusing the
-same shape) rather than summing rows in JS, mirroring the pattern that already works on the portal
-side. No schema change expected.**
+**Apply and verify the TD-011 migration against the live hosted Supabase project
+(`cmlvtnjoynffrznyelym`): run `supabase db push` (or the team's equivalent apply step) to create
+`tutor_unpaid_summary`, then check the Supabase advisor (security + performance) for that function,
+then do the manual walkthrough described in TD-011's Verification State (seed a completed+unpaid
+lesson, confirm the "Balance owed" card and its link, repeat with a second currency). This is small,
+low-risk, and blocks the feature from working at all in production — a better next step than new
+feature work until the gap between "implemented in this worktree" and "actually live" is closed. If
+that's already done by the time this is picked up, the next-most-valuable gap is the same one TD-006
+flagged and TD-007–TD-010 kept deferring: none of TD-006 through TD-011's changes have had a single
+manual/hosted-browser walkthrough in an interactive session — worth a dedicated verification pass
+across all six before adding more surface area.**

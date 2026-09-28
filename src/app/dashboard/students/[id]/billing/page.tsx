@@ -6,8 +6,10 @@ import { RateForm } from "../../../../../features/rates/components/RateForm";
 import { listRatesForStudent } from "../../../../../features/rates/data";
 import { updateStudentAction } from "../../../../../features/students/actions";
 import { StudentForm } from "../../../../../features/students/components/StudentForm";
-import { getStudent } from "../../../../../features/students/data";
+import { getStudent, getStudentUnpaidSummary } from "../../../../../features/students/data";
 import { listSubjects } from "../../../../../features/subjects/data";
+import { getTutorFormatSettings } from "../../../../../features/tutor-profile/data";
+import { formatMoney } from "../../../../../lib/formatting";
 import { createClient } from "../../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,15 +20,40 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
   const student = await getStudent(supabase, id);
   if (!student) notFound();
 
-  const [rates, subjects] = await Promise.all([
+  const [rates, subjects, unpaidSummary, { locale }] = await Promise.all([
     listRatesForStudent(supabase, id),
     listSubjects(supabase),
+    getStudentUnpaidSummary(supabase, id),
+    getTutorFormatSettings(supabase, student.tutor_id),
   ]);
   const ratedSubjectIds = new Set(rates.map((rate) => rate.subject_id));
   const availableSubjects = subjects.filter((subject) => !ratedSubjectIds.has(subject.id));
 
   return (
     <div className="space-y-6">
+      {unpaidSummary.length > 0 && (
+        <Card>
+          <h2 className="text-sm font-semibold text-ink">Balance owed</h2>
+          <div className="mt-2 space-y-1">
+            {unpaidSummary.map((row) => (
+              <p key={row.currency} className="text-sm text-ink-muted">
+                <span className="font-medium text-ink">
+                  {formatMoney(row.total, row.currency, locale)}
+                </span>{" "}
+                across {row.count} unpaid lesson
+                {row.count === 1 ? "" : "s"}
+              </p>
+            ))}
+          </div>
+          <Link
+            href={`/dashboard/lessons?status=completed&payment=unpaid&student=${student.id}`}
+            className="mt-2 inline-block text-sm text-brand hover:text-brand-strong hover:underline"
+          >
+            View unpaid lessons &rarr;
+          </Link>
+        </Card>
+      )}
+
       <Card>
         <h2 className="text-sm font-semibold text-ink">Default price</h2>
         <div className="mt-4">

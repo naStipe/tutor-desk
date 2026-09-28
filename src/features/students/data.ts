@@ -158,6 +158,22 @@ export async function listPortalMembers(supabase: SupabaseClient<Database>, stud
   return { members: members ?? [], pendingInvites: invites ?? [] };
 }
 
+export type StudentUnpaidSummary = { currency: string; total: number; count: number };
+
+/**
+ * Aggregate-only: sums one student's completed-but-unpaid lessons in the database instead of
+ * downloading every row, mirroring getPortalUnpaidSummary/portal_unpaid_summary
+ * (src/features/portal/data.ts) for the tutor-facing billing page's "amount owed" figure.
+ */
+export async function getStudentUnpaidSummary(
+  supabase: SupabaseClient<Database>,
+  studentId: string,
+) {
+  const { data, error } = await supabase.rpc("tutor_unpaid_summary", { p_student_id: studentId });
+  if (error) throw new Error(`Unable to load amount owed: ${error.message}`);
+  return (data ?? []) as StudentUnpaidSummary[];
+}
+
 export async function createPortalInvite(
   supabase: SupabaseClient<Database>,
   studentId: string,

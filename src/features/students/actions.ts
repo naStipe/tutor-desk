@@ -12,6 +12,7 @@ import {
   createStudent,
   deleteStudent,
   type PortalRole,
+  unarchiveStudent,
   updateStudent,
 } from "./data";
 import { studentInputSchema } from "./schemas";
@@ -135,6 +136,21 @@ export async function archiveStudentAction(formData: FormData) {
   revalidatePath("/dashboard/schedule");
   revalidatePath("/dashboard");
   redirect("/dashboard/students");
+}
+
+export async function unarchiveStudentAction(formData: FormData) {
+  const id = formData.get("id");
+  if (typeof id !== "string" || id === "") throw new Error("Missing student reference.");
+
+  const { supabase, tutorId } = await requireTutorId();
+  await unarchiveStudent(supabase, id);
+
+  revalidateTag(tutorTag("students", tutorId));
+  revalidatePath("/dashboard/students");
+  revalidatePath("/dashboard/students/archived");
+  revalidatePath(`/dashboard/students/${id}`, "layout");
+  revalidatePath("/dashboard");
+  redirect("/dashboard/students/archived");
 }
 
 export async function deleteStudentAction(formData: FormData) {

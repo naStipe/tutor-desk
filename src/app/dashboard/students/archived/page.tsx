@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "../../../../components/Avatar";
 import { Card } from "../../../../components/Card";
+import { ConfirmSubmitForm } from "../../../../components/ConfirmSubmitForm";
 import { EmptyState } from "../../../../components/EmptyState";
 import { UsersIcon } from "../../../../components/icons";
 import { PageHeader } from "../../../../components/PageHeader";
-import { deleteStudentAction } from "../../../../features/students/actions";
+import { deleteStudentAction, unarchiveStudentAction } from "../../../../features/students/actions";
 import { ConfirmDeleteForm } from "../../../../features/students/components/ConfirmDeleteForm";
 import { listArchivedStudents } from "../../../../features/students/data";
 import { cachedForTutor, tutorTag } from "../../../../lib/query-cache";
@@ -61,6 +62,15 @@ export default async function ArchivedStudentsPage() {
                   </p>
                 )}
               </Link>
+              <ConfirmSubmitForm
+                action={unarchiveStudentAction}
+                confirmMessage={`Reactivate ${student.name}? They will reappear in your active students list.`}
+                label="Reactivate"
+                variant="secondary"
+                className="shrink-0"
+              >
+                <input type="hidden" name="id" value={student.id} />
+              </ConfirmSubmitForm>
               <ConfirmDeleteForm
                 action={deleteStudentAction}
                 id={student.id}

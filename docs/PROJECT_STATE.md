@@ -2,12 +2,33 @@
 
 ## Current Milestone
 
-- Milestone: **TD-005 — Full visual overhaul: design tokens, dark mode, distinctive brand identity**
+- Milestone: **Student unarchive/reactivate action**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
-- Last updated: 2026-09-16
+- Last updated: 2026-09-28
 
 ## Current Reality
+
+A tutor can now reactivate an archived student from `/dashboard/students/archived`. This closes a
+prior gap: only `archiveStudentAction` existed, with no way back short of re-creating the student
+(which would have lost lesson/homework history). `unarchiveStudent` (`src/features/students/data.ts`)
+clears `archived_at` on the `student` row; `unarchiveStudentAction`
+(`src/features/students/actions.ts`) validates the session via `requireTutorId()`, calls it, and
+revalidates the active students list, the archived list, the student's own detail path, and the
+dashboard, then redirects back to the archived list. It intentionally does not touch any `lesson`
+rows — lessons cancelled by the earlier archive stay cancelled; restoring lesson history is explicit
+out-of-scope per the ticket. The archived list page (`src/app/dashboard/students/archived/page.tsx`)
+gained a "Reactivate" button next to the existing "Delete permanently" button, built with the same
+`ConfirmSubmitForm` (browser `confirm()` dialog, secondary button variant) already used for
+`archiveStudentAction` on the student detail page — no new confirmation/loading pattern was
+introduced.
+
+Note: this session found `docs/PROJECT_STATE.md`'s prior "6 unit test files, 21 tests" and "16/16
+routes" claims already stale relative to the actual repo (now 9 test files / 41 tests, 38 build
+routes) — likely from feature work landed after the TD-005 doc entry was last updated. Corrected
+below; this task did not investigate what changed those numbers, only re-measured them.
+
+## Prior Reality (TD-005, visual overhaul)
 
 TutorDesk is a Next.js App Router modular monolith using hosted Supabase Auth and PostgreSQL. On top
 of the working student/lesson/homework feature set (TD-002–TD-004), the entire UI was rebuilt on a
@@ -78,6 +99,11 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Not Implemented
 
+- Reactivating an archived student does not restore the lessons that were auto-cancelled when they
+  were archived. This is intentional (out of scope, ambiguous which cancelled lessons a tutor would
+  want back) — if a tutor needs those lessons back, they must be re-created manually. There is also
+  still no unarchive control on the student detail page itself (`src/app/dashboard/students/[id]/page.tsx`);
+  only the archived list page has the new "Reactivate" button, per this task's scope.
 - The design-lab previews are intentionally not connected to Supabase, live tutor data, or product
   actions, and are not linked from the production navigation. They are visual proposals only.
 
@@ -90,14 +116,40 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Verification State
 
+- Unarchive-action verification (2026-09-28): `npx tsc --noEmit` (repo-wide typecheck) passed clean.
+  `npx vitest run` passed (9 test files, 41 tests — no test logic changed by this task; these are the
+  current real counts, correcting the stale "6 files, 21 tests" this doc previously claimed). `npx
+  next build` passed cleanly (38 routes generated, no errors; run with the dev server stopped). `npx
+  biome lint .` passed with zero errors (one pre-existing warning and one pre-existing info-level
+  finding, both in unrelated files — `src/app/portal/homework/page.tsx` and
+  `src/features/homework/components/HomeworkListView.tsx` — untouched by this task); `npx biome lint`
+  scoped to the three changed files reported zero issues. `pnpm run format:check` / `biome format .`
+  could **not** be used to verify formatting: it reports ~178 pre-existing CRLF-vs-LF diffs across
+  essentially the whole repository (including files this task did not touch, e.g. `tsconfig.json`,
+  `vitest.config.ts`), which looks like a Windows checkout line-ending mismatch against Biome's LF
+  expectation rather than anything introduced here — unresolved and out of this task's scope to fix
+  repo-wide. `pnpm audit` / dependency review: not re-run; no dependency was added or changed.
+  Playwright E2E: not run (same pre-existing gap noted below — no Chromium binary in this
+  environment); the changed pages have no existing E2E coverage to update.
+- Manual verification of this task was reasoning-based, not browser-driven (no `.env`/hosted Supabase
+  credentials available in this environment to exercise the real archive/unarchive flow live): traced
+  `unarchiveStudentAction` — `requireTutorId()` redirects to `/sign-in` when unauthenticated;
+  `unarchiveStudent` issues `update({ archived_at: null }).eq("id", id)` with no `tutor_id` filter,
+  matching the existing `archiveStudent`/`deleteStudent`/`updateStudent` pattern, which is safe here
+  because `docs/SECURITY.md` documents that `public.student`'s RLS `UPDATE` policy independently
+  requires `tutor_id = auth.uid()` — so a foreign student ID resolves to zero rows updated (a
+  same-shape no-op as the existing actions), never another tutor's row. `revalidateTag`/`revalidatePath`
+  calls mirror `archiveStudentAction`'s targets (active list, archived list, dashboard) plus the
+  student's own detail path so a reactivated student's page stops showing archived state. Did not
+  independently query the hosted `student` table or run `supabase/tests/student_rls.sql` to confirm
+  the RLS policy text still matches the doc's description — flagged as unverified below.
+
 - Design-lab verification (2026-09-16): scoped Biome format/lint, full TypeScript typecheck, and the
   optimized Next.js production build passed. Both mockups compiled as static routes and were
   manually inspected in the in-app browser at a narrow responsive viewport. No behavior tests were
   added because the concepts contain no product functionality.
-
-- `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (6 unit test files, 21 tests — no
-  test logic changed, this was a styling task).
-- `pnpm run build`: passed cleanly — 16/16 routes, no errors — run with the dev server stopped.
+- `pnpm run build`: passed cleanly at the time — 16/16 routes, no errors — run with the dev server
+  stopped (route count has since grown; see this task's entry above for the current count).
 - Repo-wide grep for legacy Tailwind palette classes (`slate-`, `blue-`, `emerald-`, `rose-`,
   `amber-`, `bg-white`, `text-white`) across `src/app`, `src/features`, `src/components`: zero
   matches, confirming the token sweep is complete.
@@ -118,6 +170,9 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Known Issues
 
+- `biome format .` / `pnpm run format:check` reports ~178 pre-existing CRLF line-ending diffs across
+  most of the repository in this Windows checkout, unrelated to this task's code changes and not
+  fixed here (fixing it repo-wide is out of this task's scope).
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
   (pre-existing, unrelated to this task).
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).

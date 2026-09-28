@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/supabase/database.types";
-import type { LessonInput, LessonStatus, PaymentMethod, PaymentStatus } from "./schemas";
+import type {
+  LessonInput,
+  LessonStatus,
+  PaymentFilter,
+  PaymentMethod,
+  PaymentStatus,
+} from "./schemas";
 
 export type Lesson = Database["public"]["Tables"]["lesson"]["Row"];
 export type LessonSeries = Database["public"]["Tables"]["lesson_series"]["Row"];
@@ -120,6 +126,7 @@ export async function listLessonsPage(
     status?: LessonStatus;
     studentId?: string;
     subjectId?: string;
+    payment?: PaymentFilter;
     sortKey?: LessonListSortKey;
     sortDir?: "asc" | "desc";
     page?: number;
@@ -130,6 +137,7 @@ export async function listLessonsPage(
     status,
     studentId,
     subjectId,
+    payment,
     sortKey = "date",
     sortDir = "desc",
     page = 1,
@@ -141,6 +149,7 @@ export async function listLessonsPage(
   if (status) query = query.eq("status", status);
   if (studentId) query = query.eq("student_id", studentId);
   if (subjectId) query = query.eq("subject_id", subjectId);
+  if (payment && payment !== "all") query = query.eq("payment_status", payment);
 
   const sort = LESSON_SORT_COLUMNS[sortKey];
   const ascending = sortDir === "asc";

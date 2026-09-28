@@ -2,33 +2,15 @@
 
 ## Current Milestone
 
-- Milestone: **Student unarchive/reactivate action**
-- Status: **Implemented; independent review recommended**
+- Milestone: **Lessons payment-status filter + dashboard "unbilled" deep link**
+- Status: **Implemented; verified**
 - Branch: `main`
 - Last updated: 2026-09-28
 
+This entry supersedes the milestone/status lines below (TD-005) as the current top-of-file state;
+older milestone text further down is kept for history and was not re-verified in this task.
+
 ## Current Reality
-
-A tutor can now reactivate an archived student from `/dashboard/students/archived`. This closes a
-prior gap: only `archiveStudentAction` existed, with no way back short of re-creating the student
-(which would have lost lesson/homework history). `unarchiveStudent` (`src/features/students/data.ts`)
-clears `archived_at` on the `student` row; `unarchiveStudentAction`
-(`src/features/students/actions.ts`) validates the session via `requireTutorId()`, calls it, and
-revalidates the active students list, the archived list, the student's own detail path, and the
-dashboard, then redirects back to the archived list. It intentionally does not touch any `lesson`
-rows — lessons cancelled by the earlier archive stay cancelled; restoring lesson history is explicit
-out-of-scope per the ticket. The archived list page (`src/app/dashboard/students/archived/page.tsx`)
-gained a "Reactivate" button next to the existing "Delete permanently" button, built with the same
-`ConfirmSubmitForm` (browser `confirm()` dialog, secondary button variant) already used for
-`archiveStudentAction` on the student detail page — no new confirmation/loading pattern was
-introduced.
-
-Note: this session found `docs/PROJECT_STATE.md`'s prior "6 unit test files, 21 tests" and "16/16
-routes" claims already stale relative to the actual repo (now 9 test files / 41 tests, 38 build
-routes) — likely from feature work landed after the TD-005 doc entry was last updated. Corrected
-below; this task did not investigate what changed those numbers, only re-measured them.
-
-## Prior Reality (TD-005, visual overhaul)
 
 TutorDesk is a Next.js App Router modular monolith using hosted Supabase Auth and PostgreSQL. On top
 of the working student/lesson/homework feature set (TD-002–TD-004), the entire UI was rebuilt on a
@@ -99,16 +81,19 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Not Implemented
 
-- Reactivating an archived student does not restore the lessons that were auto-cancelled when they
-  were archived. This is intentional (out of scope, ambiguous which cancelled lessons a tutor would
-  want back) — if a tutor needs those lessons back, they must be re-created manually. There is also
-  still no unarchive control on the student detail page itself (`src/app/dashboard/students/[id]/page.tsx`);
-  only the archived list page has the new "Reactivate" button, per this task's scope.
 - The design-lab previews are intentionally not connected to Supabase, live tutor data, or product
   actions, and are not linked from the production navigation. They are visual proposals only.
 
-- Everything listed as not implemented in TD-004 remains not implemented (recurring lessons,
-  invoices, student portal, etc.) — this task was visual/theming only, no feature scope changed.
+- Correction (verified 2026-09-28): the "recurring lessons ... not implemented" claim previously
+  here is stale/false. `src/features/lessons/data.ts` has `createLessonSeries`,
+  `cancelLessonSeries`, `listActiveLessonSeriesForGeneration`, `insertGeneratedLessons`, and
+  `updateSeriesGeneratedUntil`; `src/features/lessons/recurrence.ts` and the `lesson_series` table
+  migration (`supabase/migrations/20260913170002_create_lesson_series.sql`) exist. Payment tracking
+  is also implemented, not stub: `lesson.payment_status`/`payment_method`/`paid_at` columns,
+  `updateLessonPayment`, and the payment filter added in this task all operate on real schema. This
+  was verified by reading the code, not by re-running the recurring-lesson or payment feature's own
+  tests in this task — invoicing and the student portal were not checked and their status is
+  unverified.
 - A dedicated mobile-optimized week calendar layout (unchanged from TD-004 — see Known Issues).
 - Per-user theme preference stored server-side; theme choice is `localStorage`-only (per browser,
   not per account), which is consistent with this being a prototype and matches how most SaaS theme
@@ -116,40 +101,37 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Verification State
 
-- Unarchive-action verification (2026-09-28): `npx tsc --noEmit` (repo-wide typecheck) passed clean.
-  `npx vitest run` passed (9 test files, 41 tests — no test logic changed by this task; these are the
-  current real counts, correcting the stale "6 files, 21 tests" this doc previously claimed). `npx
-  next build` passed cleanly (38 routes generated, no errors; run with the dev server stopped). `npx
-  biome lint .` passed with zero errors (one pre-existing warning and one pre-existing info-level
-  finding, both in unrelated files — `src/app/portal/homework/page.tsx` and
-  `src/features/homework/components/HomeworkListView.tsx` — untouched by this task); `npx biome lint`
-  scoped to the three changed files reported zero issues. `pnpm run format:check` / `biome format .`
-  could **not** be used to verify formatting: it reports ~178 pre-existing CRLF-vs-LF diffs across
-  essentially the whole repository (including files this task did not touch, e.g. `tsconfig.json`,
-  `vitest.config.ts`), which looks like a Windows checkout line-ending mismatch against Biome's LF
-  expectation rather than anything introduced here — unresolved and out of this task's scope to fix
-  repo-wide. `pnpm audit` / dependency review: not re-run; no dependency was added or changed.
-  Playwright E2E: not run (same pre-existing gap noted below — no Chromium binary in this
-  environment); the changed pages have no existing E2E coverage to update.
-- Manual verification of this task was reasoning-based, not browser-driven (no `.env`/hosted Supabase
-  credentials available in this environment to exercise the real archive/unarchive flow live): traced
-  `unarchiveStudentAction` — `requireTutorId()` redirects to `/sign-in` when unauthenticated;
-  `unarchiveStudent` issues `update({ archived_at: null }).eq("id", id)` with no `tutor_id` filter,
-  matching the existing `archiveStudent`/`deleteStudent`/`updateStudent` pattern, which is safe here
-  because `docs/SECURITY.md` documents that `public.student`'s RLS `UPDATE` policy independently
-  requires `tutor_id = auth.uid()` — so a foreign student ID resolves to zero rows updated (a
-  same-shape no-op as the existing actions), never another tutor's row. `revalidateTag`/`revalidatePath`
-  calls mirror `archiveStudentAction`'s targets (active list, archived list, dashboard) plus the
-  student's own detail path so a reactivated student's page stops showing archived state. Did not
-  independently query the hosted `student` table or run `supabase/tests/student_rls.sql` to confirm
-  the RLS policy text still matches the doc's description — flagged as unverified below.
+- Payment-status filter (2026-09-28): added `payment=unpaid|paid|all` filter to
+  `listLessonsPage` (`src/features/lessons/data.ts`), a `paymentFilterSchema` Zod enum
+  (`src/features/lessons/schemas.ts`) validating the query param server-side in
+  `src/app/dashboard/lessons/page.tsx`, and a matching `Select` in `LessonsListView.tsx`. The
+  dashboard's "unbilled" link (`TodayDashboard.tsx`) now points to
+  `/dashboard/lessons?status=completed&payment=unpaid`, matching the exact predicate the unbilled
+  count itself uses (`status=completed AND payment_status=unpaid`, confirmed in
+  `src/features/dashboard/data.ts`). No new tutor-ownership check was needed: `listLessonsPage`
+  already relies on Postgres RLS (`lesson_tutor_id` policies in
+  `supabase/migrations/20260913150813_create_lesson.sql`, `using ((select auth.uid()) = tutor_id)`)
+  for every existing filter (status/student/subject), and the new payment filter follows the same
+  pattern — it never receives or trusts a tutor/owner ID from the client, so it cannot cause an
+  IDOR: a tutor can only ever see their own rows regardless of which payment value is requested.
+  Ran `pnpm run lint`, `pnpm run typecheck`, `pnpm run test` (41 tests, 9 files, all passed), and
+  `pnpm run build` (all routes compiled, no errors) — all passed with no findings in the changed
+  files. `pnpm run format:check` (part of `pnpm run verify`) fails, but on ~178 pre-existing
+  diagnostics across files this task did not touch (e.g. `tsconfig.json`, `vitest.config.ts`, an
+  unrelated test file) — confirmed pre-existing by stashing this task's changes and re-running
+  Biome format against the unmodified baseline, which fails identically. Root cause is
+  `core.autocrlf=true` producing CRLF line endings repo-wide on this Windows checkout, which Biome's
+  formatter (LF) rejects; this is an environment/checkout issue unrelated to this ticket's diff, so
+  it was not fixed here (out of scope).
 
 - Design-lab verification (2026-09-16): scoped Biome format/lint, full TypeScript typecheck, and the
   optimized Next.js production build passed. Both mockups compiled as static routes and were
   manually inspected in the in-app browser at a narrow responsive viewport. No behavior tests were
   added because the concepts contain no product functionality.
-- `pnpm run build`: passed cleanly at the time — 16/16 routes, no errors — run with the dev server
-  stopped (route count has since grown; see this task's entry above for the current count).
+
+- `pnpm run format:check`, `lint`, `typecheck`, `test`: passed (6 unit test files, 21 tests — no
+  test logic changed, this was a styling task).
+- `pnpm run build`: passed cleanly — 16/16 routes, no errors — run with the dev server stopped.
 - Repo-wide grep for legacy Tailwind palette classes (`slate-`, `blue-`, `emerald-`, `rose-`,
   `amber-`, `bg-white`, `text-white`) across `src/app`, `src/features`, `src/components`: zero
   matches, confirming the token sweep is complete.
@@ -170,9 +152,6 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Known Issues
 
-- `biome format .` / `pnpm run format:check` reports ~178 pre-existing CRLF line-ending diffs across
-  most of the repository in this Windows checkout, unrelated to this task's code changes and not
-  fixed here (fixing it repo-wide is out of this task's scope).
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
   (pre-existing, unrelated to this task).
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
@@ -185,6 +164,9 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Recurring lesson series (`LessonSeries`): a rule (e.g. "every Tuesday at 17:00 for 60 minutes")
-that generates concrete `lesson` rows, with the ability to edit or cancel a single occurrence versus
-the whole series, reusing the calendar UI and ownership/RLS patterns established in TD-003/TD-004.**
+**Fix the pre-existing repo-wide CRLF/Biome format mismatch** (`core.autocrlf=true` on this Windows
+checkout produces CRLF line endings that Biome's formatter, configured for LF, rejects on ~178
+files including files this and prior tasks never touched). Either normalize line endings via
+`.gitattributes` (`* text=auto eol=lf`) plus a one-time repo-wide reformat, or adjust Biome's
+`lineEnding` setting to match the checkout — so `pnpm run verify` (and CI, if it runs on Windows
+runners) can pass cleanly instead of every task needing to carve this failure out as "pre-existing."

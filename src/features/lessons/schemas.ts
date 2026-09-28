@@ -90,3 +90,7 @@ export const recurrenceInputSchema = z.object({
 export type RecurrenceInput = z.infer<typeof recurrenceInputSchema>;
 
 export const lessonStatusSchema = z.enum(LESSON_STATUSES);
+
+export const PAYMENT_FILTERS = ["all", "unpaid", "paid"] as const;
+export type PaymentFilter = (typeof PAYMENT_FILTERS)[number];
+export const paymentFilterSchema = z.enum(PAYMENT_FILTERS);

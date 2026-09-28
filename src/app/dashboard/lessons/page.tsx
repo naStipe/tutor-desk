@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { LessonsListView } from "../../../features/lessons/components/LessonsListView";
 import { type LessonListSortKey, listLessonsPage } from "../../../features/lessons/data";
-import { LESSON_STATUSES, type LessonStatus } from "../../../features/lessons/schemas";
+import {
+  LESSON_STATUSES,
+  type LessonStatus,
+  paymentFilterSchema,
+} from "../../../features/lessons/schemas";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
@@ -30,6 +34,8 @@ export default async function LessonsPage({
   const status = LESSON_STATUSES.find((value) => value === first(params.status));
   const studentId = first(params.student);
   const subjectId = first(params.subject);
+  const parsedPayment = paymentFilterSchema.safeParse(first(params.payment));
+  const payment = parsedPayment.success ? parsedPayment.data : "all";
   const sortKey = SORT_KEYS.find((value) => value === first(params.sort)) ?? "date";
   const sortDir = first(params.dir) === "asc" ? "asc" : "desc";
   const page = Math.max(1, Number(first(params.page)) || 1);
@@ -37,7 +43,16 @@ export default async function LessonsPage({
   const [{ lessons, totalCount }, students, subjects, { timeZone, locale }] = await Promise.all([
     cachedForTutor(
       "lessons-page",
-      [user.id, status ?? "", studentId ?? "", subjectId ?? "", sortKey, sortDir, String(page)],
+      [
+        user.id,
+        status ?? "",
+        studentId ?? "",
+        subjectId ?? "",
+        payment,
+        sortKey,
+        sortDir,
+        String(page),
+      ],
       [tutorTag("lessons", user.id)],
       30,
       () =>
@@ -45,6 +60,7 @@ export default async function LessonsPage({
           status,
           studentId,
           subjectId,
+          payment,
           sortKey,
           sortDir,
           page,
@@ -84,6 +100,7 @@ export default async function LessonsPage({
       statusFilter={status ?? "all"}
       studentFilter={studentId ?? "all"}
       subjectFilter={subjectId ?? "all"}
+      paymentFilter={payment}
       sortKey={sortKey}
       sortDir={sortDir}
       page={page}

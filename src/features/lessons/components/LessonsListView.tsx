@@ -8,7 +8,7 @@ import { PageHeader } from "../../../components/PageHeader";
 import { Select } from "../../../components/Select";
 import type { LessonListSortKey } from "../data";
 import { formatFullDateTime } from "../date-utils";
-import type { LessonStatus } from "../schemas";
+import type { LessonStatus, PaymentFilter } from "../schemas";
 import { PaymentBadge } from "./PaymentBadge";
 import { StatusBadge } from "./StatusBadge";
 
@@ -33,6 +33,12 @@ const STATUS_FILTERS: { value: LessonStatus | "all"; label: string }[] = [
   { value: "no_show", label: "No-show" },
 ];
 
+const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
+  { value: "all", label: "All payments" },
+  { value: "unpaid", label: "Unpaid" },
+  { value: "paid", label: "Paid" },
+];
+
 const selectClass =
   "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100";
 
@@ -44,6 +50,7 @@ export function LessonsListView({
   statusFilter,
   studentFilter,
   subjectFilter,
+  paymentFilter,
   sortKey,
   sortDir,
   page,
@@ -59,6 +66,7 @@ export function LessonsListView({
   statusFilter: LessonStatus | "all";
   studentFilter: string;
   subjectFilter: string;
+  paymentFilter: PaymentFilter;
   sortKey: LessonListSortKey;
   sortDir: "asc" | "desc";
   page: number;
@@ -134,6 +142,12 @@ export function LessonsListView({
             { value: "all", label: "All subjects" },
             ...subjects.map((subject) => ({ value: subject.id, label: subject.name })),
           ]}
+        />
+        <Select
+          value={paymentFilter}
+          onChange={(value) => pushParams({ payment: value })}
+          className={selectClass}
+          options={PAYMENT_FILTERS}
         />
       </div>
 

@@ -652,7 +652,7 @@ export function TodayDashboard({
 
       {unbilled.count > 0 && (
         <Link
-          href="/dashboard/lessons"
+          href="/dashboard/lessons?status=completed&payment=unpaid"
           className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />

@@ -14,11 +14,7 @@ import { createClient } from "../../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function StudentSchedulePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function StudentSchedulePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const student = await getStudent(supabase, id);
@@ -52,7 +48,9 @@ export default async function StudentSchedulePage({
             <p className="truncate text-sm font-medium text-ink">
               {formatFullDateTime(lesson.start_time, timeZone, locale)}
             </p>
-            <p className="truncate text-sm text-ink-muted">{lesson.subject?.name ?? "No subject"}</p>
+            <p className="truncate text-sm text-ink-muted">
+              {lesson.subject?.name ?? "No subject"}
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <StatusBadge status={lesson.status} />

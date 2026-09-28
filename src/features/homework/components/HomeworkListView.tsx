@@ -32,7 +32,11 @@ function formatDueDate(value: string | null, locale: string) {
   const date = new Date(`${value}T00:00:00Z`);
   const todayUtcMidnight = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z");
   const isOverdue = date.getTime() < todayUtcMidnight.getTime();
-  const label = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
+  const label = date.toLocaleDateString(locale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
@@ -128,7 +132,8 @@ export function HomeworkListView({
                 <p className="truncate text-sm font-medium text-ink">{item.title}</p>
                 <p className="truncate text-sm text-ink-muted">
                   {item.studentName}
-                  {item.subjectName ? ` · ${item.subjectName}` : ""} · {formatDueDate(item.dueDate, locale)}
+                  {item.subjectName ? ` · ${item.subjectName}` : ""} ·{" "}
+                  {formatDueDate(item.dueDate, locale)}
                 </p>
               </div>
               <HomeworkStatusBadge status={item.status} />

@@ -129,7 +129,13 @@ export function HomeworkForm({
       </Field>
 
       <Field label="Due date" htmlFor="dueDate" hint="Optional" errors={state.fieldErrors?.dueDate}>
-        <DatePicker id="dueDate" name="dueDate" value={dueDate} onChange={setDueDate} locale={locale} />
+        <DatePicker
+          id="dueDate"
+          name="dueDate"
+          value={dueDate}
+          onChange={setDueDate}
+          locale={locale}
+        />
       </Field>
 
       <Field

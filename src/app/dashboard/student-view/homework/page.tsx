@@ -19,7 +19,11 @@ function formatDueDate(value: string | null, locale: string) {
   const date = new Date(`${value}T00:00:00Z`);
   const todayUtcMidnight = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const isOverdue = date.getTime() < todayUtcMidnight.getTime();
-  const label = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
+  const label = date.toLocaleDateString(locale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 

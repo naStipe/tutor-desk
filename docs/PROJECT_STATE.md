@@ -2,10 +2,52 @@
 
 ## Current Milestone
 
-- Milestone: **TD-007 — Duplicate-lesson shortcut**
+- Milestone: **TD-008 — Calendar color-coding by student**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
 - Last updated: 2026-09-28
+
+The day/week lesson calendar (`LessonCalendar`, used by `LessonsCalendarView` and
+`StudentScheduleView`) previously colored every lesson block purely by status (scheduled=cyan,
+completed=brand, cancelled=neutral, no_show=amber), so a busy week with many students looked
+visually identical block-to-block except for the small text label — hard to scan fast. Addresses
+the "Next Recommended Task" recorded at the end of TD-007.
+
+- **Shared color util** (`src/lib/color.ts`, new): `hashToHue(key)` — a deterministic string hash
+  cycling through 4 brand hues (`brand`/`cyan`/`violet`/`warning`, the same 4 the app already uses
+  elsewhere for accents). Extracted from `Avatar`'s pre-existing name-hash logic so both `Avatar`
+  and the calendar share one implementation instead of two copies. `Avatar` (`src/components/
+  Avatar.tsx`) was refactored to call it; its rendered output is unchanged (same hash formula, same
+  4-color palette, same class names).
+- **Calendar blocks now color by student, not status** (`src/features/lessons/components/
+  LessonCalendar.tsx`): each lesson block's fill is `hashToHue(lesson.studentId)` — student id, not
+  name, so a rename can't shift a student's color and two same-named students still get distinct
+  colors. No schema change: `studentId` was already on `CalendarLesson`, no new query or column.
+  Status is layered on top as a secondary cue rather than displaced: a 4px left accent stripe
+  (`border-l-{hue}`), a small status dot before the time label, and (cancelled only) the existing
+  strikethrough/reduced-opacity treatment. A `title` attribute (`"<student> · <status>"`) was added
+  for a hover tooltip. `MonthCalendar` was intentionally left untouched — it only shows per-day
+  counts, never individual lesson blocks, so there's nothing to recolor there. `StudentLessonCalendar`
+  (the student-portal, single-student view) was also left untouched — per-student coloring is
+  meaningless when only one student's lessons are ever shown there; its existing status-only coloring
+  still applies.
+- **Legend updated** (`src/features/lessons/components/CalendarLegend.tsx`): added a "Status:" row
+  reusing the calendar's own status-dot colors/labels (now exported from `LessonCalendar.tsx` as
+  `STATUS_DOT_CLASSES`/`STATUS_LABELS`) so the new secondary status cue is explained where a tutor
+  will actually see it, on both `LessonsCalendarView` (tutor's own schedule) and
+  `StudentScheduleView` (a single student's schedule page, which also renders `LessonCalendar`).
+- Both themes: all new colors are existing `--td-{brand,cyan,violet,warning}` design tokens at `/20`
+  (fill) or `/30` (hover) opacity over the light/dark canvas, plus `text-ink` (the semantic body-text
+  token, itself theme-aware) rather than the previous solid-fill/`on-*`-text pairing — no new raw
+  Tailwind palette classes were introduced. Verified in both themes; see Verification State.
+- Purely visual: no schema change, no new database column, no change to lesson data, creation,
+  editing, payment, or any other lesson behavior — only how existing lesson data is colored on this
+  one calendar component.
+
+## Previous Milestone (TD-007)
+
+- Milestone: **TD-007 — Duplicate-lesson shortcut**
+- Status: Implemented; independent review recommended
 
 A "Duplicate" action was added to a one-off lesson's detail page (`src/app/dashboard/lessons/[id]`)
 that pre-fills the "New lesson" form from the source lesson's student/subject/duration/price and
@@ -138,10 +180,12 @@ were restyled to the new tokens but their logic is untouched.
   hues), `StatCard` (icon-chip stat card, now built on `Card`), and a hand-rolled `icons.tsx` (no
   icon-library dependency — inline SVGs using `currentColor`, theme-agnostic by construction).
   `PageHeader` gained an `avatar` slot, used on student/lesson detail pages.
-- **Status color mapping** now uses the brand hues meaningfully rather than generic
-  red/yellow/green: lesson `scheduled`=cyan, `completed`=brand(green), `cancelled`=neutral,
-  `no_show`=amber; homework `assigned`=neutral, `submitted`=cyan, `reviewed`=violet. The calendar's
-  lesson blocks use the same mapping as solid fills.
+- **Status color mapping** uses the brand hues meaningfully rather than generic red/yellow/green:
+  lesson `scheduled`=cyan, `completed`=brand(green), `cancelled`=neutral, `no_show`=amber; homework
+  `assigned`=neutral, `submitted`=cyan, `reviewed`=violet. `StatusBadge` and homework badges still
+  use this mapping as a solid fill. As of TD-008, the day/week `LessonCalendar` no longer does —
+  see TD-008 above: its blocks are now colored by student, with status as a border-stripe/dot
+  accent using this same set of hues.
 - **Home page** (`/`) was rebuilt from a leftover "Supabase foundation" infra-status card into an
   actual product intro matching the new brand (tagline, sign-in/sign-up CTAs, a 3-up feature strip
   for Students/Lessons/Homework). `e2e/app.spec.ts` was updated to match (the old `#status-badge`
@@ -214,6 +258,21 @@ were restyled to the new tokens but their logic is untouched.
   specifically, click through Duplicate on a real lesson and confirm the modal opens pre-filled
   with the right student/subject/duration/price and a genuinely free slot.
 
+- TD-008 verification (2026-09-28): this worktree was fast-forwarded onto `main` (which already had
+  TD-006/TD-007) before starting, then hit the same known CRLF-on-disk issue on the first
+  `format:check` (147 errors on files this task never touched) — fixed the same documented way,
+  `git rm -r --cached . && git reset --hard HEAD` after committing this task's changes first, so
+  nothing in-progress was lost. After that: `pnpm run format:check` — clean, 181 files. `pnpm run
+  lint` — 0 errors (same 1 pre-existing unrelated warning + 1 info as TD-006/TD-007). `pnpm run
+  typecheck` — clean. `pnpm run test` — 10 files, 46 tests, all passed (no test logic changed —
+  purely a rendering/styling task, matching the styling precedent set by TD-005). `pnpm run build`
+  — passed cleanly, all 38 routes compiled, no `.next` cache corruption hit this run.
+- No manual/hosted-browser walkthrough of the recolored calendar was performed (no interactive
+  Supabase session in this unsupervised environment) — flagged as unverified pending a manual pass:
+  specifically, view a week with several students in both light and dark mode and confirm each
+  student's color is visually distinct enough and the status dot/border stripe stay legible over
+  each of the 4 fill hues at `/20`-`/30` opacity.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -221,6 +280,11 @@ were restyled to the new tokens but their logic is untouched.
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
 - The week calendar view is visually cramped on narrow (≤375px) mobile viewports (pre-existing,
   noted in TD-004; unchanged by this task's recoloring).
+- The student color palette is only 4 hues (`brand`/`cyan`/`violet`/`warning`, same as `Avatar`), so
+  a tutor with 5+ active students will see color repeats on the calendar — two students can share a
+  color. Acceptable for now (still a big scan improvement over one color for everyone), but a wider
+  palette or a persisted per-student color would remove the collision if it becomes a real
+  complaint.
 - Theme preference is per-browser (`localStorage`), not per-account — see Not Implemented.
 - The dashboard's time-based greeting and the lesson calendar's "now" indicator both evaluate in the
   server/browser's own time zone rather than an explicit tutor timezone setting (pre-existing,
@@ -244,12 +308,13 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Calendar color-coding by student or subject: give each student (or subject) a consistent color,
-and use it for their lesson blocks on the day/week/month calendar (`LessonCalendar` /
-`MonthCalendar` in `src/features/lessons/components/`) instead of today's single status-based color
-mapping. Medium effort — no schema change needed if a color is derived deterministically from the
-student/subject id (the same approach `Avatar` already uses for initials-and-color), though a
-persisted user-chosen color would need a new nullable column on `student`/`subject`. Picked over
-"bulk mark lessons as paid" because it's a meaningful daily-glance improvement for tutors who see
-many students on one calendar, and status color (scheduled/completed/cancelled/no-show) is still
-visible via the block's border or a small badge rather than being displaced.**
+**Bulk "mark lessons as paid" on the lessons list (`src/app/dashboard/lessons`,
+`src/features/lessons/`): row checkboxes plus a bulk action that flips `payment_status` to `paid`
+for the selected completed lessons, reusing the `payment=unpaid|paid|all` filter TD-006 already
+added (`paymentFilterSchema`, `listLessonsPage`) so a tutor can filter to `payment=unpaid`, select
+several, and clear them in one action instead of opening each lesson individually. Picked over the
+homework due-date dashboard nudge because it's a smaller, more contained change (one list view, one
+new server action, no new dashboard surface) and directly extends a filter that already exists and
+is already unverified against a live account (TD-006) — a good opportunity to verify both at once.
+Needs the usual IDOR check: the bulk update must still scope to `tutor_id = auth.uid()` (RLS already
+does this for `lesson`, but double-check the bulk-update query shape doesn't bypass or weaken it).**

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { moveLessonAction } from "../actions";
 import { layoutDayIntervals } from "../calendar-layout";
+import { type BrandHue, hashToHue } from "../../../lib/color";
 import {
   formatHourLabel,
   formatMinutesOfDay,
@@ -40,11 +41,37 @@ export type CalendarLesson = {
   status: LessonStatus;
 };
 
-const STATUS_BLOCK_CLASSES: Record<LessonStatus, string> = {
-  scheduled: "bg-cyan hover:bg-cyan-strong text-on-cyan",
-  completed: "bg-brand hover:bg-brand-strong text-on-brand",
-  cancelled: "bg-surface-muted hover:bg-border text-ink-muted line-through",
-  no_show: "bg-warning hover:bg-warning-strong text-on-warning",
+// Lesson blocks are colored by student (a consistent hue per student, so a busy week is scannable
+// at a glance) with lesson status layered on top as a secondary cue — a left accent stripe, a small
+// status dot, and (for cancelled) a strikethrough — rather than status displacing the student color
+// the way a single status-only fill used to. Same hash-based hue-cycling approach as `Avatar`
+// (`src/lib/color.ts`), keyed by student id so a student keeps one color across the whole calendar.
+const STUDENT_BLOCK_FILL_CLASSES: Record<BrandHue, string> = {
+  brand: "bg-brand/20 hover:bg-brand/30 text-ink",
+  cyan: "bg-cyan/20 hover:bg-cyan/30 text-ink",
+  violet: "bg-violet/20 hover:bg-violet/30 text-ink",
+  warning: "bg-warning/20 hover:bg-warning/30 text-ink",
+};
+
+const STATUS_ACCENT_CLASSES: Record<LessonStatus, string> = {
+  scheduled: "border-l-cyan",
+  completed: "border-l-brand",
+  cancelled: "border-l-ink-subtle",
+  no_show: "border-l-warning",
+};
+
+export const STATUS_DOT_CLASSES: Record<LessonStatus, string> = {
+  scheduled: "bg-cyan",
+  completed: "bg-brand",
+  cancelled: "bg-ink-subtle",
+  no_show: "bg-warning",
+};
+
+export const STATUS_LABELS: Record<LessonStatus, string> = {
+  scheduled: "Scheduled",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  no_show: "No-show",
 };
 
 function snap(minutes: number) {
@@ -477,16 +504,18 @@ export function LessonCalendar({
                   const columns = isDragging ? 1 : (layout?.columns ?? 1);
                   const column = isDragging ? 0 : (layout?.column ?? 0);
                   const widthPct = 100 / columns;
+                  const studentHue = hashToHue(lesson.studentId);
 
                   return (
                     <button
                       key={lesson.id}
                       type="button"
+                      title={`${lesson.studentName} · ${STATUS_LABELS[lesson.status]}`}
                       onPointerDown={(event) => handleBlockPointerDown(event, lesson, dayIndex)}
                       onPointerMove={handleBlockPointerMove}
                       onPointerUp={(event) => handleBlockPointerUp(event, lesson)}
                       onPointerCancel={handleBlockPointerCancel}
-                      className={`absolute z-20 touch-pan-y overflow-hidden rounded-md px-2 text-left text-xs shadow-sm transition-colors ${STATUS_BLOCK_CLASSES[lesson.status]} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
+                      className={`absolute z-20 touch-pan-y overflow-hidden rounded-md border-l-4 px-2 text-left text-xs shadow-sm transition-colors ${STUDENT_BLOCK_FILL_CLASSES[studentHue]} ${STATUS_ACCENT_CLASSES[lesson.status]} ${lesson.status === "cancelled" ? "opacity-75 line-through" : ""} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
                       style={{
                         top,
                         height,
@@ -494,8 +523,14 @@ export function LessonCalendar({
                         width: `calc(${widthPct}% - 4px)`,
                       }}
                     >
-                      <span className="block truncate font-medium leading-tight">
-                        {formatMinutesOfDay(startMinutes)} · {lesson.studentName}
+                      <span className="flex items-center gap-1">
+                        <span
+                          aria-hidden="true"
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT_CLASSES[lesson.status]}`}
+                        />
+                        <span className="truncate font-medium leading-tight">
+                          {formatMinutesOfDay(startMinutes)} · {lesson.studentName}
+                        </span>
                       </span>
                       {!compact && (
                         <span className="block truncate text-[11px] opacity-90">

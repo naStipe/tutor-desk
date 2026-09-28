@@ -1,17 +1,11 @@
-const PALETTE = [
-  "bg-brand/15 text-brand",
-  "bg-cyan/15 text-cyan",
-  "bg-violet/15 text-violet",
-  "bg-warning/15 text-warning",
-];
+import { type BrandHue, hashToHue } from "../lib/color";
 
-function hashName(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
+const PALETTE: Record<BrandHue, string> = {
+  brand: "bg-brand/15 text-brand",
+  cyan: "bg-cyan/15 text-cyan",
+  violet: "bg-violet/15 text-violet",
+  warning: "bg-warning/15 text-warning",
+};
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -26,7 +20,7 @@ const SIZE_CLASSES = {
 } as const;
 
 export function Avatar({ name, size = "md" }: { name: string; size?: keyof typeof SIZE_CLASSES }) {
-  const palette = PALETTE[hashName(name) % PALETTE.length];
+  const palette = PALETTE[hashToHue(name)];
   return (
     <span
       aria-hidden="true"

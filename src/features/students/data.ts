@@ -119,10 +119,7 @@ export async function archiveStudent(supabase: SupabaseClient<Database>, id: str
 }
 
 export async function unarchiveStudent(supabase: SupabaseClient<Database>, id: string) {
-  const { error } = await supabase
-    .from("student")
-    .update({ archived_at: null })
-    .eq("id", id);
+  const { error } = await supabase.from("student").update({ archived_at: null }).eq("id", id);
 
   if (error) throw new Error(`Unable to unarchive student: ${error.message}`);
 }

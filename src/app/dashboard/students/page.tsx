@@ -32,7 +32,5 @@ export default async function StudentsPage({
     () => listActiveStudents(client, { q }),
   );
 
-  return (
-    <StudentsListView students={students} highlight={highlight} query={q ?? ""} />
-  );
+  return <StudentsListView students={students} highlight={highlight} query={q ?? ""} />;
 }

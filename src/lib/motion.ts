@@ -1,7 +1,9 @@
 "use client";
 
 export function prefersReducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return (
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 /** Critically damped by default: settle cleanly, no overshoot, for anything that isn't gesture-driven. */

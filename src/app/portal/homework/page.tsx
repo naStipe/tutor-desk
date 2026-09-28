@@ -26,7 +26,11 @@ function formatDueDate(value: string | null, locale: string) {
   const date = new Date(`${value}T00:00:00Z`);
   const todayUtcMidnight = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const isOverdue = date.getTime() < todayUtcMidnight.getTime();
-  const label = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
+  const label = date.toLocaleDateString(locale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
   return isOverdue ? `Overdue · ${label}` : `Due ${label}`;
 }
 
@@ -72,7 +76,9 @@ export default async function PortalHomeworkPage({
   );
   const commentsByHomework = new Map(
     await Promise.all(
-      homework.map(async (item) => [item.id, await listHomeworkComments(supabase, item.id)] as const),
+      homework.map(
+        async (item) => [item.id, await listHomeworkComments(supabase, item.id)] as const,
+      ),
     ),
   );
 
@@ -172,7 +178,10 @@ export default async function PortalHomeworkPage({
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="text-brand hover:text-brand-strong hover:underline">
+            <Link
+              href={pageHref(page - 1)}
+              className="text-brand hover:text-brand-strong hover:underline"
+            >
               &larr; Previous
             </Link>
           ) : (
@@ -182,7 +191,10 @@ export default async function PortalHomeworkPage({
             Page {page} of {totalPages}
           </span>
           {page < totalPages ? (
-            <Link href={pageHref(page + 1)} className="text-brand hover:text-brand-strong hover:underline">
+            <Link
+              href={pageHref(page + 1)}
+              className="text-brand hover:text-brand-strong hover:underline"
+            >
               Next &rarr;
             </Link>
           ) : (

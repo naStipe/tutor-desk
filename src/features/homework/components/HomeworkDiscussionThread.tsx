@@ -89,7 +89,11 @@ export function HomeworkDiscussionThread({
             {state.error}
           </p>
         )}
-        <Field label="Add a message" htmlFor={`body-${homeworkId}`} errors={state.fieldErrors?.body}>
+        <Field
+          label="Add a message"
+          htmlFor={`body-${homeworkId}`}
+          errors={state.fieldErrors?.body}
+        >
           <textarea id={`body-${homeworkId}`} name="body" rows={2} className={inputClassName} />
         </Field>
         <SubmitButton />

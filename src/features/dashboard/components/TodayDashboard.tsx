@@ -180,7 +180,9 @@ function buildLinePath(values: number[], width: number, height: number, topPad =
     x: index * step,
     y: topPad + innerHeight - (value / max) * innerHeight,
   }));
-  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const linePath = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+    .join(" ");
   const last = points[points.length - 1];
   const areaPath = `${linePath} L${(last?.x ?? 0).toFixed(1)} ${height} L0 ${height} Z`;
   return { linePath, areaPath, points, last };
@@ -204,7 +206,10 @@ const HoursTrendCard = memo(function HoursTrendCard({
           <Eyebrow>Teaching hours · last 8 weeks</Eyebrow>
           <div className="mt-2.5 flex items-baseline gap-2.5">
             <span className="text-[30px] font-bold tracking-[-0.03em] text-[var(--td2-text-primary)]">
-              {analytics.monthHours < 10 ? analytics.monthHours.toFixed(1) : Math.round(analytics.monthHours)}h
+              {analytics.monthHours < 10
+                ? analytics.monthHours.toFixed(1)
+                : Math.round(analytics.monthHours)}
+              h
             </span>
             {analytics.monthVsPrevPct !== null && (
               <span className="text-[12px] font-medium text-[var(--td2-accent-text-strong)]">
@@ -236,11 +241,39 @@ const HoursTrendCard = memo(function HoursTrendCard({
               <stop offset="100%" stopColor="var(--td2-accent)" stopOpacity="0" />
             </linearGradient>
           </defs>
-          <line x1="0" y1={height * 0.23} x2={width} y2={height * 0.23} stroke="currentColor" strokeOpacity="0.08" />
-          <line x1="0" y1={height * 0.48} x2={width} y2={height * 0.48} stroke="currentColor" strokeOpacity="0.08" />
-          <line x1="0" y1={height * 0.73} x2={width} y2={height * 0.73} stroke="currentColor" strokeOpacity="0.08" />
+          <line
+            x1="0"
+            y1={height * 0.23}
+            x2={width}
+            y2={height * 0.23}
+            stroke="currentColor"
+            strokeOpacity="0.08"
+          />
+          <line
+            x1="0"
+            y1={height * 0.48}
+            x2={width}
+            y2={height * 0.48}
+            stroke="currentColor"
+            strokeOpacity="0.08"
+          />
+          <line
+            x1="0"
+            y1={height * 0.73}
+            x2={width}
+            y2={height * 0.73}
+            stroke="currentColor"
+            strokeOpacity="0.08"
+          />
           <path d={areaPath} fill="url(#hoursTrendFill)" />
-          <path d={linePath} fill="none" stroke="var(--td2-accent)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="var(--td2-accent)"
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
           {last && (
             <>
               <circle cx={last.x} cy={last.y} r="4.5" fill="var(--td2-accent)" />
@@ -273,7 +306,9 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
     <Card className="flex flex-col" index={1}>
       <Eyebrow>Subject split · this month</Eyebrow>
       {items.length === 0 ? (
-        <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">No lessons logged this month yet.</p>
+        <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">
+          No lessons logged this month yet.
+        </p>
       ) : (
         <>
           <div className="mt-4 flex items-center gap-5">
@@ -284,7 +319,15 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
                 role="img"
                 aria-label="Subject split for this month"
               >
-                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeOpacity="0.08" strokeWidth="12" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeOpacity="0.08"
+                  strokeWidth="12"
+                />
                 {items.map((item, index) => {
                   const dash = (item.percent / 100) * DONUT_CIRCUMFERENCE;
                   const offset = -((cumulative / 100) * DONUT_CIRCUMFERENCE);
@@ -319,7 +362,10 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
                 <div key={item.name} className="flex items-center gap-2.5">
                   <span
                     className="h-2 w-2 shrink-0 rounded-[2px]"
-                    style={{ background: "var(--td2-accent)", opacity: DONUT_OPACITIES[index] ?? 0.16 }}
+                    style={{
+                      background: "var(--td2-accent)",
+                      opacity: DONUT_OPACITIES[index] ?? 0.16,
+                    }}
                   />
                   <span className="flex-1 truncate text-[12.5px] font-medium text-[var(--td2-text-primary)]">
                     {item.name}
@@ -341,17 +387,33 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
   );
 });
 
-function SchedulePill({ label }: { label: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY" }) {
+function SchedulePill({
+  label,
+}: {
+  label: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY";
+}) {
   const base = "shrink-0 rounded-[7px] px-[9px] py-[4px] font-mono text-[9px] tracking-[0.08em]";
   if (label === "UP NEXT" || label === "IN PROGRESS")
-    return <span className={`${base} font-medium bg-[var(--td2-primary-bg)] text-[var(--td2-primary-fg)]`}>{label}</span>;
+    return (
+      <span
+        className={`${base} font-medium bg-[var(--td2-primary-bg)] text-[var(--td2-primary-fg)]`}
+      >
+        {label}
+      </span>
+    );
   if (label === "NO PLAN")
     return (
-      <span className={`${base} bg-[var(--td2-accent-surface)] text-[var(--td2-accent-text)]`}>NO PLAN</span>
+      <span className={`${base} bg-[var(--td2-accent-surface)] text-[var(--td2-accent-text)]`}>
+        NO PLAN
+      </span>
     );
   if (label === "DONE")
-    return <span className={`${base} bg-[var(--td2-bg-inset)] text-[var(--td2-text-faint)]`}>DONE</span>;
-  return <span className={`${base} bg-[var(--td2-bg-inset)] text-[var(--td2-text-muted)]`}>READY</span>;
+    return (
+      <span className={`${base} bg-[var(--td2-bg-inset)] text-[var(--td2-text-faint)]`}>DONE</span>
+    );
+  return (
+    <span className={`${base} bg-[var(--td2-bg-inset)] text-[var(--td2-text-muted)]`}>READY</span>
+  );
 }
 
 function ScheduleAheadCard({
@@ -388,7 +450,8 @@ function ScheduleAheadCard({
   ].slice(0, 5);
 
   const totalMinutes = items.reduce(
-    (sum, item) => sum + (new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / 60000,
+    (sum, item) =>
+      sum + (new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / 60000,
     0,
   );
 
@@ -411,7 +474,9 @@ function ScheduleAheadCard({
             const inProgress = index === 0 && now >= start && now < new Date(item.endTime);
             const done = item.status === "completed" || item.status === "no_show";
             const hasPlan = item.notes && item.notes.trim() !== "";
-            let pill: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY" = hasPlan ? "READY" : "NO PLAN";
+            let pill: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY" = hasPlan
+              ? "READY"
+              : "NO PLAN";
             if (done) pill = "DONE";
             else if (index === 0) pill = inProgress ? "IN PROGRESS" : "UP NEXT";
 
@@ -451,7 +516,14 @@ function MiniTrendLine({ values }: { values: number[] }) {
       role="img"
       aria-label="Hours per week trend"
     >
-      <path d={linePath} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        d={linePath}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -471,13 +543,16 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
   const shown = students.slice(0, 5);
   return (
     <Card className="flex flex-col" index={1}>
-      <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">Students</h2>
+      <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
+        Students
+      </h2>
       {shown.length === 0 ? (
         <p className="mt-6 flex-1 text-sm text-[var(--td2-text-muted)]">No active students yet.</p>
       ) : (
         <div className="mt-3.5">
           {shown.map((student) => {
-            const needsAttention = student.status === "overdue" || student.status === "plan-missing";
+            const needsAttention =
+              student.status === "overdue" || student.status === "plan-missing";
             return (
               <Link
                 key={student.id}
@@ -490,14 +565,18 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
                   </span>
                   <span
                     className={`block text-[11px] ${
-                      needsAttention ? "text-[var(--td2-accent-text)]" : "text-[var(--td2-text-muted)]"
+                      needsAttention
+                        ? "text-[var(--td2-accent-text)]"
+                        : "text-[var(--td2-text-muted)]"
                     }`}
                   >
                     {STATUS_LABEL[student.status]}
                   </span>
                 </span>
                 <span
-                  className={needsAttention ? "text-[var(--td2-accent)]" : "text-[var(--td2-text-faint)]"}
+                  className={
+                    needsAttention ? "text-[var(--td2-accent)]" : "text-[var(--td2-text-faint)]"
+                  }
                 >
                   <MiniTrendLine values={student.sparkline} />
                 </span>
@@ -583,10 +662,22 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
         <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
           Less
         </span>
-        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-bg-inset)" }} />
-        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-accent)", opacity: 0.28 }} />
-        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-accent)", opacity: 0.55 }} />
-        <div className="h-[11px] w-[11px] rounded-[3px]" style={{ background: "var(--td2-accent)" }} />
+        <div
+          className="h-[11px] w-[11px] rounded-[3px]"
+          style={{ background: "var(--td2-bg-inset)" }}
+        />
+        <div
+          className="h-[11px] w-[11px] rounded-[3px]"
+          style={{ background: "var(--td2-accent)", opacity: 0.28 }}
+        />
+        <div
+          className="h-[11px] w-[11px] rounded-[3px]"
+          style={{ background: "var(--td2-accent)", opacity: 0.55 }}
+        />
+        <div
+          className="h-[11px] w-[11px] rounded-[3px]"
+          style={{ background: "var(--td2-accent)" }}
+        />
         <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
           More
         </span>

@@ -21,7 +21,10 @@ function weekIndexFrom(trendStart: Date, startTime: Date) {
 }
 
 function dayIndexFrom(weekStart: Date, startTime: Date) {
-  return Math.min(6, Math.max(0, Math.floor((startTime.getTime() - weekStart.getTime()) / 86400000)));
+  return Math.min(
+    6,
+    Math.max(0, Math.floor((startTime.getTime() - weekStart.getTime()) / 86400000)),
+  );
 }
 
 export async function getTodayDashboardData(supabase: SupabaseClient<Database>) {
@@ -95,14 +98,16 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     throw new Error(`Unable to load unbilled lessons: ${unbilledCountResult.error.message}`);
   if (oldestUnbilledResult.error)
     throw new Error(`Unable to load unbilled lessons: ${oldestUnbilledResult.error.message}`);
-  if (trendResult.error) throw new Error(`Unable to load lesson trend: ${trendResult.error.message}`);
+  if (trendResult.error)
+    throw new Error(`Unable to load lesson trend: ${trendResult.error.message}`);
   if (prevMonthResult.error)
     throw new Error(`Unable to load lesson trend: ${prevMonthResult.error.message}`);
   if (overdueHomeworkResult.error)
     throw new Error(`Unable to load overdue homework: ${overdueHomeworkResult.error.message}`);
   if (upcomingResult.error)
     throw new Error(`Unable to load upcoming lessons: ${upcomingResult.error.message}`);
-  if (subjectsResult.error) throw new Error(`Unable to load subjects: ${subjectsResult.error.message}`);
+  if (subjectsResult.error)
+    throw new Error(`Unable to load subjects: ${subjectsResult.error.message}`);
 
   const todaysLessons = weekLessons.filter((lesson) => {
     const start = new Date(lesson.start_time);
@@ -131,7 +136,9 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
   // Weekly totals (for the trend chart + heatmap) and the same broken down per day and per
   // student (for the per-day heatmap cells and each student's mini sparkline).
   const weekMinutes = new Array<number>(TREND_WEEKS).fill(0);
-  const heatmapMinutes: number[][] = Array.from({ length: TREND_WEEKS }, () => [0, 0, 0, 0, 0, 0, 0]);
+  const heatmapMinutes: number[][] = Array.from({ length: TREND_WEEKS }, () => [
+    0, 0, 0, 0, 0, 0, 0,
+  ]);
   const studentWeekMinutes = new Map<string, number[]>();
   const subjectMonthMinutes = new Map<string, number>();
   const trendRows = (trendResult.data ?? []) as TrendLessonRow[];
@@ -170,7 +177,9 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
   }, 0);
   const monthHours = monthMinutes / 60;
   const monthVsPrevPct =
-    prevMonthMinutes > 0 ? Math.round(((monthMinutes - prevMonthMinutes) / prevMonthMinutes) * 100) : null;
+    prevMonthMinutes > 0
+      ? Math.round(((monthMinutes - prevMonthMinutes) / prevMonthMinutes) * 100)
+      : null;
 
   const subjectNameById = new Map((subjectsResult.data ?? []).map((s) => [s.id, s.name]));
   const subjectSplit = Array.from(subjectMonthMinutes.entries())
@@ -204,7 +213,8 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
 
     let status: "overdue" | "plan-missing" | "no-lesson" | "caught-up" = "caught-up";
     if (overdueByStudent.get(student.id)) status = "overdue";
-    else if (nextLesson && (!nextLesson.notes || nextLesson.notes.trim() === "")) status = "plan-missing";
+    else if (nextLesson && (!nextLesson.notes || nextLesson.notes.trim() === ""))
+      status = "plan-missing";
     else if (!nextLesson) status = "no-lesson";
 
     return { id: student.id, name: student.name, sparkline, totalHours, status };

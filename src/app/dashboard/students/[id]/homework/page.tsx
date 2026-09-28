@@ -21,11 +21,7 @@ function formatDueDate(value: string | null, locale: string) {
   });
 }
 
-export default async function StudentHomeworkPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function StudentHomeworkPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const student = await getStudent(supabase, id);

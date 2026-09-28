@@ -13,11 +13,7 @@ import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function StudentOverviewPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function StudentOverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const student = await getStudent(supabase, id);

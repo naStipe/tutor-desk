@@ -146,10 +146,7 @@ export type PortalRole = "learner" | "guardian" | "payer";
 export async function listPortalMembers(supabase: SupabaseClient<Database>, studentId: string) {
   const [{ data: members, error: membersError }, { data: invites, error: invitesError }] =
     await Promise.all([
-      supabase
-        .from("portal_membership")
-        .select("id, role, created_at")
-        .eq("student_id", studentId),
+      supabase.from("portal_membership").select("id, role, created_at").eq("student_id", studentId),
       supabase
         .from("portal_invite")
         .select("id, role, email, expires_at")

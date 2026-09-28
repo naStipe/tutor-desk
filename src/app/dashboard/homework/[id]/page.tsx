@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { Avatar } from "../../../../components/Avatar";
 import { Card } from "../../../../components/Card";
 import { PageHeader } from "../../../../components/PageHeader";
-import { addHomeworkCommentAction, updateHomeworkAction } from "../../../../features/homework/actions";
+import {
+  addHomeworkCommentAction,
+  updateHomeworkAction,
+} from "../../../../features/homework/actions";
 import { AttachmentsCard } from "../../../../features/homework/components/AttachmentsCard";
 import { FeedbackForm } from "../../../../features/homework/components/FeedbackForm";
 import { HomeworkDiscussionThread } from "../../../../features/homework/components/HomeworkDiscussionThread";

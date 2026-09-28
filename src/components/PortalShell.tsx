@@ -26,7 +26,8 @@ export function PortalShell({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const selected = students.find((student) => student.id === searchParams.get("student")) ?? students[0];
+  const selected =
+    students.find((student) => student.id === searchParams.get("student")) ?? students[0];
   const showSwitcher = students.length > 1;
   const query = showSwitcher && selected ? `?student=${selected.id}` : "";
 

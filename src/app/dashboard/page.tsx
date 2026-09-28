@@ -69,11 +69,11 @@ export default async function DashboardPage() {
     studentName: lesson.student?.name ?? "Unknown student",
   }));
 
-  const homework = homeworkAttention.map(({ homework: item, overdue }) => ({
+  const homework = homeworkAttention.map(({ homework: item, reason }) => ({
     id: item.id,
     title: item.title,
     studentName: item.student?.name ?? "Unknown student",
-    overdue,
+    reason,
     submittedAt: item.submitted_at,
     dueDate: item.due_date,
   }));

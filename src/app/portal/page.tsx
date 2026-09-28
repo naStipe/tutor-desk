@@ -3,8 +3,13 @@ import { redirect } from "next/navigation";
 import { Avatar } from "../../components/Avatar";
 import { Card } from "../../components/Card";
 import { PageHeader } from "../../components/PageHeader";
-import { listHomeworkDueInRange, listHomeworkRecentFeedback } from "../../features/homework/data";
+import {
+  listHomeworkDueInRange,
+  listHomeworkRecentFeedback,
+  listPortalHomeworkDueSoon,
+} from "../../features/homework/data";
 import { addDays } from "../../features/lessons/date-utils";
+import { HomeworkDueBanner } from "../../features/portal/components/HomeworkDueBanner";
 import { NextLessonCard } from "../../features/portal/components/NextLessonCard";
 import { getPortalUnpaidSummary, listPortalLessons } from "../../features/portal/data";
 import { requirePortalStudent } from "../../features/portal/resolve";
@@ -34,6 +39,7 @@ export default async function PortalHomePage({
   const [
     upcomingLessons,
     homeworkDue,
+    homeworkNeedingAttention,
     recentFeedback,
     unpaidSummary,
     tutorProfile,
@@ -48,6 +54,7 @@ export default async function PortalHomePage({
       { start: now.toISOString(), end: homeworkDueEnd.toISOString() },
       { studentId: student.id },
     ),
+    listPortalHomeworkDueSoon(supabase, student.id),
     listHomeworkRecentFeedback(supabase, student.id, 3),
     getPortalUnpaidSummary(supabase, student.id),
     getTutorProfile(supabase, student.tutor_id),
@@ -65,6 +72,16 @@ export default async function PortalHomePage({
       <PageHeader
         title={`Hi, ${student.name.split(" ")[0]}`}
         description={`Timezone: ${timeZone}`}
+      />
+
+      <HomeworkDueBanner
+        now={now}
+        items={homeworkNeedingAttention.map(({ homework: item, reason }) => ({
+          id: item.id,
+          title: item.title,
+          reason,
+          dueDate: item.due_date,
+        }))}
       />
 
       {nextLesson ? (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { memo, useEffect, useRef, useState } from "react";
 import {
   formatDuration,
+  formatDueSoon,
   formatEyebrowDate,
   formatOverdue,
   formatRelativePast,
@@ -28,7 +29,7 @@ export type HomeworkAttentionItem = {
   id: string;
   title: string;
   studentName: string;
-  overdue: boolean;
+  reason: "submitted" | "overdue" | "due-soon";
   submittedAt: string | null;
   dueDate: string | null;
 };
@@ -686,6 +687,12 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
   );
 });
 
+const ATTENTION_ACTION_LABEL: Record<HomeworkAttentionItem["reason"], string> = {
+  submitted: "Review",
+  overdue: "Nudge",
+  "due-soon": "Remind",
+};
+
 function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionItem[] }) {
   if (items.length === 0) return null;
   return (
@@ -699,7 +706,7 @@ function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionI
         </span>
       </div>
       <div>
-        {items.map(({ id, title, studentName, overdue, submittedAt, dueDate }) => (
+        {items.map(({ id, title, studentName, reason, submittedAt, dueDate }) => (
           <Link
             key={id}
             href={`/dashboard/homework/${id}`}
@@ -709,16 +716,18 @@ function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionI
               <p className="truncate text-sm font-medium text-[var(--td2-text-primary)]">{title}</p>
               <p
                 suppressHydrationWarning
-                className={`mt-1 font-mono text-[11px] ${overdue ? "text-[var(--td2-accent-text)]" : "text-[var(--td2-text-muted)]"}`}
+                className={`mt-1 font-mono text-[11px] ${reason === "submitted" ? "text-[var(--td2-text-muted)]" : "text-[var(--td2-accent-text)]"}`}
               >
                 {studentName} ·{" "}
-                {overdue
-                  ? formatOverdue(now, dueDate ?? now.toISOString())
-                  : formatRelativePast(now, submittedAt ?? now.toISOString())}
+                {reason === "submitted"
+                  ? formatRelativePast(now, submittedAt ?? now.toISOString())
+                  : reason === "overdue"
+                    ? formatOverdue(now, dueDate ?? now.toISOString())
+                    : formatDueSoon(now, dueDate ?? now.toISOString())}
               </p>
             </div>
             <span className="shrink-0 border-b border-[var(--td2-accent-underline)] pb-0.5 text-[13px] text-[var(--td2-accent-text)]">
-              {overdue ? "Nudge" : "Review"}
+              {ATTENTION_ACTION_LABEL[reason]}
             </span>
           </Link>
         ))}

@@ -1,3 +1,5 @@
+export { formatDueSoon, formatOverdue } from "../../lib/formatting";
+
 const DEFAULT_LOCALE = "en-US";
 
 /** No per-tutor setting for this yet; a fixed target keeps the goal progress bar meaningful. */
@@ -61,11 +63,4 @@ export function formatRelativePast(now: Date, iso: string) {
   if (isSameCalendarDay(yesterday, then)) return "yesterday";
   const days = Math.floor(hours / 24) + 1;
   return `${days} days ago`;
-}
-
-/** "1 day overdue", "3 days overdue" — for a due date already in the past. */
-export function formatOverdue(now: Date, iso: string) {
-  const due = new Date(iso);
-  const days = Math.max(1, Math.ceil((now.getTime() - due.getTime()) / 86400000));
-  return days === 1 ? "1 day overdue" : `${days} days overdue`;
 }

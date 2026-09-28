@@ -2,10 +2,55 @@
 
 ## Current Milestone
 
-- Milestone: **TD-009 — Bulk mark lessons paid/unpaid from the lessons list**
+- Milestone: **TD-010 — In-app homework due-date/overdue nudges (dashboard + portal)**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
 - Last updated: 2026-09-28
+
+No email or push infrastructure exists anywhere in `src/` (confirmed: no mailer dependency), so this
+adds an in-app-only nudge for homework approaching or past its due date, on both sides of the app.
+Addresses the "Next Recommended Task" recorded at the end of TD-009. No schema change — reuses
+`homework`'s existing `due_date` column and `assigned`/`submitted`/`reviewed` status enum.
+
+- **Shared formatters** (`src/lib/formatting.ts`): `formatOverdue`/`formatDueSoon` moved here from
+  `src/features/dashboard/format.ts` (which now just re-exports them) so both the tutor dashboard and
+  the student portal — two different features — format the same due-date language ("2 days overdue",
+  "Due tomorrow") without duplicating the logic. `formatOverdue` already existed; `formatDueSoon` is
+  new, a 3-day "due soon" window (`DUE_SOON_WINDOW_DAYS` in `src/features/homework/data.ts`).
+- **Tutor dashboard** (`src/features/dashboard/components/TodayDashboard.tsx`): the existing "Needs
+  review" card (`NeedsReviewStrip`) is extended rather than replaced. `HomeworkAttentionItem.overdue:
+  boolean` became `reason: "submitted" | "overdue" | "due-soon"`, and `listHomeworkNeedingAttention`
+  (`src/features/homework/data.ts`) now queries a third bucket — `status = "assigned"` and `due_date`
+  within the next 3 days but not yet overdue — alongside its existing submitted/overdue buckets. Each
+  row still links to `/dashboard/homework/[id]`; the action label is now "Review" (submitted),
+  "Nudge" (overdue), or "Remind" (due soon). `countHomeworkNeedingAttention` (sidebar badge) was left
+  untouched on purpose — it still counts only submitted+overdue, so the badge's existing meaning
+  ("needs your action now") doesn't get diluted by upcoming-but-not-yet-due items.
+- **Student portal** (`src/app/portal/page.tsx`): a new `HomeworkDueBanner`
+  (`src/features/portal/components/HomeworkDueBanner.tsx`) renders above `NextLessonCard` on the
+  portal home page whenever the signed-in student has their own `assigned` homework overdue or due
+  within 3 days. It's additive — the existing "Homework due soon" `Card` (14-day lookahead, all
+  statuses, no overdue bucket) is untouched. New data function `listPortalHomeworkDueSoon`
+  (`src/features/homework/data.ts`) mirrors the dashboard's overdue/due-soon query shape but scoped to
+  one `studentId`. Both link through to `/portal/homework`, the student's actual homework list.
+- **Ownership**: tutor-side queries are unfiltered by tutor id in code (same as every other dashboard
+  query) because `homework`'s RLS select policy already scopes every row to `auth.uid() = tutor_id`
+  (or a portal member). Portal-side `listPortalHomeworkDueSoon` is called with `student.id` from
+  `requirePortalStudent(supabase, studentId)` — the exact same "which student is this portal session
+  for" mechanism `listHomeworkDueInRange`/`listPortalLessons` already use on this same page — so a
+  student can never pass another student's id and see their homework: the explicit `.eq("student_id",
+  studentId)` filter and `homework`'s RLS `portal_membership` check both independently enforce it
+  (read directly from `supabase/migrations/20260917035000_merge_duplicate_select_policies.sql`, not
+  assumed).
+- Purely additive UI + data-query work: no schema change, no new due-date logic beyond comparing the
+  existing `due_date` column to `new Date()` (same server/browser-local "now" the dashboard's
+  greeting and calendar already use — see Known Issues; not fixed here, per the ticket's explicit
+  scope). Lesson and payment features are untouched.
+
+## Previous Milestone (TD-009)
+
+- Milestone: **TD-009 — Bulk mark lessons paid/unpaid from the lessons list**
+- Status: Implemented; independent review recommended
 
 A tutor who gets paid for a month of lessons in one bank transfer previously had to open each
 lesson individually and mark it paid (`setLessonPaymentAction`, one lesson at a time). This
@@ -346,6 +391,35 @@ were restyled to the new tokens but their logic is untouched.
   click "Mark as paid", confirm the outcome message's count, the rows update/drop out of the
   `unpaid` filter, and the reverse with "Mark as unpaid" under `payment=paid`.
 
+- TD-010 verification (2026-09-28): this worktree's branch was already on `main` (had TD-009), so no
+  fast-forward was needed. Hit the same known CRLF-on-disk issue on the first `format:check` (145
+  errors on files this task never touched); fixed the same documented way — committed this task's
+  changes first as a safety checkpoint, `git rm -r --cached . && git reset --hard HEAD`, then ran
+  `biome format --write .` (fixed 3 real formatting issues in the new/changed files themselves, not
+  just CRLF) and squashed the checkpoint plus that formatting fix into one clean commit (`git reset
+  --soft`, local history on this not-yet-shared worktree branch). After that: `pnpm run format:check`
+  — clean, 182 files. `pnpm run lint` — 0 errors (same 1 pre-existing unrelated warning + 1 info as
+  TD-006–TD-009, both in files this task didn't touch). `pnpm run typecheck` — clean. `pnpm run test`
+  — 10 files, 46 tests, all passed (no test logic changed; no new tests added — the new due-date
+  bucketing is a straightforward range-query extension of the existing overdue-query pattern, and
+  `formatDueSoon`/`formatOverdue` are simple enough that manual verification was judged sufficient,
+  matching the no-new-tests precedent set by TD-009). `pnpm run build` — passed cleanly after deleting
+  `.next` first, all 39 routes compiled, no cache corruption hit this run. `pnpm audit` not re-run —
+  no new dependency was added.
+- IDOR/ownership for the portal banner verified by reading
+  `supabase/migrations/20260917035000_merge_duplicate_select_policies.sql` directly (the `homework`
+  select RLS policy) rather than assumed, and by confirming `listPortalHomeworkDueSoon` is called with
+  the same `student.id` from `requirePortalStudent` that every other query on `/portal` already uses
+  — not verified by an actual live attempt to pass another student's id (would need a second hosted
+  portal account and an interactive Supabase session, unavailable in this unsupervised environment).
+- No manual/hosted-browser walkthrough of either the dashboard's extended "Needs review" card or the
+  new portal banner was performed (no interactive Supabase session in this unsupervised environment)
+  — flagged as unverified pending a manual pass: specifically, seed one overdue-assigned, one
+  due-within-3-days-assigned, and one submitted homework row for a real student, confirm the
+  dashboard card shows all three with the right label/action text, then sign in as that student's
+  portal account and confirm the banner shows only their own due-soon/overdue items (not another
+  student's) and both link through correctly.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -385,12 +459,23 @@ were restyled to the new tokens but their logic is untouched.
   lessons matching a filter has to page through and bulk-act per page rather than clearing all
   matching lessons in one click. Acceptable for now (still a large reduction over one-at-a-time),
   worth revisiting if pagination-spanning bulk selection becomes a real complaint.
+- No email or push notification channel exists anywhere in the app (TD-010 confirmed this again —
+  still no mailer dependency in `src/`). The dashboard/portal due-date nudges added in TD-010 only
+  surface while the tutor or student is actually looking at the app; nothing proactively reaches
+  them outside it. Building real notifications would need a mailer/push provider decision first.
+- TD-010's dashboard and portal due-date nudges were not manually verified against a live hosted
+  account — see Verification State for the specific manual pass recommended before relying on this
+  fully.
 
 ## Next Recommended Task
 
-**In-app homework due-date/overdue nudges on the dashboard: a banner or section on the tutor
-dashboard (`src/features/dashboard/`) surfacing homework that's due soon or already overdue and
-still `assigned`/not `reviewed`, since no email infrastructure exists yet and an in-app-only nudge
-is the practical next step. Reuses the existing homework due-date field and status enum
-(`src/features/homework/`) — no schema change expected, just a new dashboard query and a UI section
-following `TodayDashboard`'s existing card/stat patterns.**
+**Per-student running balance / total owed, on the student detail or billing page
+(`src/app/dashboard/students/[id]/billing`, `src/features/students/`): a summed dollar amount of a
+student's unpaid completed lessons, in their own currency. TD-006 already built the unpaid-lessons
+filter and TD-009 built bulk-pay, but there's still nowhere in the tutor-facing app that shows "this
+student owes $X" as a single number — a tutor currently has to filter the lessons list and add up
+line items by hand to know what to invoice. The portal side already has this (`getPortalUnpaidSummary`
+/ `portal_unpaid_summary` RPC, shown on `/portal` as "Amount due") — the tutor-facing billing page
+likely wants the same aggregate-in-the-database approach (or a thin tutor-side RPC/query reusing the
+same shape) rather than summing rows in JS, mirroring the pattern that already works on the portal
+side. No schema change expected.**

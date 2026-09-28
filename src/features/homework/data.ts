@@ -123,6 +123,9 @@ export async function countHomeworkToReview(supabase: SupabaseClient<Database>) 
   return count ?? 0;
 }
 
+/** How many days ahead counts as "due soon" for the due-date nudges below. */
+const DUE_SOON_WINDOW_DAYS = 3;
+
 /** Submitted work waiting for feedback, plus assigned work already past its due date. */
 export async function countHomeworkNeedingAttention(supabase: SupabaseClient<Database>) {
   const nowIso = new Date().toISOString();
@@ -144,10 +147,14 @@ export async function countHomeworkNeedingAttention(supabase: SupabaseClient<Dat
   return (submitted.count ?? 0) + (overdue.count ?? 0);
 }
 
+export type HomeworkAttentionReason = "submitted" | "overdue" | "due-soon";
+
 /** The rows that power the Today dashboard's "Needs review" card. */
 export async function listHomeworkNeedingAttention(supabase: SupabaseClient<Database>, limit = 5) {
-  const nowIso = new Date().toISOString();
-  const [submitted, overdue] = await Promise.all([
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const dueSoonEndIso = new Date(now.getTime() + DUE_SOON_WINDOW_DAYS * 86400000).toISOString();
+  const [submitted, overdue, dueSoon] = await Promise.all([
     supabase
       .from("homework")
       .select(HOMEWORK_COLUMNS)
@@ -161,20 +168,86 @@ export async function listHomeworkNeedingAttention(supabase: SupabaseClient<Data
       .lt("due_date", nowIso)
       .order("due_date", { ascending: true })
       .limit(limit),
+    supabase
+      .from("homework")
+      .select(HOMEWORK_COLUMNS)
+      .eq("status", "assigned")
+      .gte("due_date", nowIso)
+      .lt("due_date", dueSoonEndIso)
+      .order("due_date", { ascending: true })
+      .limit(limit),
   ]);
 
   if (submitted.error)
     throw new Error(`Unable to load homework to review: ${submitted.error.message}`);
   if (overdue.error) throw new Error(`Unable to load overdue homework: ${overdue.error.message}`);
+  if (dueSoon.error) throw new Error(`Unable to load homework due soon: ${dueSoon.error.message}`);
 
-  const rows = [
+  const rows: { homework: HomeworkWithStudent; reason: HomeworkAttentionReason }[] = [
     ...(submitted.data as unknown as HomeworkWithStudent[]).map((row) => ({
       homework: row,
-      overdue: false as const,
+      reason: "submitted" as const,
     })),
     ...(overdue.data as unknown as HomeworkWithStudent[]).map((row) => ({
       homework: row,
-      overdue: true as const,
+      reason: "overdue" as const,
+    })),
+    ...(dueSoon.data as unknown as HomeworkWithStudent[]).map((row) => ({
+      homework: row,
+      reason: "due-soon" as const,
+    })),
+  ];
+  return rows.slice(0, limit);
+}
+
+/**
+ * A single student's own assigned homework due soon or already overdue — powers the portal's
+ * due-date nudge banner. Scoped to `studentId` (the portal session's own student, established by
+ * `requirePortalStudent`) on top of `homework`'s existing RLS select policy, which independently
+ * only allows a portal member to see rows for a student they're actually linked to
+ * (`portal_membership`) — the same double-scoping pattern `listHomeworkDueInRange` already uses
+ * for the portal's "Homework due soon" list.
+ */
+export async function listPortalHomeworkDueSoon(
+  supabase: SupabaseClient<Database>,
+  studentId: string,
+  limit = 5,
+) {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const dueSoonEndIso = new Date(now.getTime() + DUE_SOON_WINDOW_DAYS * 86400000).toISOString();
+
+  const [overdue, dueSoon] = await Promise.all([
+    supabase
+      .from("homework")
+      .select(HOMEWORK_COLUMNS)
+      .eq("student_id", studentId)
+      .eq("status", "assigned")
+      .lt("due_date", nowIso)
+      .order("due_date", { ascending: true })
+      .limit(limit),
+    supabase
+      .from("homework")
+      .select(HOMEWORK_COLUMNS)
+      .eq("student_id", studentId)
+      .eq("status", "assigned")
+      .gte("due_date", nowIso)
+      .lt("due_date", dueSoonEndIso)
+      .order("due_date", { ascending: true })
+      .limit(limit),
+  ]);
+
+  if (overdue.error) throw new Error(`Unable to load overdue homework: ${overdue.error.message}`);
+  if (dueSoon.error) throw new Error(`Unable to load homework due soon: ${dueSoon.error.message}`);
+
+  const rows: { homework: HomeworkWithStudent; reason: "overdue" | "due-soon" }[] = [
+    ...(overdue.data as unknown as HomeworkWithStudent[]).map((row) => ({
+      homework: row,
+      reason: "overdue" as const,
+    })),
+    ...(dueSoon.data as unknown as HomeworkWithStudent[]).map((row) => ({
+      homework: row,
+      reason: "due-soon" as const,
     })),
   ];
   return rows.slice(0, limit);

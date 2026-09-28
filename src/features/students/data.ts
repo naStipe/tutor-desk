@@ -7,12 +7,24 @@ export type Student = Database["public"]["Tables"]["student"]["Row"];
 const STUDENT_COLUMNS =
   "id, tutor_id, name, email, phone, telegram, guardian_name, guardian_email, guardian_phone, guardian_telegram, notes, default_hourly_rate, default_currency, archived_at, created_at, updated_at";
 
-export async function listActiveStudents(supabase: SupabaseClient<Database>) {
-  const { data, error } = await supabase
+/** Escapes ilike wildcards (`%`, `_`) so search text matches literally, not as a pattern. */
+function escapeIlikeValue(value: string) {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+export async function listActiveStudents(
+  supabase: SupabaseClient<Database>,
+  filters?: { q?: string },
+) {
+  let query = supabase
     .from("student")
     .select(STUDENT_COLUMNS)
     .is("archived_at", null)
     .order("name", { ascending: true });
+
+  if (filters?.q) query = query.ilike("name", `%${escapeIlikeValue(filters.q)}%`);
+
+  const { data, error } = await query;
 
   if (error) throw new Error(`Unable to load students: ${error.message}`);
   return data;

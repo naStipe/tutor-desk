@@ -66,6 +66,19 @@ were restyled to the new tokens but their logic is untouched.
   red/yellow/green: lesson `scheduled`=cyan, `completed`=brand(green), `cancelled`=neutral,
   `no_show`=amber; homework `assigned`=neutral, `submitted`=cyan, `reviewed`=violet. The calendar's
   lesson blocks use the same mapping as solid fills.
+- **Active students list search** (`/dashboard/students`): a debounced text box filters the active
+  student list by name, case-insensitive, partial match, via a `?q=` query param — following the
+  same server-side query-param filter convention already used by the lessons (`?status=`,
+  `?student=`, `?subject=`) and homework (`?student=`, `?subject=`) list pages. `q` is Zod-validated
+  at the server boundary (`studentSearchQuerySchema` in `src/features/students/schemas.ts`, trimmed,
+  capped at 200 chars) before being passed to `listActiveStudents`, which applies a Postgres `ilike`
+  filter on `name` (wildcard characters `%`/`_`/`\` in the search text are escaped so they match
+  literally). The page (`src/app/dashboard/students/page.tsx`) stayed server-rendered and now
+  delegates markup to a new client component, `StudentsListView`
+  (`src/features/students/components/StudentsListView.tsx`), matching the server-page +
+  client-list-view split already used by lessons/homework. Tutor scoping is unchanged: the query
+  still relies solely on RLS (`student.tutor_id`), the same as before this task and the same as
+  lessons/homework — no client-provided tutor/owner ID is ever used.
 - **Home page** (`/`) was rebuilt from a leftover "Supabase foundation" infra-status card into an
   actual product intro matching the new brand (tagline, sign-in/sign-up CTAs, a 3-up feature strip
   for Students/Lessons/Homework). `e2e/app.spec.ts` was updated to match (the old `#status-badge`
@@ -116,6 +129,18 @@ were restyled to the new tokens but their logic is untouched.
 - `pnpm audit`: not re-run; no new dependencies were added (Manrope loads via `next/font/google`,
   which ships with Next.js).
 
+- **Student search verification (2026-09-28)**: `pnpm run lint` and `pnpm run typecheck` passed
+  clean on the changed files. `pnpm run test` passed (9 test files, 41 tests — no existing test
+  behavior changed). `pnpm run build` passed cleanly (all routes compiled, including
+  `/dashboard/students`). `pnpm run format:check` fails, but on essentially the whole repository
+  (178 errors across 179 files, including files untouched by this task, e.g.
+  `src/features/students/components/StudentForm.tsx`) — every checked-out file on this Windows
+  worktree is CRLF (`core.autocrlf=true`) while Biome's formatter expects LF; this is the pre-existing
+  repo-wide line-ending issue, not introduced or worsened by this task, and (per the task brief) may
+  already be tracked as a separate, parallel fix. No manual/browser walkthrough of the new search box
+  was performed in this session (no authenticated hosted-account session available here); this remains
+  unverified beyond the automated checks above.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -130,6 +155,7 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Recurring lesson series (`LessonSeries`): a rule (e.g. "every Tuesday at 17:00 for 60 minutes")
-that generates concrete `lesson` rows, with the ability to edit or cancel a single occurrence versus
-the whole series, reusing the calendar UI and ownership/RLS patterns established in TD-003/TD-004.**
+**"Duplicate lesson" shortcut: on a lesson's detail page, a button that pre-fills the new-lesson form
+(same student, subject, duration, price/currency, payment method) for a new date/time, so a tutor
+scheduling a recurring one-off doesn't have to re-enter everything by hand. Small, self-contained UX
+win that reuses the existing lesson form and ownership/RLS patterns.**

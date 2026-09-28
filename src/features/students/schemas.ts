@@ -33,3 +33,10 @@ export const studentInputSchema = z.object({
 });
 
 export type StudentInput = z.infer<typeof studentInputSchema>;
+
+/** `?q=` search query on the active students list — trimmed, capped, optional. */
+export const studentSearchQuerySchema = optionalTrimmed(
+  z.string().trim().max(200, "Search is too long"),
+);
+
+export type StudentSearchQuery = z.infer<typeof studentSearchQuerySchema>;

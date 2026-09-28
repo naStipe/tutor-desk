@@ -14,13 +14,20 @@ import {
   createLessonSeries,
   deleteLesson,
   getFirstLessonForSeries,
+  getLesson,
   listLessonSlotsInRange,
   updateLesson,
   updateLessonPayment,
   updateLessonStatus,
   updateLessonTime,
 } from "./data";
-import { addDays, minutesSinceMidnightInZone, startOfDay, toDateParam } from "./date-utils";
+import {
+  addDays,
+  findNextAvailableSlot,
+  minutesSinceMidnightInZone,
+  startOfDay,
+  toDateParam,
+} from "./date-utils";
 import { buildRatesByStudent } from "./rates-map";
 import { ensureUpcomingLessonsGenerated } from "./recurrence";
 import {
@@ -367,5 +374,84 @@ export async function getScheduleCreateDataAction() {
       endTime: row.end_time,
       status: row.status,
     })),
+  };
+}
+
+/**
+ * Data for the "Duplicate" shortcut on a one-off lesson's detail page: the same student/subject/
+ * duration/price/currency, plus everything the "New lesson" form needs (subjects, rates, and the
+ * conflict-picker's lesson window), and a computed next-open-slot default so the tutor doesn't
+ * have to hunt for a free time themselves.
+ *
+ * Ownership is enforced server-side, never trusting the client-supplied `lessonId`: `getLesson`'s
+ * result is checked against the authenticated tutor's id before anything about it is returned
+ * (defense in depth on top of `lesson`'s RLS `select` policy, which already scopes every query to
+ * `auth.uid()`).
+ */
+export async function getLessonDuplicateDataAction(lessonId: string) {
+  const { supabase, tutorId } = await requireTutorId();
+
+  const lesson = await getLesson(supabase, lessonId);
+  if (!lesson || lesson.tutor_id !== tutorId) {
+    throw new Error("Lesson not found.");
+  }
+
+  const pickerStart = addDays(startOfDay(new Date()), -7);
+  const pickerEnd = addDays(startOfDay(new Date()), 120);
+
+  const [activeStudents, subjects, rates, pickerLessonRows, formatSettings] = await Promise.all([
+    listActiveStudents(supabase),
+    listSubjects(supabase),
+    listRatesForTutor(supabase),
+    listLessonSlotsInRange(supabase, {
+      start: pickerStart.toISOString(),
+      end: pickerEnd.toISOString(),
+    }),
+    getTutorFormatSettings(supabase, tutorId),
+  ]);
+
+  const pickerLessons = pickerLessonRows.map((row) => ({
+    id: row.id,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    status: row.status,
+  }));
+
+  const durationMinutes = Math.round(
+    (new Date(lesson.end_time).getTime() - new Date(lesson.start_time).getTime()) / 60000,
+  );
+
+  const slot = findNextAvailableSlot({
+    sourceStartIso: lesson.start_time,
+    durationMinutes,
+    pickerLessons,
+    excludeLessonId: lesson.id,
+    timeZone: formatSettings.timeZone,
+    workingHoursStartMinutes: formatSettings.workingHoursStartMinutes,
+    workingHoursEndMinutes: formatSettings.workingHoursEndMinutes,
+  });
+
+  // The source student might be archived by now — keep it selectable in the form even though
+  // it's missing from the active-students list, same defensive pattern as the edit form.
+  const students = activeStudents.some((student) => student.id === lesson.student_id)
+    ? activeStudents
+    : [
+        { id: lesson.student_id, name: lesson.student?.name ?? "Unknown student" },
+        ...activeStudents,
+      ];
+
+  return {
+    source: {
+      studentId: lesson.student_id,
+      subjectId: lesson.subject_id ?? undefined,
+      durationMinutes,
+      price: lesson.price !== null ? String(lesson.price) : undefined,
+      currency: lesson.currency ?? undefined,
+    },
+    slot,
+    students: students.map((student) => ({ id: student.id, name: student.name })),
+    subjects: subjects.map((subject) => ({ id: subject.id, name: subject.name })),
+    ratesByStudent: buildRatesByStudent(rates, activeStudents),
+    pickerLessons,
   };
 }

@@ -44,6 +44,7 @@ export default async function SchedulePage({
     date?: string;
     create?: string;
     highlight?: string;
+    duplicate?: string;
   }>;
 }) {
   const {
@@ -51,6 +52,7 @@ export default async function SchedulePage({
     date: dateParam,
     create: createParam,
     highlight: highlightParam,
+    duplicate: duplicateParam,
   } = await searchParams;
   const view: View = viewParam === "day" ? "day" : viewParam === "month" ? "month" : "week";
   const anchor = parseDateParam(dateParam);
@@ -230,6 +232,7 @@ export default async function SchedulePage({
       lessons={calendarLessons}
       students={students}
       initialCreate={createParam === "1"}
+      duplicateLessonId={duplicateParam ?? null}
       highlightLessonId={highlightParam ?? null}
       monthCountByDate={countByDate}
       monthAnchorValue={toLocalMidnightValue(anchor)}

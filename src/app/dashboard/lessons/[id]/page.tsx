@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "../../../../components/Avatar";
-import { Button } from "../../../../components/Button";
+import { Button, LinkButton } from "../../../../components/Button";
 import { Card } from "../../../../components/Card";
 import { ConfirmSubmitForm } from "../../../../components/ConfirmSubmitForm";
 import { PageHeader } from "../../../../components/PageHeader";
@@ -53,9 +53,14 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         description={formatFullDateTime(lesson.start_time, timeZone, locale)}
         avatar={<Avatar name={lesson.student?.name ?? "?"} />}
         actions={
-          <Link href="/dashboard/lessons" className="text-sm text-ink-muted hover:text-ink">
-            &larr; Back to lessons
-          </Link>
+          <>
+            <LinkButton href={`/dashboard/schedule?duplicate=${lesson.id}`} variant="secondary">
+              Duplicate
+            </LinkButton>
+            <Link href="/dashboard/lessons" className="text-sm text-ink-muted hover:text-ink">
+              &larr; Back to lessons
+            </Link>
+          </>
         }
       />
 

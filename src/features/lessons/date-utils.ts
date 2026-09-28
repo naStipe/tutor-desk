@@ -227,6 +227,73 @@ export function formatMonthHeading(date: Date, timeZone?: string, locale = DISPL
   return date.toLocaleDateString(locale, { month: "long", year: "numeric", timeZone });
 }
 
+/**
+ * Finds the next free slot for a duplicated lesson: same time-of-day as the source lesson, on the
+ * first day (starting tomorrow) that doesn't overlap an existing lesson. Reuses the same
+ * picker-window lesson list already fetched for the "New lesson" form's conflict picker (see
+ * `getScheduleCreateDataAction`) instead of running a separate availability query — the
+ * database's overlap constraint remains the final authority at submit time regardless.
+ */
+export function findNextAvailableSlot(params: {
+  sourceStartIso: string;
+  durationMinutes: number;
+  pickerLessons: { id: string; startTime: string; endTime: string; status: string }[];
+  excludeLessonId?: string;
+  timeZone?: string;
+  workingHoursStartMinutes: number;
+  workingHoursEndMinutes: number;
+  now?: Date;
+  maxDaysAhead?: number;
+}): { dateParam: string; minutes: number } {
+  const {
+    sourceStartIso,
+    durationMinutes,
+    pickerLessons,
+    excludeLessonId,
+    timeZone,
+    workingHoursStartMinutes,
+    workingHoursEndMinutes,
+    now = new Date(),
+    maxDaysAhead = 120,
+  } = params;
+
+  const preferredMinutes = minutesSinceMidnightInZone(new Date(sourceStartIso), timeZone);
+  // The same time-of-day falls inside (or outside) working hours the same way on every candidate
+  // day, so this only needs checking once. If it's outside (e.g. working hours were tightened
+  // after the source lesson was booked), skip the conflict scan — the create form's own
+  // working-hours check will surface a clear error for the tutor to adjust.
+  const fitsWorkingHours =
+    preferredMinutes >= workingHoursStartMinutes &&
+    preferredMinutes + durationMinutes <= workingHoursEndMinutes;
+
+  const busy = pickerLessons.filter(
+    (lesson) => lesson.status !== "cancelled" && lesson.id !== excludeLessonId,
+  );
+
+  if (fitsWorkingHours) {
+    let candidateDay = addDays(startOfDay(now), 1);
+    for (let i = 0; i < maxDaysAhead; i++) {
+      const dateParam = toDateParam(candidateDay);
+      const start = zonedMinutesToDate(dateParam, preferredMinutes, timeZone);
+      const end = new Date(start.getTime() + durationMinutes * 60000);
+
+      const overlaps = busy.some((lesson) => {
+        const lessonStart = new Date(lesson.startTime);
+        const lessonEnd = new Date(lesson.endTime);
+        return start < lessonEnd && lessonStart < end;
+      });
+
+      if (!overlaps) return { dateParam, minutes: preferredMinutes };
+      candidateDay = addDays(candidateDay, 1);
+    }
+  }
+
+  // No free day found within the picker window (or the source time no longer fits working
+  // hours) — fall back to tomorrow, unchecked; the create form's own conflict picker and the
+  // database's overlap constraint still protect against a double-booking.
+  return { dateParam: toDateParam(addDays(startOfDay(now), 1)), minutes: preferredMinutes };
+}
+
 export function formatMinutesOfDay(minutes: number) {
   const wrapped = ((minutes % 1440) + 1440) % 1440;
   const hour = Math.floor(wrapped / 60);

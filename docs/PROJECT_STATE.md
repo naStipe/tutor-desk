@@ -2,11 +2,56 @@
 
 ## Current Milestone
 
-- Milestone: **TD-006 — UX audit fixes: unpaid-lessons filter, unarchive student, student search,
-  repo-wide line-ending fix**
+- Milestone: **TD-007 — Duplicate-lesson shortcut**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
 - Last updated: 2026-09-28
+
+A "Duplicate" action was added to a one-off lesson's detail page (`src/app/dashboard/lessons/[id]`)
+that pre-fills the "New lesson" form from the source lesson's student/subject/duration/price and
+opens it on the schedule page, defaulting the date/time to the next open slot. Addresses the audit
+finding recorded as TD-006's "Next Recommended Task": tutors adding ad-hoc extra sessions with the
+same student/subject/price had to refill the whole form from scratch each time.
+
+- **Entry point**: a "Duplicate" `LinkButton` next to "Back to lessons" on
+  `src/app/dashboard/lessons/[id]/page.tsx`, matching that page's existing action-link convention.
+  It navigates to `/dashboard/schedule?duplicate=<lessonId>` rather than opening a new modal
+  in-place, so the existing "New lesson" modal (already built into `LessonsCalendarView`) can be
+  reused instead of building a second create flow.
+- **Data loading**: `getLessonDuplicateDataAction(lessonId)` (`src/features/lessons/actions.ts`)
+  loads the source lesson via `getLesson`, then explicitly checks `lesson.tutor_id === tutorId`
+  before returning anything — defense in depth on top of `lesson`'s RLS `select` policy (which
+  already scopes every query to `auth.uid()`), per AGENTS.md's IDOR requirement, and never trusts
+  the client-supplied lesson id alone. It otherwise reuses exactly what
+  `getScheduleCreateDataAction` already fetches for the "New lesson" form (subjects, rates, and the
+  same -7..+120-day conflict-picker lesson window), so no new query shape was introduced.
+- **Next-open-slot default**: `findNextAvailableSlot` (`src/features/lessons/date-utils.ts`) is a
+  new pure function that reuses the picker-window lesson list already being fetched (no separate
+  availability query): it scans forward day by day from tomorrow, at the source lesson's own
+  time-of-day, and returns the first day with no overlapping lesson at that time. If the source
+  time no longer fits the tutor's current working hours (e.g. working hours were tightened since
+  the lesson was booked), it skips the scan and falls back to tomorrow unchecked — the create
+  form's own working-hours check and the database's overlap constraint remain the final authority
+  at submit time either way. Covered by a new unit test file, `src/test/date-utils.test.ts` (5
+  tests: free tomorrow, skips a busy day, ignores cancelled lessons, ignores the source lesson
+  itself via `excludeLessonId`, and the working-hours fallback).
+- **Form**: `LessonsCalendarView` gained a `duplicateLessonId` prop; on mount, if set, it calls
+  `getLessonDuplicateDataAction` and opens the same `LessonForm` modal used for "New lesson"
+  (`createLessonAction`, `allowRecurrence` still available), pre-filled with the source student/
+  subject/duration/price/currency and the computed slot. Payment status is deliberately **not**
+  carried over — a duplicated lesson defaults to `unpaid` like any new lesson, since it's a new,
+  unpaid session. If the source student has since been archived (missing from the page's active-
+  students list), it's added back into the form's student dropdown, mirroring the same pattern
+  `getLessonEditDataAction` already uses for the edit form.
+- Recurring lesson series, billing, and every other lesson feature were left untouched, per the
+  ticket's explicit scope — duplicating one occurrence of a recurring series creates a new
+  standalone one-off lesson; it does not touch the series itself.
+
+## Previous Milestone (TD-006)
+
+- Milestone: **TD-006 — UX audit fixes: unpaid-lessons filter, unarchive student, student search,
+  repo-wide line-ending fix**
+- Status: Implemented; independent review recommended
 
 Four small, independently-scoped changes were implemented in parallel (each in its own worktree/
 branch, then merged into `main`) as part of an unsupervised audit-and-fix pass while the owner was
@@ -155,6 +200,20 @@ were restyled to the new tokens but their logic is untouched.
 - No manual/hosted-browser walkthrough of the four TD-006 changes was performed (no interactive
   Supabase session in this unsupervised environment) — flagged as unverified pending a manual pass.
 
+- TD-007 verification (2026-09-28): this worktree's checkout still had CRLF line endings on disk
+  despite `.gitattributes` being correct in the index (the TD-006 renormalize only touched the
+  branch it was made on; a worktree branched before that commit doesn't get its working tree
+  rewritten by a later merge/rebase alone) — fixed locally with `git rm -r --cached . && git reset
+  --hard HEAD` to force a clean re-checkout under the `eol=lf` attribute, no source changes. After
+  that: `pnpm run format:check` — clean, 180 files. `pnpm run lint` — 0 errors (same 1 pre-existing
+  unrelated warning + 1 info as TD-006). `pnpm run typecheck` — clean. `pnpm run test` — 10 files,
+  46 tests, all passed (5 new for `findNextAvailableSlot`). `pnpm run build` — passed cleanly, all
+  38 routes compiled, no `.next` cache corruption hit this run.
+- No manual/hosted-browser walkthrough of the Duplicate button was performed (no interactive
+  Supabase session in this unsupervised environment) — flagged as unverified pending a manual pass:
+  specifically, click through Duplicate on a real lesson and confirm the modal opens pre-filled
+  with the right student/subject/duration/price and a genuinely free slot.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -175,13 +234,22 @@ were restyled to the new tokens but their logic is untouched.
 - TD-006's four changes were not manually verified against a live hosted account (no interactive
   Supabase session available in the unsupervised environment that built them) — recommend a manual
   browser pass (unpaid filter, reactivate button, student search) before relying on this fully.
+- TD-007's Duplicate button was likewise not manually verified against a live hosted account — see
+  Verification State.
+- A worktree branched before a line-ending renormalize commit can still have CRLF files on disk
+  even after rebasing onto a branch that includes it, since checkout doesn't rewrite files whose
+  blob content didn't change in the rebase. If `format:check` fails on files you didn't touch, try
+  `git rm -r --cached . && git reset --hard HEAD` to force Git to re-apply the `eol=lf` attribute,
+  before assuming the source content itself is wrong.
 
 ## Next Recommended Task
 
-**Duplicate-lesson shortcut: a "Duplicate" action on an existing one-off lesson's detail page
-(`src/app/dashboard/lessons/[id]`) that pre-fills the lesson creation form (`LessonForm` in
-`src/features/lessons/`) from the current lesson's student/subject/duration/price, defaulting the
-date/time to the next open slot. Small effort — no schema change, reuses the existing lesson-creation
-form and conflict-checking logic already used by `getScheduleCreateDataAction`. Addresses a real
-audit finding: tutors who add ad-hoc extra sessions with the same student/subject/price currently
-have to refill the whole form from scratch each time.**
+**Calendar color-coding by student or subject: give each student (or subject) a consistent color,
+and use it for their lesson blocks on the day/week/month calendar (`LessonCalendar` /
+`MonthCalendar` in `src/features/lessons/components/`) instead of today's single status-based color
+mapping. Medium effort — no schema change needed if a color is derived deterministically from the
+student/subject id (the same approach `Avatar` already uses for initials-and-color), though a
+persisted user-chosen color would need a new nullable column on `student`/`subject`. Picked over
+"bulk mark lessons as paid" because it's a meaningful daily-glance improvement for tutors who see
+many students on one calendar, and status color (scheduled/completed/cancelled/no-show) is still
+visible via the block's border or a small badge rather than being displaced.**

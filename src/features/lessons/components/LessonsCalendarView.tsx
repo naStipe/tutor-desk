@@ -7,7 +7,11 @@ import { Button, LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
 import { Modal } from "../../../components/Modal";
 import { PageHeader } from "../../../components/PageHeader";
-import { createLessonAction, getScheduleCreateDataAction } from "../actions";
+import {
+  createLessonAction,
+  getLessonDuplicateDataAction,
+  getScheduleCreateDataAction,
+} from "../actions";
 import { toDateParam } from "../date-utils";
 import { CalendarLegend } from "./CalendarLegend";
 import { type CalendarLesson, LessonCalendar } from "./LessonCalendar";
@@ -40,6 +44,7 @@ export function LessonsCalendarView({
   lessons,
   students,
   initialCreate,
+  duplicateLessonId,
   highlightLessonId,
   monthCountByDate,
   monthAnchorValue,
@@ -65,6 +70,7 @@ export function LessonsCalendarView({
   lessons: CalendarLesson[];
   students: { id: string; name: string }[];
   initialCreate: boolean;
+  duplicateLessonId?: string | null;
   highlightLessonId: string | null;
   monthCountByDate: Record<string, number>;
   monthAnchorValue: string;
@@ -90,19 +96,61 @@ export function LessonsCalendarView({
   } | null>(null);
   const [isLoadingCreateData, startLoadingCreateData] = useTransition();
 
+  // Set once a "Duplicate" source lesson finishes loading: the student/subject/duration/price to
+  // pre-fill the form with, plus that student in case it's since been archived out of `students`.
+  const [duplicateSource, setDuplicateSource] = useState<{
+    studentId: string;
+    subjectId?: string;
+    durationMinutes: number;
+    price?: string;
+    currency?: string;
+    students: { id: string; name: string }[];
+  } | null>(null);
+  const [isLoadingDuplicateData, startLoadingDuplicateData] = useTransition();
+
   // The "New lesson" form needs subjects/rates/the conflict picker, but most schedule visits
   // never open it — fetch that data only once the modal is actually open instead of on every
   // page load.
   useEffect(() => {
-    if (!createPrefill || createData) return;
+    if (!createPrefill || createData || duplicateLessonId) return;
     startLoadingCreateData(async () => {
       const data = await getScheduleCreateDataAction();
       setCreateData(data);
     });
-  }, [createPrefill, createData]);
+  }, [createPrefill, createData, duplicateLessonId]);
+
+  // The "Duplicate" shortcut opens the same modal, but pre-filled from a source lesson and
+  // defaulted to its next open slot — fetched via one server action that also enforces the
+  // source lesson belongs to the current tutor (see `getLessonDuplicateDataAction`).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once for a given duplicate source; createPrefill is read only to skip re-fetching once this effect has set it
+  useEffect(() => {
+    if (!duplicateLessonId || createPrefill) return;
+    startLoadingDuplicateData(async () => {
+      const data = await getLessonDuplicateDataAction(duplicateLessonId);
+      setCreatePrefill({
+        dateParam: data.slot.dateParam,
+        minutes: data.slot.minutes,
+        durationMinutes: data.source.durationMinutes,
+      });
+      setCreateData({
+        subjects: data.subjects,
+        ratesByStudent: data.ratesByStudent,
+        pickerLessons: data.pickerLessons,
+      });
+      setDuplicateSource({
+        studentId: data.source.studentId,
+        subjectId: data.source.subjectId,
+        durationMinutes: data.source.durationMinutes,
+        price: data.source.price,
+        currency: data.source.currency,
+        students: data.students,
+      });
+    });
+  }, [duplicateLessonId]);
 
   function closeModal() {
     setCreatePrefill(null);
+    setDuplicateSource(null);
     router.refresh();
   }
 
@@ -285,18 +333,20 @@ export function LessonsCalendarView({
       )}
 
       <Modal
-        open={Boolean(createPrefill && students.length > 0)}
+        open={Boolean((createPrefill && students.length > 0) || duplicateLessonId)}
         onClose={closeModal}
-        title="Schedule lesson"
+        title={duplicateLessonId ? "Duplicate lesson" : "Schedule lesson"}
       >
-        {createPrefill && (isLoadingCreateData || !createData) ? (
+        {duplicateLessonId && (isLoadingDuplicateData || !createPrefill || !createData) ? (
+          <p className="text-sm text-ink-muted">Loading…</p>
+        ) : createPrefill && (isLoadingCreateData || !createData) ? (
           <p className="text-sm text-ink-muted">Loading…</p>
         ) : (
           createPrefill &&
           createData && (
             <LessonForm
               action={createLessonAction}
-              students={students}
+              students={duplicateSource?.students ?? students}
               subjects={createData.subjects}
               ratesByStudent={createData.ratesByStudent}
               pickerLessons={createData.pickerLessons}
@@ -306,13 +356,16 @@ export function LessonsCalendarView({
               workingHoursEndMinutes={workingHoursEndMinutes}
               allowRecurrence
               defaultValues={{
-                studentId: students[0]?.id ?? "",
+                studentId: duplicateSource?.studentId ?? students[0]?.id ?? "",
+                subjectId: duplicateSource?.subjectId,
                 dateParam: createPrefill.dateParam,
                 minutes: createPrefill.minutes,
                 durationMinutes: createPrefill.durationMinutes,
                 notes: "",
+                price: duplicateSource?.price,
+                currency: duplicateSource?.currency,
               }}
-              submitLabel="Schedule lesson"
+              submitLabel={duplicateLessonId ? "Duplicate lesson" : "Schedule lesson"}
               pendingLabel="Scheduling…"
               onCancel={closeModal}
             />

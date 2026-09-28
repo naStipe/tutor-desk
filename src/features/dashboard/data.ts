@@ -42,6 +42,7 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     homeworkAttention,
     unbilledCountResult,
     oldestUnbilledResult,
+    unbilledAmountResult,
     trendResult,
     prevMonthResult,
     overdueHomeworkResult,
@@ -66,6 +67,14 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
       .order("start_time", { ascending: true })
       .limit(1)
       .maybeSingle(),
+    // Same predicate as the unbilled count/oldest-date queries above, plain query + JS grouping
+    // (no DB aggregate) since one tutor's unbilled lesson set is a small, bounded row count.
+    supabase
+      .from("lesson")
+      .select("price, currency")
+      .eq("status", "completed")
+      .eq("payment_status", "unpaid")
+      .not("price", "is", null),
     supabase
       .from("lesson")
       .select("id, start_time, end_time, status, student_id, subject_id")
@@ -98,6 +107,8 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     throw new Error(`Unable to load unbilled lessons: ${unbilledCountResult.error.message}`);
   if (oldestUnbilledResult.error)
     throw new Error(`Unable to load unbilled lessons: ${oldestUnbilledResult.error.message}`);
+  if (unbilledAmountResult.error)
+    throw new Error(`Unable to load unbilled lessons: ${unbilledAmountResult.error.message}`);
   if (trendResult.error)
     throw new Error(`Unable to load lesson trend: ${trendResult.error.message}`);
   if (prevMonthResult.error)
@@ -128,9 +139,22 @@ export async function getTodayDashboardData(supabase: SupabaseClient<Database>) 
     loadCount += 1;
   }
 
+  const unbilledAmountByCurrency = new Map<string, number>();
+  for (const row of unbilledAmountResult.data ?? []) {
+    if (row.price === null || row.currency === null) continue;
+    unbilledAmountByCurrency.set(
+      row.currency,
+      (unbilledAmountByCurrency.get(row.currency) ?? 0) + row.price,
+    );
+  }
+  const unbilledAmounts = Array.from(unbilledAmountByCurrency.entries())
+    .map(([currency, total]) => ({ currency, total }))
+    .sort((a, b) => b.total - a.total);
+
   const unbilled = {
     count: unbilledCountResult.count ?? 0,
     oldestDate: oldestUnbilledResult.data?.start_time ?? null,
+    amounts: unbilledAmounts,
   };
 
   // Weekly totals (for the trend chart + heatmap) and the same broken down per day and per

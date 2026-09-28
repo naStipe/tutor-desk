@@ -2,11 +2,50 @@
 
 ## Current Milestone
 
+- Milestone: **TD-012 — Total outstanding balance stat on the tutor dashboard**
+- Status: Implemented; independent review recommended
+- Branch: `main`
+- Last updated: 2026-09-28
+
+The tutor dashboard (`src/features/dashboard/`) previously showed only an "unbilled" *count* of
+completed+unpaid lessons, with no currency amount anywhere on the dashboard despite its rich
+time/workload analytics — a gap flagged in the original UX audit ("the dashboard analytics section
+is rich for time tracking but has no money view at all"). This adds the summed outstanding balance
+next to that existing count.
+
+- **Data layer** (`getTodayDashboardData` in `src/features/dashboard/data.ts`): a new plain query
+  (`.select("price, currency")` on `lesson`, same `status = 'completed' AND payment_status =
+  'unpaid'` predicate as the existing unbilled-count/oldest-date queries, plus `.not("price", "is",
+  null)`) is summed and grouped by currency in JS (`unbilledAmountByCurrency`, a `Map`), sorted
+  descending by total. **Deliberately no new DB migration, RPC, or aggregate** — this ticket's
+  explicit constraint, since this environment cannot apply schema changes to the live hosted
+  Supabase project (see TD-011 below, still pending). A tutor's own unbilled lesson set is a small,
+  bounded row count, so a plain `.select()` + JS `reduce`/grouping is fine, mirroring the reasoning
+  TD-011's migration comment already gives for why a JS sum would have been safe there too. `unbilled`
+  now returns `{ count, oldestDate, amounts: { currency, total }[] }` instead of just `{ count,
+  oldestDate }`.
+- **UI** (`TodayDashboard.tsx`): the existing "N unbilled lessons" link
+  (`/dashboard/lessons?status=completed&payment=unpaid`) is left completely untouched — still the
+  same pill, same link, same conditional (`unbilled.count > 0`). One additional pill per currency is
+  rendered alongside it inside the same flex-wrap row, each using `formatMoney(total, currency,
+  locale)` (`src/lib/formatting.ts`) with the page's existing `getTutorFormatSettings`-resolved
+  locale — no new money-formatting logic, matching the pattern TD-011 already established on the
+  billing page. Multiple currencies render as separate pills rather than being summed together,
+  since summing across currencies would be meaningless.
+- **Ownership**: reuses the exact same query/RLS pattern the existing unbilled-count query already
+  relies on (no app-level `tutor_id` filter — `lesson`'s RLS `select` policy already scopes every
+  query to `auth.uid()`, same as TD-006's unpaid-lessons filter and every other unfiltered dashboard
+  query). Not weakened: same predicate, same implicit RLS scoping, no client-supplied filter of any
+  kind.
+- Scope was kept deliberately narrow per the ticket: no change to the billing page, payment actions,
+  lesson creation, or any other feature — purely one new dashboard stat, additive to the existing
+  unbilled-count UI.
+
+## Previous Milestone (TD-011)
+
 - Milestone: **TD-011 — Per-student running balance on the tutor billing page**
 - Status: **Implemented; independent review recommended; new DB function unverified against the
   live hosted database**
-- Branch: `main`
-- Last updated: 2026-09-28
 
 The tutor-facing student billing page (`src/app/dashboard/students/[id]/billing/page.tsx`) had no
 single "this student owes $X" figure — TD-006/TD-009 built the unpaid-lessons filter and bulk-pay,
@@ -535,6 +574,29 @@ were restyled to the new tokens but their logic is untouched.
   real student, open their billing page, and confirm the total/count/link are correct, then repeat
   with a second currency to confirm the multi-row (grouped-by-currency) case renders correctly.
 
+- TD-012 verification (2026-09-28): this worktree's branch was already on `main` (had TD-011), so
+  no fast-forward was needed. Hit the same known CRLF-on-disk issue on the first `format:check`
+  (139 errors, on files this task never touched); fixed the same documented way — committed this
+  task's changes first as a safety checkpoint, `git rm -r --cached . && git reset --hard HEAD`, then
+  fixed a `currency: string | null` typecheck error surfaced after that (the `lesson.currency`
+  column is nullable; the currency-grouping loop now also skips rows with a null currency, matching
+  the existing null-`price` skip) and squashed the checkpoint plus that fix into one clean commit
+  (`git reset --soft`, local history on this not-yet-shared worktree branch). After that: `pnpm run
+  format:check` — clean, 182 files. `pnpm run lint` — 0 errors (same 1 pre-existing unrelated
+  warning + 1 info as TD-006–TD-011, both in files this task didn't touch). `pnpm run typecheck` —
+  clean. `pnpm run test` — 10 files, 46 tests, all passed (no test logic changed; no new tests added
+  — the new currency-grouping loop is a straightforward `Map`-based sum with no branching complex
+  enough to warrant its own test, matching the no-new-tests precedent set for similarly-thin
+  aggregation code in TD-009/TD-010/TD-011). `pnpm run build` — passed cleanly after deleting `.next`
+  first, all 39 routes compiled (dashboard route: 5.19 kB), no cache corruption hit this run. `pnpm
+  audit` not re-run — no new dependency was added.
+- No manual/hosted-browser walkthrough of the new outstanding-balance pill(s) was performed (no
+  interactive Supabase session in this unsupervised environment) — flagged as unverified pending a
+  manual pass: specifically, seed a completed+unpaid lesson with a price, confirm the pill renders
+  next to the existing "N unbilled lessons" link with the correct formatted amount, then seed a
+  second unpaid lesson in a different currency and confirm two separate pills render (not a single
+  incorrectly-summed total).
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -583,17 +645,27 @@ were restyled to the new tokens but their logic is untouched.
   fully.
 - TD-011's `tutor_unpaid_summary` migration has not been applied to the live hosted Supabase
   project — see Verification State. The billing page's RPC call will error until it is.
+- TD-012's new outstanding-balance pill(s) were not manually verified against a live hosted account
+  — see Verification State for the specific manual pass recommended before relying on this fully.
 
 ## Next Recommended Task
 
-**Apply and verify the TD-011 migration against the live hosted Supabase project
-(`cmlvtnjoynffrznyelym`): run `supabase db push` (or the team's equivalent apply step) to create
-`tutor_unpaid_summary`, then check the Supabase advisor (security + performance) for that function,
-then do the manual walkthrough described in TD-011's Verification State (seed a completed+unpaid
-lesson, confirm the "Balance owed" card and its link, repeat with a second currency). This is small,
-low-risk, and blocks the feature from working at all in production — a better next step than new
-feature work until the gap between "implemented in this worktree" and "actually live" is closed. If
-that's already done by the time this is picked up, the next-most-valuable gap is the same one TD-006
-flagged and TD-007–TD-010 kept deferring: none of TD-006 through TD-011's changes have had a single
-manual/hosted-browser walkthrough in an interactive session — worth a dedicated verification pass
-across all six before adding more surface area.**
+**Add a lesson/homework notes search on the lessons list** (`src/features/lessons/`), following the
+exact pattern TD-006 already established for student name search: a `?q=` query param
+(case-insensitive `ilike`, wildcard-escaped, Zod-validated, debounced client-side) matched against
+`lesson.notes`, applied in `listLessonsPage` alongside the existing status/payment/student/subject
+filters. Picked deliberately as a **code-only** item — no new table, column, index, or migration
+needed (`lesson.notes` already exists as plain `text`, and TD-006's student search proves a plain
+`ilike` scan is fine at this data scale without a dedicated full-text index) — since this
+unsupervised environment still has no DB write access to the live hosted Supabase project
+(`cmlvtnjoynffrznyelym`), and TD-011's `tutor_unpaid_summary` migration remains blocked on that for
+the same reason (see Known Issues). A tutor with many lessons currently has no way to find "the one
+where I noted X" short of scrolling/filtering by date — the same kind of gap TD-006's student search
+closed for student names.
+
+Once DB write access to the live hosted project becomes available again, the standing
+higher-priority item is still: apply and verify the TD-011 migration (`supabase db push` to create
+`tutor_unpaid_summary`, check the Supabase advisor, then the manual walkthrough in TD-011's
+Verification State) — and, separately, none of TD-006 through TD-012's changes have yet had a single
+manual/hosted-browser walkthrough in an interactive session, worth a dedicated verification pass
+across all seven before adding much more surface area.**

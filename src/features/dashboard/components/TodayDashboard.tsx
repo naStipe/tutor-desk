@@ -12,6 +12,7 @@ import {
   greetingWord,
   WEEKLY_GOAL_HOURS,
 } from "../format";
+import { formatMoney } from "../../../lib/formatting";
 import { prefersReducedMotion } from "../../../lib/motion";
 
 export type TodayLesson = {
@@ -69,7 +70,11 @@ export type TodayDashboardProps = {
   locale: string;
   lessons: TodayLesson[];
   homework: HomeworkAttentionItem[];
-  unbilled: { count: number; oldestDate: string | null };
+  unbilled: {
+    count: number;
+    oldestDate: string | null;
+    amounts: { currency: string; total: number }[];
+  };
   weekLoad: { lessonCount: number; totalMinutes: number; perDayMinutes: number[] };
   analytics: DashboardAnalytics;
 };
@@ -751,13 +756,23 @@ export function TodayDashboard({
       <GreetingHeader now={now} firstName={firstName} locale={locale} />
 
       {unbilled.count > 0 && (
-        <Link
-          href="/dashboard/lessons?status=completed&payment=unpaid"
-          className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />
-          {unbilled.count} unbilled lesson{unbilled.count === 1 ? "" : "s"}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/lessons?status=completed&payment=unpaid"
+            className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />
+            {unbilled.count} unbilled lesson{unbilled.count === 1 ? "" : "s"}
+          </Link>
+          {unbilled.amounts.map((row) => (
+            <span
+              key={row.currency}
+              className="inline-flex w-fit items-center rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] font-medium text-[var(--td2-text-primary)]"
+            >
+              {formatMoney(row.total, row.currency, locale)} outstanding
+            </span>
+          ))}
+        </div>
       )}
 
       <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.6fr_1fr] lg:gap-[22px]">

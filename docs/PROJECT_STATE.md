@@ -2,10 +2,13 @@
 
 ## Current Milestone
 
-- Milestone: **TD-005 — Full visual overhaul: design tokens, dark mode, distinctive brand identity**
-- Status: **Implemented; independent review recommended**
+- Milestone: **Lessons payment-status filter + dashboard "unbilled" deep link**
+- Status: **Implemented; verified**
 - Branch: `main`
-- Last updated: 2026-09-16
+- Last updated: 2026-09-28
+
+This entry supersedes the milestone/status lines below (TD-005) as the current top-of-file state;
+older milestone text further down is kept for history and was not re-verified in this task.
 
 ## Current Reality
 
@@ -81,14 +84,45 @@ were restyled to the new tokens but their logic is untouched.
 - The design-lab previews are intentionally not connected to Supabase, live tutor data, or product
   actions, and are not linked from the production navigation. They are visual proposals only.
 
-- Everything listed as not implemented in TD-004 remains not implemented (recurring lessons,
-  invoices, student portal, etc.) — this task was visual/theming only, no feature scope changed.
+- Correction (verified 2026-09-28): the "recurring lessons ... not implemented" claim previously
+  here is stale/false. `src/features/lessons/data.ts` has `createLessonSeries`,
+  `cancelLessonSeries`, `listActiveLessonSeriesForGeneration`, `insertGeneratedLessons`, and
+  `updateSeriesGeneratedUntil`; `src/features/lessons/recurrence.ts` and the `lesson_series` table
+  migration (`supabase/migrations/20260913170002_create_lesson_series.sql`) exist. Payment tracking
+  is also implemented, not stub: `lesson.payment_status`/`payment_method`/`paid_at` columns,
+  `updateLessonPayment`, and the payment filter added in this task all operate on real schema. This
+  was verified by reading the code, not by re-running the recurring-lesson or payment feature's own
+  tests in this task — invoicing and the student portal were not checked and their status is
+  unverified.
 - A dedicated mobile-optimized week calendar layout (unchanged from TD-004 — see Known Issues).
 - Per-user theme preference stored server-side; theme choice is `localStorage`-only (per browser,
   not per account), which is consistent with this being a prototype and matches how most SaaS theme
   toggles work before a settings page exists.
 
 ## Verification State
+
+- Payment-status filter (2026-09-28): added `payment=unpaid|paid|all` filter to
+  `listLessonsPage` (`src/features/lessons/data.ts`), a `paymentFilterSchema` Zod enum
+  (`src/features/lessons/schemas.ts`) validating the query param server-side in
+  `src/app/dashboard/lessons/page.tsx`, and a matching `Select` in `LessonsListView.tsx`. The
+  dashboard's "unbilled" link (`TodayDashboard.tsx`) now points to
+  `/dashboard/lessons?status=completed&payment=unpaid`, matching the exact predicate the unbilled
+  count itself uses (`status=completed AND payment_status=unpaid`, confirmed in
+  `src/features/dashboard/data.ts`). No new tutor-ownership check was needed: `listLessonsPage`
+  already relies on Postgres RLS (`lesson_tutor_id` policies in
+  `supabase/migrations/20260913150813_create_lesson.sql`, `using ((select auth.uid()) = tutor_id)`)
+  for every existing filter (status/student/subject), and the new payment filter follows the same
+  pattern — it never receives or trusts a tutor/owner ID from the client, so it cannot cause an
+  IDOR: a tutor can only ever see their own rows regardless of which payment value is requested.
+  Ran `pnpm run lint`, `pnpm run typecheck`, `pnpm run test` (41 tests, 9 files, all passed), and
+  `pnpm run build` (all routes compiled, no errors) — all passed with no findings in the changed
+  files. `pnpm run format:check` (part of `pnpm run verify`) fails, but on ~178 pre-existing
+  diagnostics across files this task did not touch (e.g. `tsconfig.json`, `vitest.config.ts`, an
+  unrelated test file) — confirmed pre-existing by stashing this task's changes and re-running
+  Biome format against the unmodified baseline, which fails identically. Root cause is
+  `core.autocrlf=true` producing CRLF line endings repo-wide on this Windows checkout, which Biome's
+  formatter (LF) rejects; this is an environment/checkout issue unrelated to this ticket's diff, so
+  it was not fixed here (out of scope).
 
 - Design-lab verification (2026-09-16): scoped Biome format/lint, full TypeScript typecheck, and the
   optimized Next.js production build passed. Both mockups compiled as static routes and were
@@ -130,6 +164,9 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Recurring lesson series (`LessonSeries`): a rule (e.g. "every Tuesday at 17:00 for 60 minutes")
-that generates concrete `lesson` rows, with the ability to edit or cancel a single occurrence versus
-the whole series, reusing the calendar UI and ownership/RLS patterns established in TD-003/TD-004.**
+**Fix the pre-existing repo-wide CRLF/Biome format mismatch** (`core.autocrlf=true` on this Windows
+checkout produces CRLF line endings that Biome's formatter, configured for LF, rejects on ~178
+files including files this and prior tasks never touched). Either normalize line endings via
+`.gitattributes` (`* text=auto eol=lf`) plus a one-time repo-wide reformat, or adjust Biome's
+`lineEnding` setting to match the checkout — so `pnpm run verify` (and CI, if it runs on Windows
+runners) can pass cleanly instead of every task needing to carve this failure out as "pre-existing."

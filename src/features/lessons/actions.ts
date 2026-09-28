@@ -9,6 +9,7 @@ import { listActiveStudents } from "../students/data";
 import { listSubjects } from "../subjects/data";
 import { getTutorFormatSettings } from "../tutor-profile/data";
 import {
+  bulkUpdateLessonPayment,
   cancelLessonSeries,
   createLesson,
   createLessonSeries,
@@ -31,6 +32,7 @@ import {
 import { buildRatesByStudent } from "./rates-map";
 import { ensureUpcomingLessonsGenerated } from "./recurrence";
 import {
+  bulkLessonPaymentSchema,
   lessonInputSchema,
   lessonStatusSchema,
   PAYMENT_METHODS,
@@ -271,6 +273,47 @@ export async function setLessonPaymentAction(formData: FormData) {
   revalidatePath(`/dashboard/lessons/${id}`);
   revalidatePath("/dashboard");
   redirect(`/dashboard/lessons/${id}`);
+}
+
+export type BulkPaymentActionState = { error?: string; updatedCount?: number };
+
+/**
+ * Bulk-flips payment status for many lessons at once (e.g. a tutor clearing a month's worth of
+ * lessons in one action after one bank transfer covers them all). Called directly from the lessons
+ * list's client component, not a `<form>` action, since it takes an array of ids rather than a
+ * single FormData.
+ *
+ * IDOR: the client-supplied `lessonIds` are never trusted as-is. Zod validates the batch shape
+ * (a bounded array of UUIDs plus an enum status) before anything touches the database, and
+ * `bulkUpdateLessonPayment` scopes the update to `tutor_id = tutorId` explicitly — on top of
+ * `lesson`'s RLS update policy (`using (auth.uid() = tutor_id)`), which independently drops any
+ * row that isn't the caller's own. A foreign lesson id smuggled into the batch is therefore never
+ * modified by either layer; it's simply excluded from `updatedCount`, with no error surfaced for a
+ * partial-ownership batch (not expected in normal use, since the ids come from the tutor's own
+ * filtered list, but safe either way).
+ */
+export async function bulkSetLessonPaymentAction(
+  lessonIds: string[],
+  paymentStatus: string,
+): Promise<BulkPaymentActionState> {
+  const parsed = bulkLessonPaymentSchema.safeParse({ lessonIds, paymentStatus });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid selection." };
+  }
+
+  const { supabase, tutorId } = await requireTutorId();
+  const updatedCount = await bulkUpdateLessonPayment(
+    supabase,
+    tutorId,
+    parsed.data.lessonIds,
+    parsed.data.paymentStatus,
+  );
+
+  revalidateTag(tutorTag("lessons", tutorId));
+  revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
+  revalidatePath("/dashboard");
+  return { updatedCount };
 }
 
 export async function deleteLessonAction(formData: FormData) {

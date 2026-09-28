@@ -94,3 +94,14 @@ export const lessonStatusSchema = z.enum(LESSON_STATUSES);
 export const PAYMENT_FILTERS = ["all", "unpaid", "paid"] as const;
 export type PaymentFilter = (typeof PAYMENT_FILTERS)[number];
 export const paymentFilterSchema = z.enum(PAYMENT_FILTERS);
+
+export const paymentStatusSchema = z.enum(PAYMENT_STATUSES);
+
+/** Bulk "mark as paid/unpaid" from the lessons list: a bounded batch of lesson ids plus a target status. */
+export const bulkLessonPaymentSchema = z.object({
+  lessonIds: z
+    .array(z.string().uuid())
+    .min(1, "Select at least one lesson")
+    .max(200, "Select fewer lessons at a time"),
+  paymentStatus: paymentStatusSchema,
+});

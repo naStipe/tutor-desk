@@ -312,6 +312,35 @@ export async function updateLessonPayment(
   if (error) throw new Error(`Unable to update lesson payment: ${error.message}`);
 }
 
+/**
+ * Bulk-flips payment status for many lessons at once. `tutor_id = tutorId` is filtered explicitly
+ * here — defense in depth on top of `lesson`'s RLS update policy (`using (auth.uid() = tutor_id)`),
+ * which already silently drops any row that isn't the caller's own from the update. Either layer
+ * alone is sufficient; a lesson id belonging to another tutor is never modified. The `.select("id")`
+ * return value is the ids actually updated, so the caller can report an accurate count even if some
+ * ids in the batch didn't belong to the tutor.
+ */
+export async function bulkUpdateLessonPayment(
+  supabase: SupabaseClient<Database>,
+  tutorId: string,
+  ids: string[],
+  paymentStatus: PaymentStatus,
+) {
+  const { data, error } = await supabase
+    .from("lesson")
+    .update({
+      payment_status: paymentStatus,
+      paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .in("id", ids)
+    .eq("tutor_id", tutorId)
+    .select("id");
+
+  if (error) throw new Error(`Unable to update lesson payments: ${error.message}`);
+  return data.length;
+}
+
 export async function cancelScheduledLessonsForStudent(
   supabase: SupabaseClient<Database>,
   studentId: string,

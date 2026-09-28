@@ -2,10 +2,58 @@
 
 ## Current Milestone
 
-- Milestone: **TD-008 — Calendar color-coding by student**
+- Milestone: **TD-009 — Bulk mark lessons paid/unpaid from the lessons list**
 - Status: **Implemented; independent review recommended**
 - Branch: `main`
 - Last updated: 2026-09-28
+
+A tutor who gets paid for a month of lessons in one bank transfer previously had to open each
+lesson individually and mark it paid (`setLessonPaymentAction`, one lesson at a time). This
+extends the lessons list (`src/features/lessons/`, TD-006's `payment=unpaid|paid|all` filter) with
+row selection and a bulk payment-status action, so a tutor can filter to `payment=unpaid`, select
+several, and clear them in one action. Addresses the "Next Recommended Task" recorded at the end
+of TD-008.
+
+- **Selection UX** (`src/features/lessons/components/LessonsListView.tsx`): a checkbox per row plus
+  a header "select all visible" checkbox (scoped to the current page's rows, not the whole filtered
+  set, since pages are fetched server-side 50 at a time). A bulk action bar appears above the table
+  whenever 1+ rows are selected, with "Mark as paid", "Mark as unpaid", and "Clear selection".
+  Selection is cleared whenever the filters/sort/page change (`pushParams`) or after a bulk action
+  completes — deliberately not reactive to every `lessons` prop change via `useEffect`, since Biome's
+  `useExhaustiveDependencies` rule rejects a prop-array dependency there; clearing at the two actual
+  trigger points is simpler and avoids that rule entirely.
+- **New server action** (`bulkSetLessonPaymentAction` in `src/features/lessons/actions.ts`): takes
+  an array of lesson ids and a target `PaymentStatus`, called directly from the client component
+  (not a `<form>` action, since it needs a JSON array rather than `FormData`) — same calling
+  convention already used by `moveLessonAction` and `updateLessonStatusAction`. Validates with a new
+  `bulkLessonPaymentSchema` (`src/features/lessons/schemas.ts`: array of UUIDs, 1–200 items, plus
+  the existing `PAYMENT_STATUSES` enum) before touching the database.
+- **New data-layer function** (`bulkUpdateLessonPayment` in `src/features/lessons/data.ts`): reuses
+  `updateLessonPayment`'s field-setting pattern (`payment_status`, `paid_at` set/cleared together,
+  `updated_at`) but as a single `.in("id", ids)` batch update, returning the actually-updated ids via
+  `.select("id")` so the caller can report an accurate count even if some ids in the batch didn't
+  belong to the tutor. `payment_method` is deliberately left untouched by the bulk action (no method
+  picker in the bulk UI, unlike the single-lesson form) — out of this ticket's minimal scope; a
+  tutor who wants to record *how* a batch was paid still edits that per-lesson.
+- **IDOR / ownership**: the client-supplied lesson-id list is never trusted directly. Two
+  independent layers both scope the update to the authenticated tutor: (1) `bulkUpdateLessonPayment`
+  adds an explicit `.eq("tutor_id", tutorId)` filter to the update query, and (2) `lesson`'s existing
+  RLS update policy (`supabase/migrations/20260913150813_create_lesson.sql`: `using ((select
+  auth.uid()) = tutor_id)`) independently drops any row that isn't the caller's own regardless of
+  the app-level filter. Confirmed by reading the migration directly (not assumed from TD-006's
+  reasoning) — a foreign lesson id smuggled into the batch is filtered out by both the `.eq` clause
+  and RLS before any row is touched; it simply isn't included in the returned `updatedCount`, and no
+  error is raised for a partial-ownership batch (not expected from normal use, since ids come from
+  the tutor's own already-filtered list, but safe either way). This mirrors, and is at least as
+  strict as, the ownership guarantee TD-007's `getLessonDuplicateDataAction` established for a single
+  id.
+- Scope was kept deliberately narrow per the ticket: no generic bulk-action framework, no bulk
+  status/delete/reschedule, invoicing and single-lesson payment editing untouched.
+
+## Previous Milestone (TD-008)
+
+- Milestone: **TD-008 — Calendar color-coding by student**
+- Status: Implemented; independent review recommended
 
 The day/week lesson calendar (`LessonCalendar`, used by `LessonsCalendarView` and
 `StudentScheduleView`) previously colored every lesson block purely by status (scheduled=cyan,
@@ -273,6 +321,31 @@ were restyled to the new tokens but their logic is untouched.
   student's color is visually distinct enough and the status dot/border stripe stay legible over
   each of the 4 fill hues at `/20`-`/30` opacity.
 
+- TD-009 verification (2026-09-28): this worktree's branch had fallen behind `main` (missing
+  TD-006/TD-007/TD-008) — fast-forwarded onto `main` first (`git merge main --ff-only`, clean, no
+  conflicts) before starting. Hit the same known CRLF-on-disk issue on the first `format:check` (144
+  errors on files this task never touched); fixed the same documented way, `git rm -r --cached . &&
+  git reset --hard HEAD` after committing this task's changes first as a safety checkpoint, then
+  squashed that checkpoint together with a lint fix into one clean commit (`git reset --soft`, purely
+  local history on this not-yet-shared worktree branch, not a rewrite of shared work). After that:
+  `pnpm run format:check` — clean, 181 files. `pnpm run lint` — 0 errors (same 1 pre-existing
+  unrelated warning + 1 info as TD-006/TD-007/TD-008, both in files this task didn't touch). `pnpm
+  run typecheck` — clean. `pnpm run test` — 10 files, 46 tests, all passed (no new tests added — this
+  ticket's logic is thin enough, and closely-patterned enough on `updateLessonPayment`/
+  `moveLessonAction`, that manual verification was judged sufficient, matching the precedent of not
+  adding tests for `moveLessonAction`/`updateLessonStatusAction` either). `pnpm run build` — passed
+  cleanly after deleting `.next` first, all 38 routes compiled, no cache corruption hit this run.
+  `pnpm audit` not re-run — no new dependency was added.
+- IDOR guarantee verified by reading `supabase/migrations/20260913150813_create_lesson.sql`
+  directly (see TD-009 above) rather than assumed from TD-006/TD-007's prior reasoning; not verified
+  by an actual live attempt to update a foreign tutor's lesson id (would need a second hosted
+  account and an interactive Supabase session, unavailable in this unsupervised environment).
+- No manual/hosted-browser walkthrough of the new checkboxes/bulk bar was performed (no interactive
+  Supabase session in this unsupervised environment) — flagged as unverified pending a manual pass:
+  specifically, filter to `payment=unpaid`, select several lessons (including "select all visible"),
+  click "Mark as paid", confirm the outcome message's count, the rows update/drop out of the
+  `unpaid` filter, and the reverse with "Mark as unpaid" under `payment=paid`.
+
 ## Known Issues
 
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
@@ -305,16 +378,19 @@ were restyled to the new tokens but their logic is untouched.
   blob content didn't change in the rebase. If `format:check` fails on files you didn't touch, try
   `git rm -r --cached . && git reset --hard HEAD` to force Git to re-apply the `eol=lf` attribute,
   before assuming the source content itself is wrong.
+- TD-009's checkboxes/bulk-payment action were not manually verified against a live hosted account
+  (no interactive Supabase session available in the unsupervised environment that built them) — see
+  Verification State for the specific manual pass recommended before relying on this fully.
+- TD-009's "select all visible" only selects the current page (50 rows) — a tutor with 100+ unpaid
+  lessons matching a filter has to page through and bulk-act per page rather than clearing all
+  matching lessons in one click. Acceptable for now (still a large reduction over one-at-a-time),
+  worth revisiting if pagination-spanning bulk selection becomes a real complaint.
 
 ## Next Recommended Task
 
-**Bulk "mark lessons as paid" on the lessons list (`src/app/dashboard/lessons`,
-`src/features/lessons/`): row checkboxes plus a bulk action that flips `payment_status` to `paid`
-for the selected completed lessons, reusing the `payment=unpaid|paid|all` filter TD-006 already
-added (`paymentFilterSchema`, `listLessonsPage`) so a tutor can filter to `payment=unpaid`, select
-several, and clear them in one action instead of opening each lesson individually. Picked over the
-homework due-date dashboard nudge because it's a smaller, more contained change (one list view, one
-new server action, no new dashboard surface) and directly extends a filter that already exists and
-is already unverified against a live account (TD-006) — a good opportunity to verify both at once.
-Needs the usual IDOR check: the bulk update must still scope to `tutor_id = auth.uid()` (RLS already
-does this for `lesson`, but double-check the bulk-update query shape doesn't bypass or weaken it).**
+**In-app homework due-date/overdue nudges on the dashboard: a banner or section on the tutor
+dashboard (`src/features/dashboard/`) surfacing homework that's due soon or already overdue and
+still `assigned`/not `reviewed`, since no email infrastructure exists yet and an in-app-only nudge
+is the practical next step. Reuses the existing homework due-date field and status enum
+(`src/features/homework/`) — no schema change expected, just a new dashboard query and a UI section
+following `TodayDashboard`'s existing card/stat patterns.**

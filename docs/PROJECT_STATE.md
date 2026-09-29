@@ -561,18 +561,16 @@ were restyled to the new tokens but their logic is untouched.
   run build` — passed cleanly after deleting `.next` first, all 39 routes compiled (including the
   new `/dashboard/students/[id]/billing` bundle at 1.16 kB), no cache corruption hit this run.
   `pnpm audit` not re-run — no new dependency was added.
-- **New migration not applied to the live hosted Supabase project** (`cmlvtnjoynffrznyelym`) —
-  this unsupervised environment has no DB credentials/MCP write access to that project. The
-  `tutor_unpaid_summary` function in `supabase/migrations/20260928010000_tutor_unpaid_summary.sql`
-  is therefore unverified against the real database: it needs a manual `supabase db push` (or
-  equivalent) against the hosted project, followed by a Supabase advisor check (security +
-  performance), before this feature will actually work in production. Until applied, the billing
-  page's RPC call will fail with a "function does not exist" error at runtime.
-- No manual/hosted-browser walkthrough of the new "Balance owed" card was performed (no interactive
-  Supabase session in this unsupervised environment, and the migration isn't applied yet regardless)
-  — flagged as unverified pending: apply the migration, then seed a completed+unpaid lesson for a
-  real student, open their billing page, and confirm the total/count/link are correct, then repeat
-  with a second currency to confirm the multi-row (grouped-by-currency) case renders correctly.
+- **Migration applied (2026-09-29)**: `tutor_unpaid_summary` was pushed to the live hosted Supabase
+  project (`cmlvtnjoynffrznyelym`) via `apply_migration`, with the user's explicit go-ahead. Security
+  advisor re-checked after applying: the function is flagged `authenticated_security_definer_function_
+  executable` (WARN) — expected and consistent with six other pre-existing `security definer` RPCs in
+  this project (`accept_portal_invite`, `portal_count_lessons`, `portal_list_lessons`,
+  `portal_list_students`, `portal_unpaid_summary`, `submit_homework`), all intentionally callable by
+  `authenticated` with their own internal `auth.uid()` ownership check — same pattern, not a new class
+  of issue. No other new advisor findings. The billing page's RPC call now works against production.
+  Full manual browser walkthrough (seed a completed+unpaid lesson, confirm the card renders correctly,
+  repeat with a second currency) still not performed in this session.
 
 - TD-012 verification (2026-09-28): this worktree's branch was already on `main` (had TD-011), so
   no fast-forward was needed. Hit the same known CRLF-on-disk issue on the first `format:check`
@@ -643,29 +641,36 @@ were restyled to the new tokens but their logic is untouched.
 - TD-010's dashboard and portal due-date nudges were not manually verified against a live hosted
   account — see Verification State for the specific manual pass recommended before relying on this
   fully.
-- TD-011's `tutor_unpaid_summary` migration has not been applied to the live hosted Supabase
-  project — see Verification State. The billing page's RPC call will error until it is.
+- TD-011's `tutor_unpaid_summary` migration is now applied to the live hosted Supabase project
+  (2026-09-29) — see Verification State. Still no manual/hosted-browser walkthrough of the resulting
+  billing-page card.
 - TD-012's new outstanding-balance pill(s) were not manually verified against a live hosted account
   — see Verification State for the specific manual pass recommended before relying on this fully.
 
 ## Next Recommended Task
 
-**Add a lesson/homework notes search on the lessons list** (`src/features/lessons/`), following the
-exact pattern TD-006 already established for student name search: a `?q=` query param
-(case-insensitive `ilike`, wildcard-escaped, Zod-validated, debounced client-side) matched against
-`lesson.notes`, applied in `listLessonsPage` alongside the existing status/payment/student/subject
-filters. Picked deliberately as a **code-only** item — no new table, column, index, or migration
-needed (`lesson.notes` already exists as plain `text`, and TD-006's student search proves a plain
-`ilike` scan is fine at this data scale without a dedicated full-text index) — since this
-unsupervised environment still has no DB write access to the live hosted Supabase project
-(`cmlvtnjoynffrznyelym`), and TD-011's `tutor_unpaid_summary` migration remains blocked on that for
-the same reason (see Known Issues). A tutor with many lessons currently has no way to find "the one
-where I noted X" short of scrolling/filtering by date — the same kind of gap TD-006's student search
-closed for student names.
+**A dedicated manual/hosted-browser verification pass across TD-006 through TD-012.** None of these
+seven changes have had a single interactive walkthrough against the live hosted account yet — only
+static analysis, typecheck, unit tests, and production builds. With `tutor_unpaid_summary` now applied
+(2026-09-29), every shipped feature is technically live; the highest-value next step is exercising
+each one for real (unpaid filter, bulk pay, reactivate, student search, duplicate lesson, calendar
+colors, homework nudges, per-student balance, dashboard revenue total) before adding more surface
+area. If that pass is deferred, the next-best code-only item is a lesson/homework notes search on the
+lessons list (`?q=` against `lesson.notes`, mirroring TD-006's student-name search pattern) — no
+migration needed.
 
-Once DB write access to the live hosted project becomes available again, the standing
-higher-priority item is still: apply and verify the TD-011 migration (`supabase db push` to create
-`tutor_unpaid_summary`, check the Supabase advisor, then the manual walkthrough in TD-011's
-Verification State) — and, separately, none of TD-006 through TD-012's changes have yet had a single
-manual/hosted-browser walkthrough in an interactive session, worth a dedicated verification pass
-across all seven before adding much more surface area.**
+**Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
+there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout
+integration exists (`grep`-confirmed across `src/`). `payment_status`/`payment_method` on `lesson` are
+purely tutor-side manual bookkeeping fields (the tutor marks a lesson paid and picks a label —
+`online`/`invoice`/`sbp` — after money changes hands elsewhere); students never see or trigger a
+payment action anywhere in the app. Every payment-related feature built in TD-006–TD-012 (the
+unpaid filter, bulk mark-paid, per-student balance, dashboard revenue total) reads/writes `lesson`
+scoped only by `tutor_id`, with zero dependency on the student having a portal account: `student` rows
+require no `portal_membership`/`portal_invite` to exist (`hasPortalMembership`/`listPortalMembers` in
+`src/features/students/data.ts` treat both as optional, separate concerns from the student record
+itself). A student added purely for the tutor's own record-keeping, who never receives an invite and
+never logs in, is tracked identically to one who does — the only features gated on a portal account
+are the student-facing portal pages themselves (`NextLessonCard`, `HomeworkDueBanner`,
+`portal_unpaid_summary`), which simply render nothing for a student without one; nothing on the tutor
+side assumes or requires it.

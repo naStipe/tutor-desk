@@ -114,7 +114,7 @@ function NavPill({
     >
       <span className="flex-1">{children}</span>
       {typeof count === "number" && count > 0 && (
-        <span className="rounded-[20px] bg-[var(--td2-attention)] px-1.5 py-px font-mono text-[11px] font-medium text-[var(--td2-attention-ink)]">
+        <span className="rounded-[20px] bg-[var(--td2-attention)] px-1.5 py-px font-mono text-xs font-medium text-[var(--td2-attention-ink)]">
           {count}
         </span>
       )}
@@ -159,15 +159,15 @@ function NavLinks({
 
       {items === TUTOR_NAV_ITEMS && (
         <>
-          <p className="mt-6 px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--td2-text-disabled)]">
+          <p className="mt-6 px-3 pb-1.5 font-mono text-xs uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
             Coming later
           </p>
           <span
             aria-disabled="true"
-            className="flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-sm text-[var(--td2-text-disabled)]"
+            className="flex items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-sm text-[var(--td2-text-faint)]"
           >
             <span className="flex-1">Invoices</span>
-            <span className="rounded-[20px] border border-[var(--td2-border-chip)] bg-[var(--td2-bg-inset)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--td2-text-disabled)]">
+            <span className="rounded-[20px] border border-[var(--td2-border-chip)] bg-[var(--td2-bg-inset)] px-1.5 py-0.5 font-mono text-xs text-[var(--td2-text-faint)]">
               SOON
             </span>
           </span>
@@ -263,14 +263,14 @@ function Footer({ email, name }: { email: string; name?: string | null }) {
         <p className="truncate text-[13px] font-medium text-[var(--td2-text-primary)]">
           {displayName}
         </p>
-        <p className="truncate font-mono text-[10px] text-[var(--td2-text-faint)]">{email}</p>
+        <p className="truncate font-mono text-xs text-[var(--td2-text-faint)]">{email}</p>
       </div>
       <form action={signOutAction}>
         <button
           type="submit"
           title="Sign out"
           aria-label="Sign out"
-          className="rounded-lg px-3 py-2.5 text-[13px] font-medium text-[var(--td2-text-muted)] hover:bg-[var(--td2-bg-inset-2)] hover:text-[var(--td2-text-primary)] lg:px-2 lg:py-1.5 lg:text-[11px]"
+          className="rounded-lg px-3 py-2.5 text-[13px] font-medium text-[var(--td2-text-muted)] hover:bg-[var(--td2-bg-inset-2)] hover:text-[var(--td2-text-primary)] lg:px-2 lg:py-1.5 lg:text-xs"
         >
           Sign out
         </button>
@@ -296,15 +296,16 @@ function BottomTab({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium active:bg-[var(--td2-bg-inset-2)] ${
+      className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium active:bg-[var(--td2-bg-inset-2)] ${
         active ? "text-[var(--td2-accent-text-strong)]" : "text-[var(--td2-text-muted)]"
       }`}
     >
       <span className="relative">
         <Icon className="h-6 w-6" />
         {typeof count === "number" && count > 0 && (
-          <span className="absolute -right-2.5 -top-1.5 min-w-4 rounded-full bg-[var(--td2-attention)] px-1 text-center font-mono text-[10px] font-medium leading-4 text-[var(--td2-attention-ink)]">
+          <span className="absolute -right-2.5 -top-1.5 min-w-4 rounded-full bg-[var(--td2-attention)] px-1 text-center font-mono text-xs font-medium leading-4 text-[var(--td2-attention-ink)]">
             {count}
+            <span className="sr-only"> need attention</span>
           </span>
         )}
       </span>
@@ -427,7 +428,7 @@ export function AppShell({
             onClick={() => setMenuOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
-            className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium active:bg-[var(--td2-bg-inset-2)] ${
+            className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium active:bg-[var(--td2-bg-inset-2)] ${
               menuActive ? "text-[var(--td2-accent-text-strong)]" : "text-[var(--td2-text-muted)]"
             }`}
           >

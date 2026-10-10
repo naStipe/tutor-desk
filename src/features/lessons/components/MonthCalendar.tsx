@@ -80,7 +80,7 @@ export function MonthCalendar({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 px-1 pb-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
+      <div className="grid grid-cols-7 gap-1 px-1 pb-1.5 text-center text-xs font-semibold uppercase tracking-wide text-ink-subtle">
         {weekdayHeaders.map((label, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: fixed 7-entry header; labels can repeat in some locales
           <span key={index}>{label}</span>
@@ -107,6 +107,8 @@ export function MonthCalendar({
               key={dateParam}
               type="button"
               disabled={Boolean(isDisabled)}
+              aria-pressed={isSelected}
+              aria-current={isToday ? "date" : undefined}
               onClick={() => onSelectDate(dateParam)}
               className={`relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-sm transition-all duration-150 sm:h-16 active:scale-95 motion-reduce:hover:scale-100 motion-reduce:active:scale-100 ${
                 isSelected
@@ -114,40 +116,45 @@ export function MonthCalendar({
                   : isToday
                     ? "border border-brand/40 text-ink hover:bg-brand/5"
                     : isPast
-                      ? "text-ink-subtle/70 hover:bg-surface-muted"
+                      ? "text-ink-subtle hover:bg-surface-muted"
                       : "text-ink hover:bg-surface-muted hover:scale-[1.03]"
               } ${!inMonth ? "text-ink-subtle/40" : ""} ${isDisabled ? "cursor-not-allowed opacity-30 hover:scale-100 active:scale-100" : ""}`}
             >
               <span>{day.getDate()}</span>
               {(count > 0 || homeworkCount > 0 || reviewCount > 0) && (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-0.5">
                   {count > 0 && (
                     <span
-                      className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
+                      className={`rounded-full px-1 text-xs font-medium leading-tight ${
                         isSelected ? "bg-on-brand/20 text-on-brand" : "bg-brand/15 text-brand"
                       }`}
                     >
                       {count}
+                      <span className="sr-only"> lessons</span>
                     </span>
                   )}
                   {homeworkCount > 0 && (
                     <span
-                      className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
+                      className={`rounded-sm px-1 text-xs font-medium leading-tight ${
                         isSelected ? "bg-on-brand/20 text-on-brand" : "bg-warning/20 text-warning"
                       }`}
                       title={`${homeworkCount} ${homeworkDueLabel}`}
                     >
                       {homeworkCount}
+                      <span className="sr-only"> {homeworkDueLabel}</span>
                     </span>
                   )}
                   {reviewCount > 0 && (
                     <span
-                      className={`rounded-full px-1.5 text-[10px] font-medium leading-tight ${
-                        isSelected ? "bg-on-brand/20 text-on-brand" : "bg-cyan/20 text-cyan"
+                      className={`rounded-full px-1 text-xs font-medium leading-tight ring-1 ring-inset ${
+                        isSelected
+                          ? "bg-on-brand/20 text-on-brand ring-on-brand/50"
+                          : "bg-cyan/20 text-cyan ring-cyan/50"
                       }`}
                       title={`${reviewCount} ${reviewLabel}`}
                     >
                       {reviewCount}
+                      <span className="sr-only"> {reviewLabel}</span>
                     </span>
                   )}
                 </span>

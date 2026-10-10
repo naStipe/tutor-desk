@@ -138,7 +138,7 @@ function Card({
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--td2-text-muted)]">
+    <p className="font-mono text-xs uppercase tracking-[0.1em] text-[var(--td2-text-muted)]">
       {children}
     </p>
   );
@@ -158,7 +158,7 @@ function GreetingHeader({
       <div>
         <p
           suppressHydrationWarning
-          className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--td2-text-muted)]"
+          className="font-mono text-xs uppercase tracking-[0.12em] text-[var(--td2-text-muted)]"
         >
           {formatEyebrowDate(now, locale)}
         </p>
@@ -205,6 +205,12 @@ const HoursTrendCard = memo(function HoursTrendCard({
   const { linePath, areaPath, last } = buildLinePath(analytics.hoursTrend, width, height);
   const weekHours = analytics.hoursTrend.at(-1) ?? 0;
   const goalPct = Math.min(100, Math.round((weekHours / WEEKLY_GOAL_HOURS) * 100));
+  const trendSummary = `Teaching hours per week, last ${analytics.hoursTrend.length} weeks. ${analytics.hoursTrend
+    .map(
+      (hours, index) =>
+        `${index === analytics.hoursTrend.length - 1 ? "This week" : `Week of ${analytics.weekLabels[index] ?? index + 1}`}: ${hours.toFixed(1)} hours`,
+    )
+    .join(". ")}.`;
 
   return (
     <Card index={0}>
@@ -240,7 +246,7 @@ const HoursTrendCard = memo(function HoursTrendCard({
           preserveAspectRatio="none"
           className="block h-[130px] w-full"
           role="img"
-          aria-label="Teaching hours per week, last 8 weeks"
+          aria-label={trendSummary}
         >
           <defs>
             <linearGradient id="hoursTrendFill" x1="0" y1="0" x2="0" y2="1">
@@ -288,9 +294,19 @@ const HoursTrendCard = memo(function HoursTrendCard({
             </>
           )}
         </svg>
-        <div className="mt-2 flex justify-between font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
-          {analytics.weekLabels.map((label) => (
-            <span key={label}>{label}</span>
+        <div
+          aria-hidden="true"
+          className="mt-2 flex justify-between font-mono text-xs uppercase tracking-[0.02em] text-[var(--td2-text-faint)]"
+        >
+          {analytics.weekLabels.map((label, index) => (
+            <span
+              key={label}
+              className={
+                (analytics.weekLabels.length - 1 - index) % 2 === 1 ? "max-sm:hidden" : undefined
+              }
+            >
+              {label}
+            </span>
           ))}
         </div>
       </div>
@@ -308,6 +324,9 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
 }) {
   const items = analytics.subjectSplit.slice(0, 4);
   let cumulative = 0;
+  const splitSummary = `Subject split for this month. ${items
+    .map((item) => `${item.name}: ${item.percent}%, ${item.hours.toFixed(1)} hours`)
+    .join(". ")}.`;
 
   return (
     <Card className="flex flex-col" index={1}>
@@ -324,7 +343,7 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
                 viewBox="0 0 100 100"
                 className="block h-[104px] w-[104px] -rotate-90"
                 role="img"
-                aria-label="Subject split for this month"
+                aria-label={splitSummary}
               >
                 <circle
                   cx="50"
@@ -359,7 +378,7 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
                 <span className="text-[19px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
                   {Math.round(analytics.monthHours)}h
                 </span>
-                <span className="font-mono text-[8.5px] uppercase tracking-[0.1em] text-[var(--td2-text-faint)]">
+                <span className="font-mono text-xs uppercase tracking-[0.04em] text-[var(--td2-text-faint)]">
                   Total
                 </span>
               </div>
@@ -368,6 +387,7 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
               {items.map((item, index) => (
                 <div key={item.name} className="flex items-center gap-2.5">
                   <span
+                    aria-hidden="true"
                     className="h-2 w-2 shrink-0 rounded-[2px]"
                     style={{
                       background: "var(--td2-accent)",
@@ -377,7 +397,7 @@ const SubjectSplitCard = memo(function SubjectSplitCard({
                   <span className="flex-1 truncate text-[12.5px] font-medium text-[var(--td2-text-primary)]">
                     {item.name}
                   </span>
-                  <span className="font-mono text-[11px] text-[var(--td2-text-muted)]">
+                  <span className="font-mono text-xs text-[var(--td2-text-muted)]">
                     {item.hours.toFixed(1)}h
                   </span>
                 </div>
@@ -399,7 +419,7 @@ function SchedulePill({
 }: {
   label: "DONE" | "UP NEXT" | "IN PROGRESS" | "NO PLAN" | "READY";
 }) {
-  const base = "shrink-0 rounded-[7px] px-[9px] py-[4px] font-mono text-[9px] tracking-[0.08em]";
+  const base = "shrink-0 rounded-[7px] px-[9px] py-[4px] font-mono text-xs tracking-[0.02em]";
   if (label === "UP NEXT" || label === "IN PROGRESS")
     return (
       <span
@@ -468,7 +488,7 @@ function ScheduleAheadCard({
         <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
           Next few days
         </h2>
-        <span className="font-mono text-[11px] text-[var(--td2-text-muted)]">
+        <span className="font-mono text-xs text-[var(--td2-text-muted)]">
           {items.length} · {formatDuration(totalMinutes)}
         </span>
       </div>
@@ -493,7 +513,7 @@ function ScheduleAheadCard({
                 href={`/dashboard/lessons/${item.id}`}
                 className="flex items-center gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 transition-[background-color,transform] duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.99] active:bg-[var(--td2-bg-row-hover)] motion-reduce:active:scale-100"
               >
-                <span className="w-[76px] shrink-0 font-mono text-[11px] text-[var(--td2-text-secondary)] sm:w-[52px] sm:text-[10.5px]">
+                <span className="w-[76px] shrink-0 font-mono text-xs text-[var(--td2-text-secondary)] sm:w-[64px]">
                   {start.toLocaleDateString(locale, { weekday: "short" }).toUpperCase()}{" "}
                   {start.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
                 </span>
@@ -513,6 +533,7 @@ function ScheduleAheadCard({
 }
 
 function MiniTrendLine({ values }: { values: number[] }) {
+  const label = `Hours per week, last ${values.length} weeks: ${values.map((value) => value.toFixed(1)).join(", ")}`;
   const width = 64;
   const height = 20;
   const { linePath } = buildLinePath(values, width, height, 2, 2);
@@ -521,7 +542,7 @@ function MiniTrendLine({ values }: { values: number[] }) {
       viewBox={`0 0 ${width} ${height}`}
       className="h-5 w-16 shrink-0"
       role="img"
-      aria-label="Hours per week trend"
+      aria-label={label}
     >
       <path
         d={linePath}
@@ -571,7 +592,7 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
                     {student.name}
                   </span>
                   <span
-                    className={`block text-[11px] ${
+                    className={`block text-xs ${
                       needsAttention
                         ? "text-[var(--td2-accent-text)]"
                         : "text-[var(--td2-text-muted)]"
@@ -587,7 +608,7 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
                 >
                   <MiniTrendLine values={student.sparkline} />
                 </span>
-                <span className="w-6 shrink-0 text-right font-mono text-[11px] text-[var(--td2-text-muted)]">
+                <span className="w-8 shrink-0 text-right font-mono text-xs text-[var(--td2-text-muted)]">
                   {student.totalHours.toFixed(0)}h
                 </span>
               </Link>
@@ -596,7 +617,7 @@ const StudentsOverviewCard = memo(function StudentsOverviewCard({
         </div>
       )}
       <div className="mt-4 flex-1" />
-      <p className="mt-4 border-t border-[var(--td2-border-hairline)] pt-3.5 text-[11.5px] text-[var(--td2-text-muted)]">
+      <p className="mt-4 border-t border-[var(--td2-border-hairline)] pt-3.5 text-xs text-[var(--td2-text-muted)]">
         Trend = hours per week, last 7 weeks.
       </p>
     </Card>
@@ -617,6 +638,7 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
 }) {
   const max = Math.max(1, ...analytics.heatmap.flat());
   const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+  const weekdayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
     <Card className="flex flex-col" index={2}>
@@ -626,7 +648,10 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
         </h2>
       </div>
       <div className="mt-4 flex gap-1.5">
-        <div className="flex flex-col gap-1.5 pt-[18px] font-mono text-[8.5px] text-[var(--td2-text-faint)]">
+        <div
+          aria-hidden="true"
+          className="flex flex-col gap-1.5 pt-[22px] font-mono text-xs leading-none text-[var(--td2-text-faint)]"
+        >
           {weekdayLabels.map((label, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: fixed 7-day week order, no identity to key on
             <div key={index} className="flex h-[15px] items-center">
@@ -635,7 +660,10 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
           ))}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex gap-1.5 font-mono text-[8.5px] text-[var(--td2-text-faint)]">
+          <div
+            aria-hidden="true"
+            className="mb-1.5 flex gap-1.5 font-mono text-xs leading-4 text-[var(--td2-text-faint)]"
+          >
             {analytics.heatmap.map((_, weekIndex) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: fixed week-number order, no identity to key on
               <div key={weekIndex} className="flex-1 text-center">
@@ -643,7 +671,34 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
               </div>
             ))}
           </div>
+          <div className="sr-only">
+            <table>
+              <caption>Teaching hours by week and weekday</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Week</th>
+                  {weekdayNames.map((name) => (
+                    <th key={name} scope="col">
+                      {name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.heatmap.map((week, weekIndex) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed week order, no identity to key on
+                  <tr key={weekIndex}>
+                    <th scope="row">Week {weekIndex + 1}</th>
+                    {weekdayNames.map((name, dayIndex) => (
+                      <td key={name}>{(week[dayIndex] ?? 0).toFixed(1)} hours</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div
+            aria-hidden="true"
             className="grid gap-1.5"
             style={{ gridTemplateColumns: `repeat(${analytics.heatmap.length}, 1fr)` }}
           >
@@ -657,6 +712,7 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
               .map((cell) => (
                 <div
                   key={cell.key}
+                  title={`${cell.hours.toFixed(1)}h`}
                   className="h-[15px] rounded-[3px]"
                   style={heatCellStyle(cell.hours, max)}
                 />
@@ -665,8 +721,11 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
         </div>
       </div>
       <div className="mt-4 flex-1" />
-      <div className="mt-4 flex items-center gap-2 border-t border-[var(--td2-border-hairline)] pt-3.5">
-        <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
+      <div
+        aria-hidden="true"
+        className="mt-4 flex items-center gap-2 border-t border-[var(--td2-border-hairline)] pt-3.5"
+      >
+        <span className="font-mono text-xs uppercase tracking-[0.04em] text-[var(--td2-text-faint)]">
           Less
         </span>
         <div
@@ -685,7 +744,7 @@ const TermHeatmapCard = memo(function TermHeatmapCard({
           className="h-[11px] w-[11px] rounded-[3px]"
           style={{ background: "var(--td2-accent)" }}
         />
-        <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--td2-text-faint)]">
+        <span className="font-mono text-xs uppercase tracking-[0.04em] text-[var(--td2-text-faint)]">
           More
         </span>
       </div>
@@ -707,7 +766,7 @@ function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionI
         <h2 className="text-[15px] font-bold tracking-[-0.02em] text-[var(--td2-text-primary)]">
           Needs review
         </h2>
-        <span className="rounded-[20px] bg-[var(--td2-attention)] px-2 py-0.5 font-mono text-[11px] font-medium text-[var(--td2-attention-ink)]">
+        <span className="rounded-[20px] bg-[var(--td2-attention)] px-2 py-0.5 font-mono text-xs font-medium text-[var(--td2-attention-ink)]">
           {items.length}
         </span>
       </div>
@@ -722,7 +781,7 @@ function NeedsReviewStrip({ now, items }: { now: Date; items: HomeworkAttentionI
               <p className="truncate text-sm font-medium text-[var(--td2-text-primary)]">{title}</p>
               <p
                 suppressHydrationWarning
-                className={`mt-1 font-mono text-[11px] ${reason === "submitted" ? "text-[var(--td2-text-muted)]" : "text-[var(--td2-accent-text)]"}`}
+                className={`mt-1 font-mono text-xs ${reason === "submitted" ? "text-[var(--td2-text-muted)]" : "text-[var(--td2-accent-text)]"}`}
               >
                 {studentName} ·{" "}
                 {reason === "submitted"
@@ -762,7 +821,10 @@ export function TodayDashboard({
             href="/dashboard/lessons?status=completed&payment=unpaid"
             className="inline-flex min-h-11 w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] sm:min-h-0 transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />
+            <span
+              aria-hidden="true"
+              className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]"
+            />
             {unbilled.count} unbilled lesson{unbilled.count === 1 ? "" : "s"}
           </Link>
           {unbilled.amounts.map((row) => (

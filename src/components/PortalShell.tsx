@@ -168,7 +168,7 @@ export function PortalShell({
                 key={item.href}
                 href={`${item.href}${query}`}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium active:bg-[var(--td2-bg-inset-2)] ${
+                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium active:bg-[var(--td2-bg-inset-2)] ${
                   active ? "text-[var(--td2-accent-text-strong)]" : "text-[var(--td2-text-muted)]"
                 }`}
               >

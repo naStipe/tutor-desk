@@ -92,7 +92,7 @@ export function TimeSlotGrid({
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-ink-subtle">
+      <p className="text-xs text-ink-subtle">
         Each lesson takes <span className="font-medium text-ink">{durationLabel}</span> — hover a
         time to preview the window it will occupy.
       </p>
@@ -141,18 +141,36 @@ export function TimeSlotGrid({
               }`}
             >
               {formatMinutesOfDay(slot.minutes)}
+              {slot.reason === "occupied" && (
+                <>
+                  <span aria-hidden="true" className="ml-1">
+                    ✕
+                  </span>
+                  <span className="sr-only"> booked</span>
+                </>
+              )}
+              {slot.reason === "no-fit" && (
+                <>
+                  <span aria-hidden="true" className="ml-1">
+                    !
+                  </span>
+                  <span className="sr-only"> too close to next lesson</span>
+                </>
+              )}
+              {slot.reason !== "available" &&
+                slot.reason !== "occupied" &&
+                slot.reason !== "no-fit" && <span className="sr-only"> past</span>}
             </button>
           );
         })}
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-subtle">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-subtle">
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm border border-danger/30 bg-danger/10" />
-          Booked
+          <span className="h-2.5 w-2.5 rounded-sm border border-danger/30 bg-danger/10" />✕ Booked
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm border border-warning/30 bg-warning/10" />
-          Too close to next lesson
+          <span className="h-2.5 w-2.5 rounded-sm border border-warning/30 bg-warning/10" />! Too
+          close to next lesson
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm border border-border/60 bg-surface-muted" />

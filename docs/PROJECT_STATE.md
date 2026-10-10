@@ -2,6 +2,72 @@
 
 ## Current Milestone
 
+- Milestone: **TD-018 — Accessibility pass (non-color cues, minimum text size, contrast)**
+- Status: Implemented; **not verified with a screen reader, on a real phone or against the hosted account**
+- Branch: `main` (uncommitted)
+- Last updated: 2026-10-10
+
+Presentation/markup only. No schema, data-layer, server-action or dependency change.
+
+- **Status by color only** (added a non-color cue; student-color choice from TD-016 untouched):
+  `LessonCalendar` blocks now start with a per-status glyph (scheduled `○`, completed `✓`, cancelled `⊘`,
+  no-show `!`, replacing the color-only dot), the second line reads "N min · Status", and the button has an
+  `aria-label` "9:00 AM to 10:00 AM, Student, Status". `STATUS_DOT_CLASSES` was removed; `STATUS_GLYPHS` and
+  `STATUS_TEXT_CLASSES` are exported and used by `CalendarLegend`. `StudentLessonCalendar` blocks get the
+  same glyph, status line and sr-only status. Homework-due vs review/feedback count pills are now distinct
+  by shape (square vs round with a ring) and carry sr-only text, in `LessonCalendar`, `StudentLessonCalendar`
+  and `MonthCalendar` (which also distinguishes the lesson count and has sr-only labels); `CalendarLegend`
+  mirrors the shapes. Today's column header gets a 2px brand underline, `aria-current="date"` and sr-only
+  "(today)"; `MonthCalendar` day buttons get `aria-current`/`aria-pressed`. `TimeSlotGrid` booked slots show
+  `✕`, too-close slots `!`, with sr-only text and legend glyphs. `StatusBadge`, `PaymentBadge`, `Badge` and
+  the homework badges already carry text (verified). Past-day weekday labels and past dates used `/70` opacity
+  (failed contrast); now full `ink-subtle`.
+- **Tiny text**: every `text-[8..11px]` and `text-[10.5px]`/`[8.5px]` in `src` is now `text-xs` (12px),
+  including dashboard eyebrows, week labels, donut/heatmap labels, schedule pills, student hours, shell nav
+  badges, bottom-tab labels, calendar gutters and count pills. Heatmap `W1..W8` and weekday letters are
+  `aria-hidden` (a visually hidden `<table>` carries the data); alternate week labels hide below `sm` so 8
+  labels fit at 375px. Hours trend, donut and per-student sparklines have data-bearing `aria-label`s (before:
+  generic). Decorative swatches are `aria-hidden`. `MonthCalendar` pills use `px-1`/`gap-0.5` so they stay
+  within the 375px cell.
+- **Contrast** (WCAG ratios computed from the tokens; table below). Token changes in `globals.css`, light
+  theme unless noted: `--td2-text-muted` `#737b74`→`#5f665f`; `--td2-text-faint` `#8f958e`→`#666d66`
+  (dark `#6c7471`→`#808885`); `--td2-text-disabled` `#a5aba3`→`#666d66` (dark `#4a514e`→`#808885`; it was
+  used for informative sidebar text, and the usages now use `text-faint`); `--td2-cyan` `#0891b2`→`#0b6680`,
+  `-strong` `#0e7490`→`#0a5468`; `--td2-violet` `#7c3aed`→`#6d28d9`, `-strong` `#6d28d9`→`#5b21b6`;
+  `--td2-danger` `#dc2626`→`#b91c1c`, `-strong` `#b91c1c`→`#991b1b`; `--td2-warning` `#b45309`→`#92400e`,
+  `-strong` `#92400e`→`#78350f`. Hues stay emerald/cyan/violet; light accents are darker shades. New small
+  `src/test/contrast.test.ts` guards body text, accent-on-card/page and `on-*`-on-accent pairs (4.5:1) in both
+  themes.
+  Before (failing, normal text 4.5:1): light `ink-subtle` 3.71-4.16, `faint` 2.60-2.92, `disabled` 1.99-2.24,
+  `cyan` on surface 3.51, `danger` on page 4.10, `warning` on page 4.27, `on-cyan` on cyan 3.68, cyan text on
+  its 10-20% tints 2.5-3.1, violet/danger/warning text on 15-20% tints 3.0-4.4; dark `faint` 3.55-4.10,
+  `disabled` 2.1-2.4. After: all of those pass.
+  **Still below threshold, left on purpose:** light `danger` text on `danger/20` (4.38 on card, only the
+  danger button hover), `danger/15` and `danger/20` on page (4.30/3.95), `violet/20` on page (4.37),
+  `warning/20` on page (4.46) and `cyan/20` on page (4.15) - these tints appear on cards (where they pass,
+  4.60+) or only on hover; `hue-lime` fill vs page 2.63:1 (student color, TD-016 scope; text on it is
+  `ink`); `MonthCalendar` out-of-month dates (`ink-subtle/40`, intentionally dim, inactive);
+  **form-field and card borders** (`border` 1.17-1.26:1, `border-strong` 1.38-1.40:1 on surface, below the
+  3:1 UI-component guideline in both themes). Fixing borders changes the whole look, so it needs a design
+  decision.
+- **Focus and touch targets**: `Modal` close button measured 40px; now `p-3` (44x44 below `sm`, verified).
+  `ConfirmModal` buttons 48px (verified); `Button`/`LinkButton` (quick action row, confirm) have a
+  `focus-visible` 2px brand outline and `min-h-11`; no `outline-none` exists in `src`; the `Modal` close
+  button relies on the browser default focus ring. `Field` inputs show a brand border plus a 25% outline on
+  focus.
+- Verification: `format:check`, `lint` (0 errors, same 1 warning + 1 info), `typecheck`, `test` (72 passed, 6
+  new in `contrast.test.ts`), `build` pass (`.next` removed). In the in-app browser on a temporary public
+  fixture route (removed) at 375x812 and ~1024 wide, light and dark: the calendar blocks, legend, pills,
+  month grid, dashboard cards and confirm sheet render with the glyphs; no horizontal overflow at 375px;
+  no computed font size under 12px outside `sr-only`; close button 44x44. This caught a bug in my own first
+  version (an `sr-only` `<table>` widened the page; wrapped in an `sr-only` div).
+  **Not verified:** screen readers (VoiceOver/TalkBack/NVDA: labels written, never announced), real phone,
+  hosted/authenticated pages (the production `LessonsCalendarView`, lessons list, `WeekAgenda` and
+  `TimeSlotGrid` were not rendered; changes there are class swaps or sr-only text), keyboard-only
+  walkthrough, the `ConfirmModal` focus ring visually, Windows high-contrast mode, `prefers-contrast`.
+
+## Previous Milestone (TD-017)
+
 - Milestone: **TD-017 — "Select all N matching" bulk payment across pages (lessons list)**
 - Status: Implemented; **server action not verified against the hosted database or a real phone**
 - Branch: `main` (uncommitted)

@@ -10,7 +10,7 @@ import {
   startOfDay,
   toDateParam,
 } from "../date-utils";
-import type { CalendarLesson } from "./LessonCalendar";
+import { type CalendarLesson, STATUS_GLYPHS, STATUS_LABELS } from "./LessonCalendar";
 
 const DEFAULT_START_HOUR = 7;
 const DEFAULT_END_HOUR = 21;
@@ -107,14 +107,18 @@ export function StudentLessonCalendar({
             <div
               key={day.toISOString()}
               className={`flex-1 border-l border-border px-2 py-2.5 text-center first:border-l-0 ${
-                isToday ? "bg-brand/10" : isPast ? "bg-surface-muted/50" : ""
+                isToday
+                  ? "border-b-2 border-b-brand bg-brand/10"
+                  : isPast
+                    ? "bg-surface-muted/50"
+                    : ""
               }`}
+              aria-current={isToday ? "date" : undefined}
             >
-              <p
-                className={`text-xs font-medium uppercase tracking-wide ${isPast ? "text-ink-subtle/70" : "text-ink-subtle"}`}
-              >
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
                 {formatWeekdayShort(day, timeZone, locale)}
                 {isPast && !isToday ? " · Past" : ""}
+                {isToday && <span className="sr-only"> (today)</span>}
               </p>
               <p
                 className={`mt-0.5 text-sm font-semibold ${
@@ -128,17 +132,19 @@ export function StudentLessonCalendar({
                   {dueCount > 0 && (
                     <span
                       title={`${dueCount} homework due`}
-                      className="rounded-full bg-warning/20 px-1.5 text-[10px] font-medium leading-tight text-warning"
+                      className="rounded-sm bg-warning/20 px-1.5 text-xs font-medium leading-tight text-warning"
                     >
                       {dueCount}
+                      <span className="sr-only"> homework due</span>
                     </span>
                   )}
                   {feedbackCount > 0 && (
                     <span
                       title={`${feedbackCount} awaiting feedback`}
-                      className="rounded-full bg-cyan/20 px-1.5 text-[10px] font-medium leading-tight text-cyan"
+                      className="rounded-full bg-cyan/20 px-1.5 text-xs font-medium leading-tight text-cyan ring-1 ring-inset ring-cyan/50"
                     >
                       {feedbackCount}
+                      <span className="sr-only"> awaiting feedback</span>
                     </span>
                   )}
                 </p>
@@ -155,7 +161,7 @@ export function StudentLessonCalendar({
         <div className="shrink-0 select-none" style={{ width: GUTTER_PX }}>
           {HOURS.map((hour) => (
             <div key={hour} className="relative text-right" style={{ height: PX_PER_HOUR }}>
-              <span className="absolute -top-2 right-2 text-[11px] text-ink-subtle">
+              <span className="absolute -top-2 right-2 text-xs text-ink-subtle">
                 {formatHourLabel(hour)}
               </span>
             </div>
@@ -228,11 +234,15 @@ export function StudentLessonCalendar({
                       style={{ top, height }}
                     >
                       <span className="block truncate font-medium leading-tight">
+                        <span aria-hidden="true" className="mr-1 font-bold">
+                          {STATUS_GLYPHS[lesson.status]}
+                        </span>
                         {formatMinutesOfDay(startMinutes)} · {lesson.studentName}
+                        <span className="sr-only">, {STATUS_LABELS[lesson.status]}</span>
                       </span>
                       {!compact && (
-                        <span className="block truncate text-[11px] opacity-90">
-                          {durationMinutes} min
+                        <span className="block truncate text-xs opacity-90">
+                          {durationMinutes} min · {STATUS_LABELS[lesson.status]}
                         </span>
                       )}
                     </div>

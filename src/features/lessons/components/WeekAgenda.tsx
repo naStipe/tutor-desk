@@ -52,7 +52,7 @@ export function WeekAgenda({
                   {formatWeekdayShort(day, timeZone, locale)} {day.getDate()}
                 </span>
                 {isToday && (
-                  <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[11px] font-medium text-brand">
+                  <span className="rounded-full bg-brand/15 px-2 py-0.5 text-xs font-medium text-brand">
                     Today
                   </span>
                 )}

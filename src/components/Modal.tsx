@@ -90,7 +90,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-2 rounded-full p-2.5 text-ink-subtle transition-[background-color,color,transform] duration-100 hover:bg-surface-muted hover:text-ink active:scale-90 motion-reduce:active:scale-100 sm:-mr-1 sm:p-1.5"
+            className="-my-1 -mr-3 rounded-full p-3 text-ink-subtle transition-[background-color,color,transform] duration-100 hover:bg-surface-muted hover:text-ink active:scale-90 motion-reduce:active:scale-100 sm:-mr-1 sm:p-1.5"
           >
             <XIcon className="h-5 w-5 sm:h-4 sm:w-4" />
           </button>

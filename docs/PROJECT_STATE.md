@@ -2,6 +2,55 @@
 
 ## Current Milestone
 
+- Milestone: **TD-019 — Component/render tests and refreshed auth e2e spec**
+- Status: Implemented; **e2e spec written but never executed** (Playwright browser download failed)
+- Branch: `main` (uncommitted)
+- Last updated: 2026-10-10
+
+No schema, server-action or runtime-behavior change except one real bug fix in `Select` (below).
+
+- **Dev dependencies added** (devDependencies only, no force flags): `jsdom` 30.1.2 (DOM for vitest; optional
+  peer `canvas` not installed), `@testing-library/react` 16.3.3 (peers react/react-dom 18 || 19, fine on
+  React 19), `@testing-library/dom` 10.4.2 (required peer of RTL), `@testing-library/user-event` 14.6.7.
+  `@testing-library/jest-dom` was skipped on purpose (plain DOM assertions suffice). `pnpm audit`: 8
+  advisories (4 high, 4 moderate), all in `next` (<15.5.27), `postcss`, `source-map-js`, `sharp`, reached via
+  `next` / `@vercel/speed-insights`; none in the new packages. They are not fixed here (no `audit --fix`).
+  `pnpm-lock.yaml` changed (vitest peer variant now includes jsdom).
+- **Setup**: tests opt into jsdom per file with `// @vitest-environment jsdom`; the default stays `node`, so
+  the 13 old pure test files are unchanged. `vitest.config.ts` gained `esbuild: { jsx: "automatic" }`
+  (tsconfig uses `jsx: preserve`, so TSX tests failed with "React is not defined"). `src/test/dom-helpers.ts`
+  provides a test-local `matchMedia` (reduced motion on, coarse pointer / phone width switchable) and
+  `HTMLDialogElement.showModal/show/close` polyfills. Server actions and `next/navigation` are mocked in the
+  LessonsListView test; Supabase is never reached.
+- **New tests (48)**: `select.test.tsx` (custom listbox vs native `<select>` on coarse pointer, keyboard,
+  disabled option, hidden input, placeholder), `modal.test.tsx` (Modal open/close, close button, backdrop,
+  native close event for Esc, sheet/centered class contract; ConfirmModal labels, confirm/cancel, disabled),
+  `week-agenda.test.tsx` (7 days, today pill in tutor zone, lessons, status text, ordering, zone bucketing,
+  hrefs), `lessons-list-view.test.tsx` (rows/cards, pagination via router, selection, bulk action ids,
+  returned/thrown error alerts, "Select all N matching" banner, mode switch and drop, confirm modal, cancel,
+  filter-action payload and count, failure keeps mode).
+- **jsdom limits**: Tailwind/media queries are not evaluated, so sheet-vs-centered is checked as a class
+  contract only; real Esc handling, focus trap, backdrop rendering, `motion` animations (skipped via reduced
+  motion) and `(pointer: coarse)` on real devices are not covered. The table and the phone card list both
+  render in jsdom (CSS hides one).
+- **Bug found and fixed**: in `Select.tsx` the custom listbox relied on `autoFocus` on a `<div>`, which React
+  ignores, so focus stayed on the trigger and ArrowUp/Down/Enter could never choose an option. The open
+  effect now focuses the listbox, and commit/Escape return focus to the trigger (`triggerRef`). Covered by the
+  keyboard test. Verified in jsdom only, not in a real browser.
+- **`e2e/auth.spec.ts` rewritten** for the current UI (ids/copy were stale: `#signup-*`, "Create Tutor
+  Account", a name field and session cards no longer exist). It now checks the home links, sign-in / sign-up
+  forms, Zod field errors ("Enter a valid email address", "Password is required", "Password must be at least
+  8 characters") and navigation between the two pages. The register/sign-out/sign-in round trip was removed
+  (needs a hosted project without email confirmation and created a real user per run; `test:auth:hosted`
+  covers hosted auth). Every submit fails validation before any Supabase call; no credentials used.
+  **Not executed**: `pnpm run test:e2e:install` failed ("Failed to download Chrome Headless Shell"), so the
+  spec is only typechecked and Biome-clean. `e2e/app.spec.ts` is also stale (expects heading "Tutor sign
+  in", the real one is "Sign in"); not touched, out of scope.
+- Verification: `format:check`, `lint` (0 errors, same 1 warning + 1 info), `typecheck`, `test` (120 passed in
+  17 files; 72 before, 48 new), `build` pass (`.next` removed after).
+
+## Previous Milestone (TD-018)
+
 - Milestone: **TD-018 — Accessibility pass (non-color cues, minimum text size, contrast)**
 - Status: Implemented; **not verified with a screen reader, on a real phone or against the hosted account**
 - Branch: `main` (uncommitted)

@@ -69,6 +69,7 @@ export function Select({
 
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const selected = options.find((option) => option.value === current);
@@ -78,6 +79,7 @@ export function Select({
     if (!isControlled) setInternal(nextValue);
     onChange?.(nextValue);
     setOpen(false);
+    triggerRef.current?.focus();
   }
 
   useEffect(() => {
@@ -87,6 +89,12 @@ export function Select({
     }
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  // React ignores `autoFocus` on a <div>, so hand keyboard control to the listbox explicitly;
+  // otherwise ArrowUp/Down/Enter keep going to the trigger and an option can never be chosen.
+  useEffect(() => {
+    if (open) listRef.current?.focus();
   }, [open]);
 
   useEffect(() => {
@@ -160,6 +168,7 @@ export function Select({
       case "Escape":
         event.preventDefault();
         setOpen(false);
+        triggerRef.current?.focus();
         break;
       case "Tab":
         setOpen(false);
@@ -207,6 +216,7 @@ export function Select({
     <div ref={rootRef} className="relative">
       {name && <input type="hidden" name={name} value={current} />}
       <button
+        ref={triggerRef}
         type="button"
         id={triggerId}
         disabled={disabled}

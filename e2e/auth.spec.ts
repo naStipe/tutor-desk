@@ -1,89 +1,86 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-test.describe("TD-001A Tutor Authentication UX", () => {
-  const uniqueId = Date.now();
-  const testTutor = {
-    name: "Alex Tutor",
-    email: `alex-tutor-${uniqueId}@example.com`,
-    password: "Password123!",
-  };
-
-  test("displays unauthenticated session card with navigation links on home page", async ({
-    page,
-  }) => {
+/**
+ * Auth UX smoke tests against the current AuthForm (src/features/auth/components/AuthForm.tsx).
+ *
+ * Every submit here fails Zod validation in the server action before any Supabase call, so no
+ * account is created and no credentials are needed. The old create-account / sign-out / sign-in
+ * round trip was removed: it needs a hosted project that skips email confirmation and it created a
+ * real user on every run. Hosted auth is covered by `pnpm run test:auth:hosted` instead.
+ */
+test.describe("Tutor authentication UX", () => {
+  test("home page links to sign in and sign up", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("#brand-title")).toHaveText("TutorDesk");
-    await expect(page.locator("#sign-in-nav-link")).toBeVisible();
-    await expect(page.locator("#sign-up-nav-link")).toBeVisible();
+    await expect(page.locator("#brand-title")).toContainText("TutorDesk");
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Create a free account/ })).toBeVisible();
   });
 
-  test("validates input fields client-side on sign-up form", async ({ page }) => {
+  test("sign-in page renders its form and links", async ({ page }) => {
+    await page.goto("/sign-in");
+    await expect(page.getByRole("heading", { name: "Sign in", level: 1 })).toBeVisible();
+    await expect(page.getByLabel("Email address")).toBeVisible();
+    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute(
+      "href",
+      "/forgot-password",
+    );
+    await expect(page.getByRole("link", { name: "Create one" })).toHaveAttribute(
+      "href",
+      "/sign-up",
+    );
+  });
+
+  test("sign-in shows field errors for empty fields", async ({ page }) => {
+    await page.goto("/sign-in");
+    await page.getByRole("button", { name: "Sign in" }).click();
+
+    await expect(page.getByText("Enter a valid email address")).toBeVisible();
+    await expect(page.getByText("Password is required")).toBeVisible();
+    await expect(page).toHaveURL(/\/sign-in$/);
+  });
+
+  test("sign-up page renders its form and links", async ({ page }) => {
     await page.goto("/sign-up");
-    await expect(page.locator("#signup-heading")).toHaveText("Create Tutor Account");
-
-    // Click submit with empty fields
-    await page.locator("#signup-submit-btn").click();
-
-    // Verify error messages
-    await expect(page.locator("#signup-name-error")).toBeVisible();
-    await expect(page.locator("#signup-email-error")).toBeVisible();
-    await expect(page.locator("#signup-password-error")).toBeVisible();
-
-    // Test short password
-    await page.locator("#signup-name").fill("Alex Tutor");
-    await page.locator("#signup-email").fill("valid@example.com");
-    await page.locator("#signup-password").fill("short");
-    await page.locator("#signup-submit-btn").click();
-    await expect(page.locator("#signup-password-error")).toContainText("at least 8 characters");
+    await expect(
+      page.getByRole("heading", { name: "Create tutor account", level: 1 }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Email address")).toBeVisible();
+    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute(
+      "href",
+      "/sign-in",
+    );
   });
 
-  test("validates input fields client-side on sign-in form", async ({ page }) => {
-    await page.goto("/sign-in");
-    await expect(page.locator("#signin-heading")).toHaveText("Tutor Sign In");
-
-    await page.locator("#signin-submit-btn").click();
-    await expect(page.locator("#signin-email-error")).toBeVisible();
-    await expect(page.locator("#signin-password-error")).toBeVisible();
-  });
-
-  test("completes end-to-end registration, session recognition, sign-out, and sign-in", async ({
-    page,
-  }) => {
-    // 1. Go to sign-up and create account
+  test("sign-up shows field errors for empty fields and for a short password", async ({ page }) => {
     await page.goto("/sign-up");
-    await page.locator("#signup-name").fill(testTutor.name);
-    await page.locator("#signup-email").fill(testTutor.email);
-    await page.locator("#signup-password").fill(testTutor.password);
-    await page.locator("#signup-submit-btn").click();
+    await page.getByRole("button", { name: "Create account" }).click();
 
-    // 2. Expect redirect to home page with recognized session
-    await page.waitForURL("/");
-    await expect(page.locator("#authenticated-session-card")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("#session-user-name")).toHaveText(testTutor.name);
-    await expect(page.locator("#session-user-email")).toHaveText(testTutor.email);
-    await expect(page.locator("#session-badge")).toHaveText("Authenticated");
+    await expect(page.getByText("Enter a valid email address")).toBeVisible();
+    await expect(page.getByText("Password must be at least 8 characters")).toBeVisible();
 
-    // 3. Verify visiting /sign-in while authenticated shows "Already Signed In" notice
+    // A valid email with a too-short password still fails validation before any Supabase call.
+    await page.getByLabel("Email address").fill("valid@example.com");
+    await page.getByLabel("Password").fill("short");
+    await page.getByRole("button", { name: "Create account" }).click();
+
+    await expect(page.getByText("Password must be at least 8 characters")).toBeVisible();
+    await expect(page.getByText("Enter a valid email address")).toHaveCount(0);
+    await expect(page).toHaveURL(/\/sign-up$/);
+  });
+
+  test("navigates between sign-in and sign-up", async ({ page }) => {
     await page.goto("/sign-in");
-    await expect(page.locator("#already-authenticated-notice")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("#already-authenticated-notice")).toContainText(testTutor.email);
+    await page.getByRole("link", { name: "Create one" }).click();
+    await expect(page).toHaveURL(/\/sign-up$/);
+    await expect(page.getByRole("heading", { name: "Create tutor account" })).toBeVisible();
 
-    // 4. Sign out
-    await page.locator("#sign-out-btn").click();
-    await page.waitForURL("/");
-    await expect(page.locator("#unauthenticated-session-card")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("#sign-in-nav-link")).toBeVisible();
-
-    // 5. Sign back in with credentials
-    await page.goto("/sign-in");
-    await page.locator("#signin-email").fill(testTutor.email);
-    await page.locator("#signin-password").fill(testTutor.password);
-    await page.locator("#signin-submit-btn").click();
-
-    // 6. Expect redirect to home page and authenticated session restored
-    await page.waitForURL("/");
-    await expect(page.locator("#authenticated-session-card")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("#session-user-name")).toHaveText(testTutor.name);
-    await expect(page.locator("#session-user-email")).toHaveText(testTutor.email);
+    await page.getByRole("link", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(/\/sign-in$/);
+    await expect(page.getByRole("heading", { name: "Sign in", level: 1 })).toBeVisible();
   });
 });

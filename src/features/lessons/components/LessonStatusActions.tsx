@@ -24,6 +24,9 @@ const STATUS_ACTION_LABELS: Record<LessonStatus, string> = {
   no_show: "Mark no-show",
 };
 
+const STATUS_ERROR_MESSAGE = "Couldn't update the lesson. Try again.";
+const PAYMENT_ERROR_MESSAGE = "Couldn't update the payment. Try again.";
+
 function PaymentQuickButton({ paid }: { paid: boolean }) {
   const { pending } = useFormStatus();
   return (
@@ -50,15 +53,21 @@ export function LessonStatusActions({
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(status);
   const [pendingStatus, setPendingStatus] = useState<LessonStatus | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function runStatus(next: LessonStatus) {
+    setActionError(null);
     setPendingStatus(next);
     startTransition(async () => {
       setOptimisticStatus(next);
       try {
         await updateLessonStatusAction(lessonId, next);
         setStatus(next);
+      } catch {
+        // No `setStatus`: the optimistic value reverts to the last confirmed status when this
+        // transition ends. The thrown message may carry database text, so show a generic one.
+        setActionError(STATUS_ERROR_MESSAGE);
       } finally {
         setPendingStatus(null);
       }
@@ -74,6 +83,21 @@ export function LessonStatusActions({
   }
 
   const paid = paymentStatus === "paid";
+
+  // A bare `<form action={setLessonPaymentAction}>` would send a thrown error to the route error
+  // boundary and replace the whole page. This wrapper keeps the page and shows an inline message;
+  // a successful call still ends in the action's own redirect().
+  async function submitPayment(formData: FormData) {
+    setActionError(null);
+    try {
+      await setLessonPaymentAction(formData);
+    } catch (error) {
+      // redirect() surfaces as an error carrying a NEXT_REDIRECT digest; let Next handle it.
+      const digest = (error as { digest?: unknown } | null)?.digest;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) throw error;
+      setActionError(PAYMENT_ERROR_MESSAGE);
+    }
+  }
 
   return (
     <>
@@ -99,7 +123,7 @@ export function LessonStatusActions({
             {pendingStatus === "completed" ? "Updating…" : "Mark completed"}
           </Button>
         )}
-        <form action={setLessonPaymentAction}>
+        <form action={submitPayment}>
           <input type="hidden" name="id" value={lessonId} />
           <input type="hidden" name="paymentStatus" value={paid ? "unpaid" : "paid"} />
           {!paid && paymentMethod && (
@@ -116,6 +140,15 @@ export function LessonStatusActions({
           Move
         </Button>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger"
+        >
+          {actionError}
+        </div>
+      )}
 
       <Card className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">

@@ -2,6 +2,55 @@
 
 ## Current Milestone
 
+- Milestone: **TD-015 — Visible error handling for client-called server actions**
+- Status: Implemented; **not verified against the hosted account or a real phone**
+- Branch: `main` (uncommitted)
+- Last updated: 2026-10-10
+
+Presentation/error-path only; no schema, validation, `requireTutorId`, RLS or ownership change, no new
+action, no new dependency. Same inline alert styling as `LessonForm` (`role="alert"`,
+`border-danger/25 bg-danger/10 text-danger`); no toast.
+
+- **`LessonStatusActions`**: `runStatus` now has a `catch`; it shows "Couldn't update the lesson. Try
+  again." above the Status card (visible on phone and desktop) and clears the message at the start of
+  the next attempt. The optimistic status reverts on its own: `setStatus` is only called on success, so
+  `useOptimistic` falls back to the last confirmed status when the transition ends (confirmed in the
+  browser). The thrown message (may contain Supabase text) is not shown.
+- **Phone "Mark paid / Mark unpaid"**: decision: needs a wrapper. A bare `<form action=
+  {setLessonPaymentAction}>` sends a thrown error to `src/app/dashboard/error.tsx`, replacing the whole
+  lesson page. It now uses a small local `submitPayment(formData)` that awaits the same action in
+  try/catch and shows "Couldn't update the payment. Try again." in the same alert. `setLessonPaymentAction`
+  is unchanged (the desktop Payment card still uses it directly); success still ends in its `redirect()`.
+- **`LessonsListView` bulk payment**: the returned `error` was previously shown as neutral grey text,
+  identical to success, and a thrown exception was unhandled. Failures now use a separate `bulkError`
+  state rendered as a danger alert; success stays neutral and is `role="status"`. Both a returned error
+  and a thrown error keep the selection (it is only cleared on success or when filters/page change).
+  Messages reset at the start of the next attempt.
+- **`LessonCalendar` move**: the returned-`error` path was already correct (block rolled back, banner
+  with `role="alert"`, auto-clears after 5s). Broken part: a thrown exception left the block in the new
+  slot with an unhandled rejection. Added try/catch that restores `previousLessons` and shows "Couldn't
+  move the lesson. Try again."
+- **`moveLessonAction` leak**: it returned `Unable to move lesson: <Supabase message>` to the UI. It now
+  returns only the overlap message (new exported `LESSON_OVERLAP_MESSAGE` in `data.ts`, same text as
+  before) or "Couldn't move the lesson. Try again."; the real error is not logged (no server-side
+  logging pattern exists in the repo), so it is currently dropped.
+- Not changed (out of scope): `createLessonAction`/`updateLessonAction` still return raw
+  `error.message` into `LessonForm`; `updateLessonStatusAction`/`bulkUpdateLessonPayment` still throw
+  messages containing Supabase text (now never shown); `ConfirmDeleteForm` etc. unchanged.
+- Verification: `format:check`, `lint` (0 errors, same 1 pre-existing warning + 1 info), `typecheck`,
+  `test` (46 passed), `build` (after deleting a stale `.next`; first run hit the known webpack cache
+  failure) pass. No new unit test (no pure function added). In the in-app browser, on a temporary public
+  fixture route (removed) with `window.fetch` forced to reject server-action requests: at 375x812 the
+  status change reverted to "Scheduled" and showed the alert, the phone payment button showed its alert
+  without leaving the page, bulk "Mark as paid" showed the alert and kept the selection (checkbox still
+  checked), a real mouse drag in the calendar snapped the block back to 10:00 and showed the banner; at
+  1280x800 the alerts render full width, no horizontal overflow. **Not verified:** any behavior against
+  the hosted account; the success paths and the real `redirect()` from the payment wrapper (the fixture
+  cannot sign in); a returned (non-thrown) error from the bulk or move action in the UI (covered by
+  reading code only); real phone.
+
+## Previous Milestone (TD-014)
+
 - Milestone: **TD-014 — Mobile follow-ups (quick actions, no-drag reschedule, confirm sheet, PWA)**
 - Status: Implemented; **not verified on a real phone or against the hosted account**
 - Branch: `main` (uncommitted)
@@ -735,10 +784,9 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**TD-015 — Error handling for client-called server actions** (`updateLessonStatusAction`,
-`bulkSetLessonPaymentAction`, `moveLessonAction` fail silently): visible inline error/toast plus
-optimistic rollback, starting with `LessonStatusActions`. Before it, a manual phone/hosted pass of
-TD-013/TD-014 is still outstanding.
+**Manual phone/hosted pass of TD-013, TD-014 and TD-015** (sign in to the hosted account on a real
+phone: bottom nav, quick actions, Move, confirm sheet, status/payment/bulk/move success and failure
+paths, PWA install). Nothing from these three tickets has been verified against real data.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

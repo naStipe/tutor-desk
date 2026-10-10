@@ -91,6 +91,7 @@ export function LessonsListView({
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
   const [isBulkPending, startBulkTransition] = useTransition();
 
   const visibleIds = lessons.map((lesson) => lesson.id);
@@ -112,10 +113,19 @@ export function LessonsListView({
   function applyBulkPayment(paymentStatus: PaymentStatus) {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    setBulkMessage(null);
+    setBulkError(null);
     startBulkTransition(async () => {
-      const result = await bulkSetLessonPaymentAction(ids, paymentStatus);
+      let result: Awaited<ReturnType<typeof bulkSetLessonPaymentAction>>;
+      try {
+        result = await bulkSetLessonPaymentAction(ids, paymentStatus);
+      } catch {
+        // Thrown (network, expired session, database): keep the selection so the user can retry.
+        setBulkError("Couldn't update the lessons. Your selection is kept. Try again.");
+        return;
+      }
       if (result.error) {
-        setBulkMessage(result.error);
+        setBulkError(result.error);
         return;
       }
       const count = result.updatedCount ?? 0;
@@ -135,6 +145,7 @@ export function LessonsListView({
   function pushParams(updates: Record<string, string | null>) {
     setSelectedIds(new Set());
     setBulkMessage(null);
+    setBulkError(null);
     const next = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
       if (value === null || value === "all") next.delete(key);
@@ -253,7 +264,19 @@ export function LessonsListView({
         </Card>
       )}
 
-      {bulkMessage && <p className="text-sm text-ink-muted">{bulkMessage}</p>}
+      {bulkError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-danger/25 bg-danger/10 p-3 text-sm text-danger"
+        >
+          {bulkError}
+        </div>
+      )}
+      {bulkMessage && (
+        <p role="status" className="text-sm text-ink-muted">
+          {bulkMessage}
+        </p>
+      )}
 
       {lessons.length === 0 ? (
         <Card>

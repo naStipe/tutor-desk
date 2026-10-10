@@ -16,6 +16,7 @@ import {
   deleteLesson,
   getFirstLessonForSeries,
   getLesson,
+  LESSON_OVERLAP_MESSAGE,
   listLessonSlotsInRange,
   updateLesson,
   updateLessonPayment,
@@ -223,7 +224,11 @@ export async function moveLessonAction(
     revalidatePath("/dashboard/schedule");
     return { id: lesson.id };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Unable to move lesson." };
+    // Only the overlap message is meant for the user; other messages can carry database text.
+    if (error instanceof Error && error.message === LESSON_OVERLAP_MESSAGE) {
+      return { error: error.message };
+    }
+    return { error: "Couldn't move the lesson. Try again." };
   }
 }
 

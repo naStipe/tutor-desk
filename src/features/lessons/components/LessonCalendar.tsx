@@ -304,11 +304,15 @@ export function LessonCalendar({
     );
 
     startTransition(async () => {
-      const result = await moveLessonAction(
-        lesson.id,
-        newStart.toISOString(),
-        newEnd.toISOString(),
-      );
+      let result: Awaited<ReturnType<typeof moveLessonAction>>;
+      try {
+        result = await moveLessonAction(lesson.id, newStart.toISOString(), newEnd.toISOString());
+      } catch {
+        // Thrown (network, expired session): put the block back instead of leaving it moved.
+        setLessons(previousLessons);
+        setError("Couldn't move the lesson. Try again.");
+        return;
+      }
       if ("error" in result) {
         setLessons(previousLessons);
         setError(result.error ?? "Unable to move lesson.");

@@ -27,9 +27,11 @@ const CONFLICT_ERROR_CODE = "23P01";
 /** Postgres unique_violation, raised by the (series_id, start_time) no-duplicate constraint. */
 const DUPLICATE_ERROR_CODE = "23505";
 
+export const LESSON_OVERLAP_MESSAGE = "This time overlaps another lesson. Choose a different time.";
+
 function lessonWriteErrorMessage(error: { code?: string; message: string }, fallback: string) {
   if (error.code === CONFLICT_ERROR_CODE) {
-    return "This time overlaps another lesson. Choose a different time.";
+    return LESSON_OVERLAP_MESSAGE;
   }
   return `${fallback}: ${error.message}`;
 }

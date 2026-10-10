@@ -128,3 +128,13 @@ This document records the foundational architectural decisions established for T
 * **Operational model**: Project `cmlvtnjoynffrznyelym` is the hosted development environment. Migration files are authoritative; hosted state is inspected and updated only through reviewed forward migrations. MCP is for inspection and development assistance, not undocumented schema mutation.
 * **Existing state**: The project contained disposable tables from an earlier TutorHub test implementation. After the owner confirmed that data was irrelevant, TD-001S removed the legacy public schema and its global Auth trigger through an explicit migration. Existing managed Auth identities were left intact. The resulting public schema contains only `tutor_profile`.
 * **Status**: Accepted.
+
+---
+
+## ADR-015: Resend as the Email Provider (REST API for app mail, custom SMTP for Auth mail)
+
+* **Decision**: Use Resend. Supabase Auth emails (signup confirmation, password recovery) go out through Supabase's custom SMTP setting pointed at Resend (`smtp.resend.com:465`). App emails (lesson reminder, unpaid-balance reminder) call Resend's REST API (`POST https://api.resend.com/emails`) with `fetch` from a server-only module in `src/features/notifications/`. Lesson reminders are scheduled with Vercel Cron, shipped **off**: master switch `EMAIL_NOTIFICATIONS_ENABLED` (default off) and no `vercel.json` cron entry until the owner activates it.
+* **Reasoning**: The owner chose Resend. One provider and one API key cover both mail paths. A single endpoint does not justify the Resend SDK, so no dependency was added. A sent-log table (`notification_log`) makes the cron idempotent at any frequency of once per day or faster.
+* **Consequences**: Introduces the first service-role (RLS-bypassing) code path, confined to `src/features/notifications/` and documented in `docs/SECURITY.md`. Requires a verified sending domain (docs/EMAIL_SETUP.md). Supersedes the earlier "no email channel / mail-provider undecided" status.
+* **Alternatives Considered**: Supabase's built-in SMTP (rate-limited, not for production); Resend SDK (extra dependency for one call); Supabase Edge Function + pg_cron (a second runtime to operate, against the single-monolith direction).
+* **Status**: Accepted.

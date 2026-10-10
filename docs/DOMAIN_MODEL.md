@@ -74,6 +74,13 @@
 * Represents an invitation issued by a tutor to a student/parent to create a portal account or access their portal link.
 * Attributes (anticipated): id, tutorId, studentId, token, expiresAt, status (pending, accepted, expired).
 
+### NotificationLog (TD-020)
+* Implemented as `public.notification_log` (migration written, not yet applied): `id`, `tutor_id`, `kind`
+  (`lesson_reminder`, `balance_reminder`), optional `lesson_id` / `student_id`, masked `to_email_masked`,
+  `status` (`pending`, `sent`, `skipped`, `failed`), `error_code`, timestamps. Unique on `(kind, lesson_id)`.
+  Written only by server code with the service role; tutors can read their own rows. There are still no
+  invoices, so "InvoiceReminder" below remains anticipated; balance reminders are per student, not per invoice.
+
 ### 11. InvoiceReminder
 * Log and schedule of automated payment reminders for an unpaid `Invoice`.
 * Attributes (anticipated): id, invoiceId, reminderType (upcoming, due_date, overdue), scheduledFor, sentAt, status.

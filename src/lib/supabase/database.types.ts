@@ -355,6 +355,67 @@ export type Database = {
           },
         ]
       }
+      notification_log: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          id: string
+          kind: string
+          lesson_id: string | null
+          status: string
+          student_id: string | null
+          to_email_masked: string | null
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          kind: string
+          lesson_id?: string | null
+          status?: string
+          student_id?: string | null
+          to_email_masked?: string | null
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          kind?: string
+          lesson_id?: string | null
+          status?: string
+          student_id?: string | null
+          to_email_masked?: string | null
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lesson"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       portal_invite: {
         Row: {
           accepted_at: string | null
@@ -655,6 +716,34 @@ export type Database = {
     }
     Functions: {
       accept_portal_invite: { Args: { p_token: string }; Returns: string }
+      claim_balance_reminder: {
+        Args: {
+          p_cooldown?: unknown
+          p_student_id: string
+          p_to_masked: string
+          p_tutor_id: string
+        }
+        Returns: string
+      }
+      due_lesson_reminders: {
+        Args: { p_from: string; p_limit: number; p_to: string }
+        Returns: {
+          end_time: string
+          guardian_email: string
+          lesson_id: string
+          meeting_url: string
+          start_time: string
+          student_email: string
+          student_id: string
+          student_name: string
+          subject_name: string
+          tutor_contact_email: string
+          tutor_id: string
+          tutor_locale: string
+          tutor_name: string
+          tutor_timezone: string
+        }[]
+      }
       portal_count_lessons: {
         Args: { p_end?: string; p_start?: string; p_student_id: string }
         Returns: number

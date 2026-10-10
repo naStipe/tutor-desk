@@ -2,6 +2,53 @@
 
 ## Current Milestone
 
+- Milestone: **TD-020 — Email via Resend (built, NOT activated)**
+- Status: Implemented and verified locally (format, lint, typecheck, 141 tests, build). **Nothing sent, nothing
+  applied**: the migration is not applied to the hosted project, no `vercel.json` cron exists, and the master
+  switch defaults to off. Uncommitted at the time of writing.
+- Last updated: 2026-10-10
+- Owner decision: Resend (ADR-015). Auth emails go through Supabase custom SMTP (dashboard, owner-configured);
+  app emails use Resend's REST API via `fetch` (no new dependency; one endpoint does not justify the SDK).
+
+- **Part A, auth emails**: confirmation and recovery were **already implemented** (`/forgot-password`,
+  `/reset-password`, `signUpAction`, `requestPasswordResetAction`, `updatePasswordAction`, `/auth/confirm`
+  handling `code` and `token_hash`, `next=/reset-password`), so nothing was rebuilt. Only `docs/EMAIL_SETUP.md`
+  was written (Resend domain/SPF/DKIM, API key, Supabase SMTP `smtp.resend.com:465` user `resend`, Site URL and
+  redirect allow-list, activation checklist, exact cron entry). No Supabase setting was touched.
+- **Part B, app emails** (`src/features/notifications/`, `src/lib/supabase/admin.ts`,
+  `src/app/api/cron/lesson-reminders/route.ts`): lesson reminder (cron, window `(now, now+24h]`, max 40 per
+  run, student email else guardian email, `skipped`/`no_email` logged, 429 stops the run and releases the
+  claim, other errors mark one lesson `failed`) and unpaid-balance reminder (button "Email payment reminder" on
+  `/dashboard/students/[id]/billing`, shown only with switch + credentials on, a balance, and a guardian/student
+  email; `ConfirmModal`, inline `role="alert"/"status"`, generic errors, one send per student per hour).
+  Env vars (all in `.env.example`): `EMAIL_NOTIFICATIONS_ENABLED`, `RESEND_API_KEY`, `EMAIL_FROM`,
+  `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`. With the switch off the cron returns `{"disabled":true}` (after
+  the 401 check) and the button is hidden, so existing behavior is unchanged.
+- **Schema (written, NOT applied)**: `supabase/migrations/20261010000000_notification_log.sql` adds
+  `public.notification_log` (RLS, tutor select-own only, unique `(kind, lesson_id)`) and two service-role-only
+  functions, `due_lesson_reminders` and `claim_balance_reminder`. `src/lib/supabase/database.types.ts` was
+  edited by hand so the typed client compiles; `pnpm run db:types:check` will fail against the hosted project
+  until the migration is applied and `pnpm run db:types` is rerun (not run: it needs the hosted project).
+- **Security**: first RLS-bypassing path; safeguards listed in `docs/SECURITY.md` (service-role-only SQL
+  function, constant-time cron secret, no user input in the cron path, ownership re-check and advisory-lock
+  rate limit on the manual action, escaped templates, masked log).
+- **Tests**: `src/test/notifications.test.ts` (21 new, node env): switch/config, cron secret, cron handler
+  401/disabled/run, window tiling, escaping and header-injection, tutor-timezone formatting, URL scheme,
+  Resend request shape and 429/error mapping with `fetch` mocked. The orchestration (`send-lesson-reminders`),
+  the SQL functions and the server action are **not** unit-tested (they need Supabase).
+- **Verified**: `format:check`, `lint` (0 errors; same pre-existing 1 warning + 1 info in `src/app/portal`),
+  `typecheck`, `test` (141 passed, 18 files), `build` pass. In the dev server: `/forgot-password` renders at
+  375x812; the cron route returns 401 without/with a wrong bearer; the balance button, confirm sheet and
+  success alert were checked at 375x812 and desktop with a temporary fixture copy of the component and a mocked
+  action (fixture deleted). `pnpm audit`: same 8 advisories (4 high, 4 moderate) in `next`/`postcss`/etc.; no
+  new dependency.
+- **Not verified**: real Resend delivery, Resend domain/DKIM, Supabase custom SMTP and the auth emails, the
+  migration and SQL functions on a real database (not even syntax-checked by Postgres), the cron on Vercel,
+  the real billing page button (needs auth and a hosted student with an email), `/reset-password` end-to-end.
+  Minor: `ConfirmModal` styles the confirm button as `danger` (red) for this non-destructive action.
+
+## Previous Milestone (TD-019)
+
 - Milestone: **TD-019 — Component/render tests and refreshed auth e2e spec**
 - Status: Implemented; **e2e spec written but never executed** (Playwright browser download failed)
 - Branch: `main` (committed as f5f0ff3)
@@ -996,10 +1043,11 @@ were restyled to the new tokens but their logic is untouched.
   Verification State for the specific manual pass recommended before relying on this fully.
 - ~~TD-009's "select all visible" only selects the current page~~ — TD-017 added "Select all N matching"
   (cap 2000, server-side re-selection). Not yet verified against the hosted database.
-- No email or push notification channel exists anywhere in the app (TD-010 confirmed this again —
-  still no mailer dependency in `src/`). The dashboard/portal due-date nudges added in TD-010 only
-  surface while the tutor or student is actually looking at the app; nothing proactively reaches
-  them outside it. Building real notifications would need a mailer/push provider decision first.
+- Email (TD-020) is built but inactive: provider is Resend (ADR-015), the switch is off, the migration is
+  unapplied and there is no cron entry. Until the owner activates it (docs/EMAIL_SETUP.md), the TD-010
+  due-date nudges still only surface while the tutor or student is looking at the app. No push channel exists.
+- A lesson with no student/guardian email when its reminder window opens is logged `skipped` and never
+  retried; failed (non-429) sends are not retried either (at-most-once by design).
 - TD-010's dashboard and portal due-date nudges were not manually verified against a live hosted
   account — see Verification State for the specific manual pass recommended before relying on this
   fully.
@@ -1011,14 +1059,14 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Manual phone/hosted pass of TD-013 to TD-019** (sign in to the hosted account on a real phone: bottom
-nav, quick actions, Move, confirm sheet, status/payment/bulk/move success and failure paths, "Select all
-N matching" with more than 50 lessons incl. already-paid rows and the stale-list error, PWA install,
-5+ student colors, Sunday-first month grid, today in the tutor timezone, `Select` keyboard focus fix),
-plus run `pnpm run test:e2e` where Chromium can be installed and fix the stale heading in
-`e2e/app.spec.ts`. Separately, `pnpm audit` reports 8 advisories (`next` < 15.5.27, `postcss`,
-`source-map-js`, `sharp`): review and upgrade `next` deliberately. TD-020 (notifications) is blocked on
-the owner's mail-provider decision.
+**Owner activation pass for TD-020** (owner-driven, in order): review and apply
+`supabase/migrations/20261010000000_notification_log.sql`, rerun `pnpm run db:types` and reconcile
+`database.types.ts`, finish the Resend/Supabase SMTP setup in `docs/EMAIL_SETUP.md`, set the env vars with the
+switch still false, test sign-up and password-reset emails, then enable the switch, try the balance button on
+a student whose guardian email is the owner's own, and only then add the `vercel.json` cron entry. Still
+pending from before: the manual phone/hosted pass of TD-013 to TD-019, `pnpm run test:e2e` where Chromium
+installs, the stale heading in `e2e/app.spec.ts`, and a deliberate `next` upgrade for the `pnpm audit`
+advisories.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

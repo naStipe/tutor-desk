@@ -4,6 +4,9 @@ import { Card } from "../../../../../components/Card";
 import { deleteRateAction, upsertRateAction } from "../../../../../features/rates/actions";
 import { RateForm } from "../../../../../features/rates/components/RateForm";
 import { listRatesForStudent } from "../../../../../features/rates/data";
+import { canSendEmail, getNotificationConfig } from "../../../../../features/notifications/config";
+import { SendBalanceReminder } from "../../../../../features/notifications/components/SendBalanceReminder";
+import { maskEmail, pickRecipient } from "../../../../../features/notifications/schemas";
 import { updateStudentAction } from "../../../../../features/students/actions";
 import { StudentForm } from "../../../../../features/students/components/StudentForm";
 import { getStudent, getStudentUnpaidSummary } from "../../../../../features/students/data";
@@ -27,6 +30,9 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
     getTutorFormatSettings(supabase, student.tutor_id),
   ]);
   const ratedSubjectIds = new Set(rates.map((rate) => rate.subject_id));
+  const reminderRecipient = pickRecipient(student.guardian_email, student.email);
+  const canEmailReminder =
+    canSendEmail(getNotificationConfig()) && unpaidSummary.length > 0 && reminderRecipient !== null;
   const availableSubjects = subjects.filter((subject) => !ratedSubjectIds.has(subject.id));
 
   return (
@@ -51,6 +57,12 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
           >
             View unpaid lessons &rarr;
           </Link>
+          {canEmailReminder && reminderRecipient && (
+            <SendBalanceReminder
+              studentId={student.id}
+              recipientHint={maskEmail(reminderRecipient)}
+            />
+          )}
         </Card>
       )}
 

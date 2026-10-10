@@ -1,11 +1,7 @@
 import { redirect } from "next/navigation";
 import { LessonsListView } from "../../../features/lessons/components/LessonsListView";
 import { type LessonListSortKey, listLessonsPage } from "../../../features/lessons/data";
-import {
-  LESSON_STATUSES,
-  type LessonStatus,
-  paymentFilterSchema,
-} from "../../../features/lessons/schemas";
+import { type LessonStatus, parseLessonListFilters } from "../../../features/lessons/schemas";
 import { listActiveStudents } from "../../../features/students/data";
 import { listSubjects } from "../../../features/subjects/data";
 import { getTutorFormatSettings } from "../../../features/tutor-profile/data";
@@ -31,11 +27,12 @@ export default async function LessonsPage({
   const params = await searchParams;
   const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
-  const status = LESSON_STATUSES.find((value) => value === first(params.status));
-  const studentId = first(params.student);
-  const subjectId = first(params.subject);
-  const parsedPayment = paymentFilterSchema.safeParse(first(params.payment));
-  const payment = parsedPayment.success ? parsedPayment.data : "all";
+  const { status, studentId, subjectId, payment } = parseLessonListFilters({
+    status: first(params.status),
+    student: first(params.student),
+    subject: first(params.subject),
+    payment: first(params.payment),
+  });
   const sortKey = SORT_KEYS.find((value) => value === first(params.sort)) ?? "date";
   const sortDir = first(params.dir) === "asc" ? "asc" : "desc";
   const page = Math.max(1, Number(first(params.page)) || 1);

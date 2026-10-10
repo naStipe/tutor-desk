@@ -105,3 +105,50 @@ export const bulkLessonPaymentSchema = z.object({
     .max(200, "Select fewer lessons at a time"),
   paymentStatus: paymentStatusSchema,
 });
+
+/** Hard sanity cap for "update everything matching the filters" so one click cannot touch unbounded rows. */
+export const MAX_BULK_ALL_MATCHING = 2000;
+
+export type LessonListFilters = {
+  status?: LessonStatus;
+  studentId?: string;
+  subjectId?: string;
+  payment: PaymentFilter;
+};
+
+const uuidSchema = z.string().uuid();
+
+/**
+ * Single parser for the lessons list filters, shared by the lessons page (query params) and the
+ * "all matching" bulk action (same param shape), so the rows the tutor sees and the rows the
+ * action updates are selected by exactly the same rules. Invalid values are ignored, never trusted.
+ */
+export function parseLessonListFilters(raw: {
+  status?: string;
+  student?: string;
+  subject?: string;
+  payment?: string;
+}): LessonListFilters {
+  const status = lessonStatusSchema.safeParse(raw.status);
+  const student = uuidSchema.safeParse(raw.student);
+  const subject = uuidSchema.safeParse(raw.subject);
+  const payment = paymentFilterSchema.safeParse(raw.payment);
+  return {
+    status: status.success ? status.data : undefined,
+    studentId: student.success ? student.data : undefined,
+    subjectId: subject.success ? subject.data : undefined,
+    payment: payment.success ? payment.data : "all",
+  };
+}
+
+/** Input of the "mark all matching" action: filter params (as in the URL), target status, and the count the tutor confirmed. */
+export const bulkPaymentAllMatchingSchema = z.object({
+  filters: z.object({
+    status: z.string().optional(),
+    student: z.string().optional(),
+    subject: z.string().optional(),
+    payment: z.string().optional(),
+  }),
+  paymentStatus: paymentStatusSchema,
+  expectedCount: z.number().int().min(1),
+});

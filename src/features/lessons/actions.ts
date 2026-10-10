@@ -10,6 +10,7 @@ import { listSubjects } from "../subjects/data";
 import { getTutorFormatSettings } from "../tutor-profile/data";
 import {
   bulkUpdateLessonPayment,
+  bulkUpdateLessonPaymentByFilter,
   cancelLessonSeries,
   createLesson,
   createLessonSeries,
@@ -34,9 +35,12 @@ import { buildRatesByStudent } from "./rates-map";
 import { ensureUpcomingLessonsGenerated } from "./recurrence";
 import {
   bulkLessonPaymentSchema,
+  bulkPaymentAllMatchingSchema,
   lessonInputSchema,
   lessonStatusSchema,
+  MAX_BULK_ALL_MATCHING,
   PAYMENT_METHODS,
+  parseLessonListFilters,
   PAYMENT_STATUSES,
   recurrenceInputSchema,
 } from "./schemas";
@@ -319,6 +323,57 @@ export async function bulkSetLessonPaymentAction(
   revalidatePath("/dashboard/schedule");
   revalidatePath("/dashboard");
   return { updatedCount };
+}
+
+export type BulkPaymentByFilterState = BulkPaymentActionState & { matchedCount?: number };
+
+/**
+ * "Select all N matching" bulk payment update. The client sends only the list filters (same query
+ * param shape as the lessons page), the target status and the count the tutor confirmed; the
+ * matching rows are re-selected here with the same parser and filter code the list uses, scoped to
+ * the authenticated tutor (`requireTutorId` + explicit `tutor_id` filter + RLS). No lesson ids from
+ * the client, so a foreign id cannot be smuggled in; a foreign student/subject id in the filters
+ * simply matches zero of the tutor's own rows. Nothing is written above MAX_BULK_ALL_MATCHING or
+ * when the live count differs from the confirmed one. Errors are generic, never raw database text.
+ */
+export async function bulkSetLessonPaymentForFilterAction(
+  filters: { status?: string; student?: string; subject?: string; payment?: string },
+  paymentStatus: string,
+  expectedCount: number,
+): Promise<BulkPaymentByFilterState> {
+  const parsed = bulkPaymentAllMatchingSchema.safeParse({ filters, paymentStatus, expectedCount });
+  if (!parsed.success) return { error: "Invalid selection. Reload the page and try again." };
+
+  const { supabase, tutorId } = await requireTutorId();
+
+  let result: Awaited<ReturnType<typeof bulkUpdateLessonPaymentByFilter>>;
+  try {
+    result = await bulkUpdateLessonPaymentByFilter(
+      supabase,
+      tutorId,
+      parseLessonListFilters(parsed.data.filters),
+      parsed.data.paymentStatus,
+      parsed.data.expectedCount,
+    );
+  } catch {
+    return { error: "Couldn't update the lessons. Try again." };
+  }
+
+  if (!result.ok) {
+    return {
+      matchedCount: result.matchedCount,
+      error:
+        result.reason === "too_many"
+          ? `${result.matchedCount} lessons match, more than the ${MAX_BULK_ALL_MATCHING} allowed at once. Narrow the filters and try again.`
+          : "The list changed since you selected it. Reload the page and try again.",
+    };
+  }
+
+  revalidateTag(tutorTag("lessons", tutorId));
+  revalidatePath("/dashboard/lessons");
+  revalidatePath("/dashboard/schedule");
+  revalidatePath("/dashboard");
+  return { updatedCount: result.updatedCount, matchedCount: result.matchedCount };
 }
 
 export async function deleteLessonAction(formData: FormData) {

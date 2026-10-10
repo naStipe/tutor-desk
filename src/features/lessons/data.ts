@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/supabase/database.types";
-import type {
-  LessonInput,
-  LessonStatus,
-  PaymentFilter,
-  PaymentMethod,
-  PaymentStatus,
+import {
+  type LessonInput,
+  type LessonListFilters,
+  type LessonStatus,
+  MAX_BULK_ALL_MATCHING,
+  type PaymentFilter,
+  type PaymentMethod,
+  type PaymentStatus,
 } from "./schemas";
 
 export type Lesson = Database["public"]["Tables"]["lesson"]["Row"];
@@ -122,6 +124,21 @@ const LESSON_SORT_COLUMNS: Record<LessonListSortKey, { column: string; foreignTa
   status: { column: "status" },
 };
 
+/** The lessons list filters, applied identically by the list query and the bulk "all matching" update. */
+function applyLessonListFilters<Q extends { eq: (column: string, value: string) => Q }>(
+  query: Q,
+  filters: Omit<LessonListFilters, "payment"> & { payment?: PaymentFilter },
+): Q {
+  let next = query;
+  if (filters.status) next = next.eq("status", filters.status);
+  if (filters.studentId) next = next.eq("student_id", filters.studentId);
+  if (filters.subjectId) next = next.eq("subject_id", filters.subjectId);
+  if (filters.payment && filters.payment !== "all") {
+    next = next.eq("payment_status", filters.payment);
+  }
+  return next;
+}
+
 export async function listLessonsPage(
   supabase: SupabaseClient<Database>,
   options: {
@@ -148,10 +165,7 @@ export async function listLessonsPage(
 
   let query = supabase.from("lesson").select(LESSON_COLUMNS, { count: "exact" });
 
-  if (status) query = query.eq("status", status);
-  if (studentId) query = query.eq("student_id", studentId);
-  if (subjectId) query = query.eq("subject_id", subjectId);
-  if (payment && payment !== "all") query = query.eq("payment_status", payment);
+  query = applyLessonListFilters(query, { status, studentId, subjectId, payment });
 
   const sort = LESSON_SORT_COLUMNS[sortKey];
   const ascending = sortDir === "asc";
@@ -341,6 +355,50 @@ export async function bulkUpdateLessonPayment(
 
   if (error) throw new Error(`Unable to update lesson payments: ${error.message}`);
   return data.length;
+}
+
+export type BulkByFilterResult =
+  | { ok: true; updatedCount: number; matchedCount: number }
+  | { ok: false; reason: "too_many" | "stale"; matchedCount: number };
+
+/**
+ * Marks every lesson matching the filters paid/unpaid, for the tutor's "select all N matching".
+ * The matching set is computed here from the filters, scoped by an explicit `tutor_id` filter on
+ * top of RLS; no client-supplied id list is involved. The count is taken first: above
+ * MAX_BULK_ALL_MATCHING nothing is written, and if it differs from the count the tutor confirmed
+ * the list has changed, so nothing is written either. Rows already in the target status are
+ * skipped so an existing `paid_at` is not overwritten. `payment_method` is left untouched.
+ */
+export async function bulkUpdateLessonPaymentByFilter(
+  supabase: SupabaseClient<Database>,
+  tutorId: string,
+  filters: LessonListFilters,
+  paymentStatus: PaymentStatus,
+  expectedCount: number,
+): Promise<BulkByFilterResult> {
+  const { count, error: countError } = await applyLessonListFilters(
+    supabase.from("lesson").select("id", { count: "exact", head: true }).eq("tutor_id", tutorId),
+    filters,
+  );
+  if (countError) throw new Error(`Unable to count lessons: ${countError.message}`);
+  const matchedCount = count ?? 0;
+  if (matchedCount > MAX_BULK_ALL_MATCHING) return { ok: false, reason: "too_many", matchedCount };
+  if (matchedCount !== expectedCount) return { ok: false, reason: "stale", matchedCount };
+
+  const { data, error } = await applyLessonListFilters(
+    supabase
+      .from("lesson")
+      .update({
+        payment_status: paymentStatus,
+        paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("tutor_id", tutorId)
+      .neq("payment_status", paymentStatus),
+    filters,
+  ).select("id");
+  if (error) throw new Error(`Unable to update lesson payments: ${error.message}`);
+  return { ok: true, updatedCount: data.length, matchedCount };
 }
 
 export async function cancelScheduledLessonsForStudent(

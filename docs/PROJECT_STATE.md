@@ -2,6 +2,68 @@
 
 ## Current Milestone
 
+- Milestone: **TD-017 — "Select all N matching" bulk payment across pages (lessons list)**
+- Status: Implemented; **server action not verified against the hosted database or a real phone**
+- Branch: `main` (uncommitted)
+- Last updated: 2026-10-10
+
+No schema change, migration or new dependency. One new server action.
+
+- **Flow** (`LessonsListView.tsx`): once the header/"Select all on this page" checkbox selects every row
+  and `totalCount` exceeds the page, the bulk bar shows "All 50 lessons on this page are selected.
+  [Select all N matching]" (44px tall on phones). Choosing it changes the bar to "All N matching lessons
+  selected" with the same Mark paid / Mark unpaid / Clear selection buttons. Mark paid/unpaid then opens
+  `ConfirmModal` stating the count ("Mark N lessons paid?", mentions other pages and that rows already in
+  that status are left alone). Success shows the neutral status line, clears the selection and refreshes;
+  failures use the TD-015 inline `role="alert"` with generic text and keep the selection.
+- **Tied to the exact list**: the mode is stored as `{ key, count }`; `key` (`listSelectionKey`) is
+  status, student, subject, payment, sort key, sort dir and page size. It is active only while the key
+  equals the current props, so browser back/forward or any filter/sort change also drops it (plus
+  `pushParams` resets it explicitly). Toggling any single row or the header checkbox leaves the mode.
+  The page number is not part of the key (the matching set does not depend on it); `pushParams` still
+  clears selection on page change.
+- **New action** `bulkSetLessonPaymentForFilterAction(filters, paymentStatus, expectedCount)`: the client
+  sends the list filters in URL-param shape, not ids. Zod (`bulkPaymentAllMatchingSchema`) checks the shape;
+  `requireTutorId`; then `bulkUpdateLessonPaymentByFilter` (data.ts) counts matching rows (explicit
+  `tutor_id` filter + RLS), returns an error without writing if the count exceeds
+  `MAX_BULK_ALL_MATCHING` (2000) or differs from the count the tutor confirmed (stale list), otherwise
+  updates `payment_status`/`paid_at`/`updated_at` (same field pattern as `bulkUpdateLessonPayment`;
+  `payment_method` untouched) and returns `updatedCount` and `matchedCount`. Thrown database errors become
+  "Couldn't update the lessons. Try again."; raw DB text is never returned.
+- **One filter parser**: new `parseLessonListFilters` (`schemas.ts`) is used by the lessons page and the
+  action, and a shared `applyLessonListFilters` (data.ts) by both `listLessonsPage` and the bulk update, so
+  what is listed and what is updated cannot drift. Behavior change on the page: `student`/`subject` params
+  that are not UUIDs are now ignored (before they were passed to the query and errored).
+- **Decisions**: (1) rows already in the target status are skipped (`.neq("payment_status", target)`) so
+  an existing `paid_at` is not overwritten when the filter includes both; the message reports e.g. "100
+  lessons marked paid. 30 already paid." (the single-id bulk action from TD-009 still overwrites). (2) the
+  expected-count guard instead of trusting the filter alone: if rows were added/changed since the page
+  loaded, nothing is written and the tutor reloads. Count and update are two statements, not a
+  transaction, so a change between them can still make the update differ slightly from the count (still
+  only the tutor's own rows matching the filter). (3) the 200-id cap on `bulkSetLessonPaymentAction` is
+  unchanged.
+- **IDOR / cross-tenant**: no client-supplied lesson ids exist in this path. The only client inputs are
+  filter strings, a status enum and a number. Rows are selected server-side with `tutor_id =
+  auth user id` (from `requireTutorId`, never from the client) and `lesson`'s RLS update/select policy
+  (`auth.uid() = tutor_id`, read in `20260913150813_create_lesson.sql` for TD-009) independently. A
+  foreign student/subject id in the filters just matches zero of the tutor's rows (count 0 fails the
+  `expectedCount >= 1` check or the stale check). A forged huge `expectedCount` cannot widen anything: it
+  must equal the tutor's own live match count. Worst case a tutor updates their own matching lessons.
+- Verification: `format:check`, `lint` (0 errors, same 1 warning + 1 info), `typecheck`, `test` (66
+  passed, 7 new in `src/test/bulk-selection.test.ts`: offer rule, selection key, filter parser, action
+  schema/cap, message), `build` pass (`.next` removed first). In the in-app browser on a temporary
+  public fixture route (removed; `fetch` for server actions mocked, so the real action did not run): at
+  1024 wide the banner appeared only with all 50 selected, the link switched the bar to "All 130 matching
+  lessons selected", Mark paid opened the confirm modal, confirming sent `{status, payment}`, `paid`,
+  `130` and showed the success line; at 375x812 the link is 44px high, confirm button 48px, no horizontal
+  overflow, a rejected request showed the alert and kept the mode, deselecting one row dropped the mode
+  and the banner. **Not verified:** the action and queries against the real database (count/update
+  syntax is type-checked only; the `head: true` count combined with `.eq`/`.neq` filters, RLS
+  behavior, the 2000 cap and stale paths); a real phone; the confirm modal's exit animation after the
+  last text fix was not re-viewed; page-size changes (there is no UI to change `pageSize`).
+
+## Previous Milestone (TD-016)
+
 - Milestone: **TD-016 — Calendar polish (student colors, locale week start, tutor-timezone "now")**
 - Status: Implemented; **not verified against the hosted account or a real phone**
 - Branch: `main` (uncommitted)
@@ -814,10 +876,8 @@ were restyled to the new tokens but their logic is untouched.
 - TD-009's checkboxes/bulk-payment action were not manually verified against a live hosted account
   (no interactive Supabase session available in the unsupervised environment that built them) — see
   Verification State for the specific manual pass recommended before relying on this fully.
-- TD-009's "select all visible" only selects the current page (50 rows) — a tutor with 100+ unpaid
-  lessons matching a filter has to page through and bulk-act per page rather than clearing all
-  matching lessons in one click. Acceptable for now (still a large reduction over one-at-a-time),
-  worth revisiting if pagination-spanning bulk selection becomes a real complaint.
+- ~~TD-009's "select all visible" only selects the current page~~ — TD-017 added "Select all N matching"
+  (cap 2000, server-side re-selection). Not yet verified against the hosted database.
 - No email or push notification channel exists anywhere in the app (TD-010 confirmed this again —
   still no mailer dependency in `src/`). The dashboard/portal due-date nudges added in TD-010 only
   surface while the tutor or student is actually looking at the app; nothing proactively reaches
@@ -833,9 +893,10 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Manual phone/hosted pass of TD-013 to TD-016** (sign in to the hosted account on a real
+**Manual phone/hosted pass of TD-013 to TD-017** (sign in to the hosted account on a real
 phone: bottom nav, quick actions, Move, confirm sheet, status/payment/bulk/move success and failure
-paths, PWA install, 5+ student colors, Sunday-first month grid, today in the tutor timezone). Nothing from these four tickets has been verified against real data.
+paths, "Select all N matching" with more than 50 lessons incl. already-paid rows and the stale-list
+error, PWA install, 5+ student colors, Sunday-first month grid, today in the tutor timezone). Nothing from these five tickets has been verified against real data.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

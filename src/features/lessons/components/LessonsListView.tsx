@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
-import { bulkSetLessonPaymentAction } from "../actions";
+import { bulkSetLessonPaymentAction, bulkSetLessonPaymentForFilterAction } from "../actions";
 import { Button, LinkButton } from "../../../components/Button";
 import { Card } from "../../../components/Card";
+import { ConfirmModal } from "../../../components/ConfirmModal";
 import { PageHeader } from "../../../components/PageHeader";
 import { Select } from "../../../components/Select";
+import { bulkAllMatchingMessage, canOfferAllMatching, listSelectionKey } from "../bulk-selection";
 import type { LessonListSortKey } from "../data";
 import { formatFullDateTime } from "../date-utils";
 import type { LessonStatus, PaymentFilter, PaymentStatus } from "../schemas";
@@ -93,15 +95,51 @@ export function LessonsListView({
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [isBulkPending, startBulkTransition] = useTransition();
+  // "All N matching" mode, tied to the exact filtered list it was chosen on (see listSelectionKey).
+  const [allMatching, setAllMatching] = useState<{ key: string; count: number } | null>(null);
+  // Kept after closing so the modal text does not blank out during its exit animation.
+  const [confirmTarget, setConfirmTarget] = useState<PaymentStatus>("paid");
+  const [confirmCount, setConfirmCount] = useState(0);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const listKey = listSelectionKey({
+    status: statusFilter,
+    student: studentFilter,
+    subject: subjectFilter,
+    payment: paymentFilter,
+    sortKey,
+    sortDir,
+    pageSize,
+  });
+  const allMatchingCount = allMatching && allMatching.key === listKey ? allMatching.count : null;
 
   const visibleIds = lessons.map((lesson) => lesson.id);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
 
+  const selectedOnPage = visibleIds.filter((id) => selectedIds.has(id)).length;
+  const offerAllMatching =
+    allMatchingCount === null && canOfferAllMatching(selectedOnPage, visibleIds.length, totalCount);
+  const hasSelection = selectedIds.size > 0 || allMatchingCount !== null;
+
+  function openConfirm(paymentStatus: PaymentStatus) {
+    setConfirmTarget(paymentStatus);
+    setConfirmCount(allMatchingCount ?? 0);
+    setConfirmOpen(true);
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+    setAllMatching(null);
+    setConfirmOpen(false);
+  }
+
   function toggleSelectAll() {
+    setAllMatching(null);
     setSelectedIds(allVisibleSelected ? new Set() : new Set(visibleIds));
   }
 
   function toggleSelectOne(id: string) {
+    setAllMatching(null);
     setSelectedIds((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
@@ -142,8 +180,46 @@ export function LessonsListView({
     });
   }
 
+  function applyBulkPaymentToAllMatching(paymentStatus: PaymentStatus) {
+    if (allMatchingCount === null) return;
+    const expectedCount = allMatchingCount;
+    setConfirmOpen(false);
+    setBulkMessage(null);
+    setBulkError(null);
+    startBulkTransition(async () => {
+      let result: Awaited<ReturnType<typeof bulkSetLessonPaymentForFilterAction>>;
+      try {
+        result = await bulkSetLessonPaymentForFilterAction(
+          {
+            status: statusFilter === "all" ? undefined : statusFilter,
+            student: studentFilter === "all" ? undefined : studentFilter,
+            subject: subjectFilter === "all" ? undefined : subjectFilter,
+            payment: paymentFilter === "all" ? undefined : paymentFilter,
+          },
+          paymentStatus,
+          expectedCount,
+        );
+      } catch {
+        // Keep the selection so the user can retry.
+        setBulkError("Couldn't update the lessons. Your selection is kept. Try again.");
+        return;
+      }
+      if (result.error) {
+        setBulkError(result.error);
+        return;
+      }
+      setBulkMessage(
+        bulkAllMatchingMessage(result.updatedCount ?? 0, result.matchedCount ?? 0, paymentStatus),
+      );
+      clearSelection();
+      router.refresh();
+    });
+  }
+
   function pushParams(updates: Record<string, string | null>) {
     setSelectedIds(new Set());
+    setAllMatching(null);
+    setConfirmOpen(false);
     setBulkMessage(null);
     setBulkError(null);
     const next = new URLSearchParams(searchParams.toString());
@@ -230,17 +306,35 @@ export function LessonsListView({
         </div>
       </div>
 
-      {selectedIds.size > 0 && (
+      {hasSelection && (
         <Card className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 flex flex-wrap items-center justify-between gap-3 bg-surface-muted shadow-lg lg:static lg:shadow-sm">
-          <span className="text-sm font-medium text-ink">
-            {selectedIds.size} lesson{selectedIds.size === 1 ? "" : "s"} selected
-          </span>
+          <div className="min-w-0 text-sm text-ink">
+            <span className="font-medium">
+              {allMatchingCount !== null
+                ? `All ${allMatchingCount} matching lessons selected`
+                : `${selectedIds.size} lesson${selectedIds.size === 1 ? "" : "s"} selected`}
+            </span>
+            {offerAllMatching && (
+              <p className="mt-1 text-ink-muted">
+                All {selectedOnPage} lessons on this page are selected.{" "}
+                <button
+                  type="button"
+                  onClick={() => setAllMatching({ key: listKey, count: totalCount })}
+                  className="inline-flex min-h-11 items-center font-medium text-brand underline underline-offset-2 md:min-h-0"
+                >
+                  Select all {totalCount} matching
+                </button>
+              </p>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="primary"
               disabled={isBulkPending}
-              onClick={() => applyBulkPayment("paid")}
+              onClick={() =>
+                allMatchingCount !== null ? openConfirm("paid") : applyBulkPayment("paid")
+              }
             >
               {isBulkPending ? "Updating…" : "Mark as paid"}
             </Button>
@@ -248,7 +342,9 @@ export function LessonsListView({
               type="button"
               variant="secondary"
               disabled={isBulkPending}
-              onClick={() => applyBulkPayment("unpaid")}
+              onClick={() =>
+                allMatchingCount !== null ? openConfirm("unpaid") : applyBulkPayment("unpaid")
+              }
             >
               {isBulkPending ? "Updating…" : "Mark as unpaid"}
             </Button>
@@ -256,13 +352,23 @@ export function LessonsListView({
               type="button"
               variant="secondary"
               disabled={isBulkPending}
-              onClick={() => setSelectedIds(new Set())}
+              onClick={clearSelection}
             >
               Clear selection
             </Button>
           </div>
         </Card>
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        title={`Mark ${confirmCount} lessons ${confirmTarget}?`}
+        message={`This updates all ${confirmCount} lessons that match the current filters, including those on other pages. Lessons already ${confirmTarget} are left as they are.`}
+        confirmLabel={`Mark ${confirmCount} ${confirmTarget}`}
+        onConfirm={() => applyBulkPaymentToAllMatching(confirmTarget)}
+        onCancel={() => setConfirmOpen(false)}
+        disabled={isBulkPending}
+      />
 
       {bulkError && (
         <div

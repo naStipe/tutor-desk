@@ -11,7 +11,8 @@ TutorDesk is a TypeScript modular monolith deployed as one Next.js App Router ap
 - Types generated from the linked hosted project in `src/lib/supabase/database.types.ts`
 - Zod boundary validation, Tailwind CSS (v4, CSS-variable-driven design tokens, light/dark theming),
   Biome, Vitest, and Playwright
-- `next/font/google` (Manrope) for the app's typeface — bundled with Next.js, not an added
+- `next/font/google` (Space Grotesk for text, JetBrains Mono for monospace; see `src/app/layout.tsx`
+  and `--font-sans`/`--font-mono` in `src/app/globals.css`) — bundled with Next.js, not an added
   dependency
 
 Docker and local Supabase are not part of the current development architecture. The linked hosted

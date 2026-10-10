@@ -4,8 +4,10 @@
 
 - Milestone: **TD-019 — Component/render tests and refreshed auth e2e spec**
 - Status: Implemented; **e2e spec written but never executed** (Playwright browser download failed)
-- Branch: `main` (uncommitted)
+- Branch: `main` (committed as f5f0ff3)
 - Last updated: 2026-10-10
+- TD-021 (docs only, after this): `docs/ARCHITECTURE.md` and the Manrope mentions in this file now say
+  Space Grotesk + JetBrains Mono (`src/app/layout.tsx`); historical entries are marked superseded.
 
 No schema, server-action or runtime-behavior change except one real bug fix in `Select` (below).
 
@@ -717,7 +719,8 @@ as a secondary/informational accent, and violet as a tertiary accent, chosen per
 direction (dark theme "black with green and cyan, maybe purple, plus white"; light theme derived from
 the same hues). Red/amber are kept for danger/warning states rather than folded into the brand
 palette, since breaking that color convention would hurt usability for its own sake. Typography moved
-to Manrope (`next/font/google`) for a distinctive but still calm, professional feel — no new npm
+to Manrope (`next/font/google`; **superseded** — the app now uses Space Grotesk + JetBrains Mono, see
+`src/app/layout.tsx`, corrected in TD-021) for a distinctive but still calm, professional feel — no new npm
 dependency, no new component library, no gradients beyond one small two-color accent on the brand
 mark.
 
@@ -815,8 +818,8 @@ were restyled to the new tokens but their logic is untouched.
 - Playwright E2E: not run (same pre-existing gap as TD-002–TD-004 — no Chromium binary installed in
   this environment); `e2e/app.spec.ts` was updated for the new home page copy but not executed here.
   `e2e/auth.spec.ts` remains stale and unrelated to this task.
-- `pnpm audit`: not re-run; no new dependencies were added (Manrope loads via `next/font/google`,
-  which ships with Next.js).
+- `pnpm audit`: not re-run; no new dependencies were added (the font, then Manrope, now Space Grotesk
+  + JetBrains Mono, loads via `next/font/google`, which ships with Next.js).
 
 - TD-006 post-merge verification (2026-09-28, run against the merged `main`, not just each branch in
   isolation): `pnpm run format:check` — clean, 179 files. `pnpm run lint` — 0 errors (1 pre-existing
@@ -1008,10 +1011,14 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Manual phone/hosted pass of TD-013 to TD-017** (sign in to the hosted account on a real
-phone: bottom nav, quick actions, Move, confirm sheet, status/payment/bulk/move success and failure
-paths, "Select all N matching" with more than 50 lessons incl. already-paid rows and the stale-list
-error, PWA install, 5+ student colors, Sunday-first month grid, today in the tutor timezone). Nothing from these five tickets has been verified against real data.
+**Manual phone/hosted pass of TD-013 to TD-019** (sign in to the hosted account on a real phone: bottom
+nav, quick actions, Move, confirm sheet, status/payment/bulk/move success and failure paths, "Select all
+N matching" with more than 50 lessons incl. already-paid rows and the stale-list error, PWA install,
+5+ student colors, Sunday-first month grid, today in the tutor timezone, `Select` keyboard focus fix),
+plus run `pnpm run test:e2e` where Chromium can be installed and fix the stale heading in
+`e2e/app.spec.ts`. Separately, `pnpm audit` reports 8 advisories (`next` < 15.5.27, `postcss`,
+`source-map-js`, `sharp`): review and upgrade `next` deliberately. TD-020 (notifications) is blocked on
+the owner's mail-provider decision.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

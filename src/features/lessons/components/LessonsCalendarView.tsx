@@ -299,8 +299,9 @@ export function LessonsCalendarView({
         </div>
       ) : (
         <>
-          {/* Phones: a day-by-day list. The 7-column time grid is only usable from `md` up. */}
-          <div className="md:hidden">
+          {/* Phones/tablets: a day-by-day list. At `md` (~100px per day) the 7-column grid truncates
+              every student name, so the grid is only used from `lg` up. */}
+          <div className="lg:hidden">
             <WeekAgenda
               dayStartValues={dayStartValues}
               lessons={agendaLessons}
@@ -309,7 +310,7 @@ export function LessonsCalendarView({
             />
           </div>
 
-          <div className="hidden space-y-6 md:block">
+          <div className="hidden space-y-6 lg:block">
             {students.length === 0 ? (
               <p className="text-xs text-ink-subtle">
                 Add a student before you can schedule a lesson.

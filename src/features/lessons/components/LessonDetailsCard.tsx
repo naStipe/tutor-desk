@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "../../../components/Button";
 import type { LessonActionState } from "../actions";
 import { getLessonEditDataAction } from "../actions";
@@ -8,6 +8,7 @@ import { formatTimeRange, minutesSinceMidnightInZone, toDateParamInZone } from "
 import type { PaymentMethod, PaymentStatus } from "../schemas";
 import type { PickerLesson } from "./LessonDateTimePicker";
 import { LessonForm, type RatesByStudent } from "./LessonForm";
+import { MOVE_LESSON_EVENT } from "./LessonStatusActions";
 
 type EditData = {
   students: { id: string; name: string }[];
@@ -49,12 +50,14 @@ export function LessonDetailsCard({
   workingHoursEndMinutes?: number;
 }) {
   const [editing, setEditing] = useState(false);
+  const [focusDateTime, setFocusDateTime] = useState(false);
   const [editData, setEditData] = useState<EditData | null>(null);
   const [isPending, startTransition] = useTransition();
   const startTime = new Date(defaultValues.startTimeIso);
   const endTime = new Date(startTime.getTime() + defaultValues.durationMinutes * 60000);
 
-  function openEditor() {
+  function openEditor(focusDate = false) {
+    setFocusDateTime(focusDate);
     setEditing(true);
     if (editData) return;
     startTransition(async () => {
@@ -66,14 +69,26 @@ export function LessonDetailsCard({
     });
   }
 
+  // The phone quick-action row's "Move" button lives in a sibling component; it signals via a window event.
+  useEffect(() => {
+    const onMove = () => openEditor(true);
+    window.addEventListener(MOVE_LESSON_EVENT, onMove);
+    return () => window.removeEventListener(MOVE_LESSON_EVENT, onMove);
+  });
+
   if (!editing) {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink">Details</h2>
-          <Button type="button" variant="secondary" onClick={openEditor}>
-            Edit
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={() => openEditor(true)}>
+              Move
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => openEditor()}>
+              Edit
+            </Button>
+          </div>
         </div>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
           <dt className="text-ink-subtle">Student</dt>
@@ -127,6 +142,7 @@ export function LessonDetailsCard({
         }}
         submitLabel="Save changes"
         pendingLabel="Saving…"
+        focusDateTime={focusDateTime}
         onCancel={() => setEditing(false)}
       />
     </div>

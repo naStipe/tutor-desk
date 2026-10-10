@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/DatePicker";
@@ -59,6 +59,8 @@ type LessonFormProps = {
   submitLabel: string;
   pendingLabel: string;
   onCancel?: () => void;
+  /** On mount, scroll the Date & time field into view and focus its first control (reschedule flow). */
+  focusDateTime?: boolean;
   locale?: string;
   timeZone?: string;
   workingHoursStartMinutes?: number;
@@ -77,6 +79,7 @@ export function LessonForm({
   submitLabel,
   pendingLabel,
   onCancel,
+  focusDateTime,
   locale = "en-US",
   timeZone,
   workingHoursStartMinutes,
@@ -100,6 +103,15 @@ export function LessonForm({
     defaultValues?.paymentMethod ?? "",
   );
   const [repeat, setRepeat] = useState(false);
+  const dateTimeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!focusDateTime) return;
+    const node = dateTimeRef.current;
+    if (!node) return;
+    node.scrollIntoView({ block: "start", behavior: "smooth" });
+    node.querySelector<HTMLElement>("button, input, select")?.focus({ preventScroll: true });
+  }, [focusDateTime]);
 
   const rate =
     ratesByStudent?.[studentId]?.[subjectId] ?? ratesByStudent?.[studentId]?.[DEFAULT_RATE_KEY];
@@ -153,28 +165,30 @@ export function LessonForm({
         />
       </Field>
 
-      <Field
-        label="Date & time"
-        htmlFor="durationMinutes"
-        required
-        errors={state.fieldErrors?.startTime ?? state.fieldErrors?.durationMinutes}
-      >
-        <LessonDateTimePicker
-          lessons={pickerLessons ?? []}
-          excludeLessonId={lessonId}
-          dateParam={dateParam}
-          minutes={minutes}
-          durationMinutes={durationMinutes}
-          onChangeDate={setDateParam}
-          onChangeMinutes={setMinutes}
-          onChangeDuration={setDurationMinutes}
-          minDate={lessonId ? undefined : startOfDay(new Date())}
-          timeZone={timeZone}
-          locale={locale}
-          workingHoursStartMinutes={workingHoursStartMinutes}
-          workingHoursEndMinutes={workingHoursEndMinutes}
-        />
-      </Field>
+      <div ref={dateTimeRef} className="scroll-mt-20">
+        <Field
+          label="Date & time"
+          htmlFor="durationMinutes"
+          required
+          errors={state.fieldErrors?.startTime ?? state.fieldErrors?.durationMinutes}
+        >
+          <LessonDateTimePicker
+            lessons={pickerLessons ?? []}
+            excludeLessonId={lessonId}
+            dateParam={dateParam}
+            minutes={minutes}
+            durationMinutes={durationMinutes}
+            onChangeDate={setDateParam}
+            onChangeMinutes={setMinutes}
+            onChangeDuration={setDurationMinutes}
+            minDate={lessonId ? undefined : startOfDay(new Date())}
+            timeZone={timeZone}
+            locale={locale}
+            workingHoursStartMinutes={workingHoursStartMinutes}
+            workingHoursEndMinutes={workingHoursEndMinutes}
+          />
+        </Field>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Price" htmlFor="price" errors={state.fieldErrors?.price}>

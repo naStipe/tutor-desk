@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   title: "TutorDesk",
   description:
     "Management SaaS for independent private tutors to manage students, schedules, lessons, homework, and invoicing.",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: "TutorDesk",
     description:

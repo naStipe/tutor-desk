@@ -71,7 +71,13 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <LessonStatusActions lessonId={lesson.id} initialStatus={lesson.status as LessonStatus} />
+      <LessonStatusActions
+        lessonId={lesson.id}
+        initialStatus={lesson.status as LessonStatus}
+        meetingUrl={lesson.meeting_url}
+        paymentStatus={lesson.payment_status as (typeof PAYMENT_STATUSES)[number]}
+        paymentMethod={lesson.payment_method as (typeof PAYMENT_METHODS)[number] | null}
+      />
 
       <Card>
         <LessonDetailsCard

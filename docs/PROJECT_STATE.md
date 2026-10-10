@@ -2,6 +2,49 @@
 
 ## Current Milestone
 
+- Milestone: **TD-014 — Mobile follow-ups (quick actions, no-drag reschedule, confirm sheet, PWA)**
+- Status: Implemented; **not verified on a real phone or against the hosted account**
+- Branch: `main` (uncommitted)
+- Last updated: 2026-10-10
+
+Presentation-only; no schema, data-layer or server-action change. Desktop (`lg`+) layout unchanged.
+
+- **Lesson page quick actions** (`LessonStatusActions.tsx`, `lessons/[id]/page.tsx`): below `lg`, a
+  2-column action row sits above the details/homework cards: Join meeting (only if `meeting_url`),
+  Mark completed (hidden once completed), Mark paid / Mark unpaid, Move. Reuses
+  `updateLessonStatusAction` and `setLessonPaymentAction` unchanged (both still `requireTutorId` +
+  RLS). Quick "Mark paid" forwards the lesson's existing `payment_method` if set, otherwise sends none
+  (the full Payment card still defaults to `invoice`); "Mark unpaid" clears the method, as before.
+- **No-drag reschedule**: a "Move" button (details card header, and the quick row) opens the existing
+  Edit `LessonForm` and scrolls/focuses its Date & time field (`focusDateTime` prop). The quick row
+  reaches `LessonDetailsCard` through a window event (`MOVE_LESSON_EVENT`).
+- **`window.confirm` replaced** in `LessonStatusActions` (cancel lesson) and `ConfirmSubmitForm` by new
+  `src/components/ConfirmModal.tsx` (on `Modal`, bottom sheet on phones). Same wording; confirm button
+  is `min-h-12`, stacked under "Go back" with a 16px gap. `ConfirmSubmitForm` submits via
+  `requestSubmit()` on confirm. `features/students/components/ConfirmDeleteForm.tsx` still uses
+  `window.confirm` (not in ticket scope).
+- **PWA**: `src/app/manifest.ts` (`start_url` `/dashboard`, `standalone`, colors = light canvas
+  `#ecede8`), `public/icon-192.png`, `icon-512.png`, `apple-touch-icon.png` (180) generated from
+  `src/app/icon.png` composited on white, referenced in `metadata.icons`. No service worker, no new
+  dependency, so it is "add to home screen" capable but has no offline support.
+- **StudentForm / SettingsForm at 375px**: no change needed; fields already stack (`grid-cols-1
+  sm:grid-cols-2`), no horizontal overflow, submit is 44px; the shell's bottom padding already clears
+  the tab bar, so no sticky bar was added.
+- **Week grid breakpoint**: at 800px the 7-column grid is ~100px per day and truncates every student
+  name, so `LessonsCalendarView.tsx` now shows `WeekAgenda` below `lg` (was `md`).
+- Verification: `format:check`, `lint` (0 errors, same 1 pre-existing warning), `typecheck`, `test`
+  (46 passed), `build` pass. In-app browser at 375x812 with a temporary fixture page (removed): quick
+  row layout, cancel sheet (buttons 48px high, 16px apart, Go back/X close it), `ConfirmSubmitForm`
+  confirm submits the form once, manifest + icon links present in `<head>`, no horizontal overflow in
+  either form, submit buttons 44px. 800px: week grid inspected with a fixture (names truncated).
+  **Not verified:** any hosted/authenticated page; Move actually opening the form focused on the date
+  (`getLessonEditDataAction` needs auth - it redirected to sign-in); Join/Mark paid/Mark completed
+  against real data; real PWA install on iOS/Android; native `<select>` branch; `WeekAgenda` at
+  800px after the breakpoint change (only the CSS class was changed).
+- Minor, not fixed: `Modal` close button measures 40px high, not the 44px TD-013 recorded.
+
+## Previous Milestone (TD-013)
+
 - Milestone: **TD-013 — Mobile usability pass (phones, ≤ 639px; tablets up to `lg` partly)**
 - Status: Implemented; **not verified on a real phone or against the hosted account**
 - Branch: `main`
@@ -644,7 +687,7 @@ were restyled to the new tokens but their logic is untouched.
   (pre-existing, unrelated to this task).
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
 - ~~The week calendar view is cramped on phones~~ — fixed in TD-013 (day-by-day list below `md`).
-  The `md`–`lg` range (tablets, narrow windows) still shows the 7-column grid.
+  TD-014 also moved the agenda/grid switch from `md` to `lg`.
 - The student color palette is only 4 hues (`brand`/`cyan`/`violet`/`warning`, same as `Avatar`), so
   a tutor with 5+ active students will see color repeats on the calendar — two students can share a
   color. Acceptable for now (still a big scan improvement over one color for everyone), but a wider
@@ -692,14 +735,10 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Manual verification of TD-013 on a real phone (iOS Safari + Android Chrome), then the remaining
-mobile-adjacent follow-ups** (not done in TD-013, listed so they can be taken in one separate session):
-installable PWA (`app/manifest.ts` + 192/512 PNG icons + apple-touch-icon; current `icon.png` is
-471×471), detail-page quick actions for a phone (lesson page: "Join meeting" button and "Mark
-completed"/"Mark paid" above the edit form instead of at the bottom), a mobile reschedule path that
-needs no drag (a "Move" action on the lesson page), `StudentForm`/`SettingsForm` section layout
-check at 375px, and swapping `window.confirm` in `LessonStatusActions`/`ConfirmSubmitForm` for the
-sheet `Modal`. Then TD-006–TD-012 manual pass as before.
+**TD-015 — Error handling for client-called server actions** (`updateLessonStatusAction`,
+`bulkSetLessonPaymentAction`, `moveLessonAction` fail silently): visible inline error/toast plus
+optimistic rollback, starting with `LessonStatusActions`. Before it, a manual phone/hosted pass of
+TD-013/TD-014 is still outstanding.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

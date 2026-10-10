@@ -78,7 +78,6 @@ function snap(minutes: number) {
   return Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
 }
 
-const TOUCH_LONG_PRESS_MS = 350;
 const TOUCH_CANCEL_PX = 8;
 
 type DragState = {
@@ -90,9 +89,8 @@ type DragState = {
   originStartMinutes: number;
   durationMinutes: number;
   moved: boolean;
-  /** Mouse/pen drag immediately; touch must survive a long-press first, so a scroll isn't hijacked. */
+  /** Mouse/pen drag immediately. Touch is never armed: a touch is a tap (open) or a scroll. */
   armed: boolean;
-  longPressTimer: ReturnType<typeof setTimeout> | null;
 };
 
 export function LessonCalendar({
@@ -228,21 +226,13 @@ export function LessonCalendar({
       durationMinutes: Math.round((end.getTime() - start.getTime()) / 60000),
       moved: false,
       armed: !isTouch,
-      longPressTimer: null,
     };
     dragRef.current = state;
 
-    if (isTouch) {
-      // Don't capture the pointer yet: touch-action: pan-y lets a vertical scroll pass through
-      // natively until the long-press fires, so scrolling the page never gets hijacked into a drag.
-      state.longPressTimer = setTimeout(() => {
-        if (dragRef.current !== state) return;
-        state.armed = true;
-        target.setPointerCapture(pointerId);
-      }, TOUCH_LONG_PRESS_MS);
-    } else {
-      target.setPointerCapture(pointerId);
-    }
+    // `touch-pan-y` hands vertical movement to the browser's scroll, which fires pointercancel
+    // mid-gesture. A long-press "drag" could therefore only ever move a lesson sideways, never
+    // change its time, so touch doesn't drag: a tap opens the lesson, where Edit changes its time.
+    if (!isTouch) target.setPointerCapture(pointerId);
   }
 
   function handleBlockPointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -253,8 +243,7 @@ export function LessonCalendar({
       const dx0 = event.clientX - drag.startClientX;
       const dy0 = event.clientY - drag.startClientY;
       if (Math.hypot(dx0, dy0) > TOUCH_CANCEL_PX) {
-        // Moved before the long-press armed: this is a scroll, not a drag. Let it through.
-        if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
+        // Finger moved: this is a scroll, not a tap. Let it through.
         dragRef.current = null;
       }
       return;
@@ -273,7 +262,6 @@ export function LessonCalendar({
   function handleBlockPointerCancel(event: ReactPointerEvent<HTMLButtonElement>) {
     const drag = dragRef.current;
     if (!drag || event.pointerId !== drag.pointerId) return;
-    if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
     dragRef.current = null;
     setDragPreview(null);
   }
@@ -285,7 +273,6 @@ export function LessonCalendar({
     const drag = dragRef.current;
     dragRef.current = null;
     if (!drag || event.pointerId !== drag.pointerId) return;
-    if (drag.longPressTimer) clearTimeout(drag.longPressTimer);
 
     if (!drag.armed || !drag.moved) {
       setDragPreview(null);

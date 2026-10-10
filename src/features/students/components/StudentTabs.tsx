@@ -17,7 +17,7 @@ export function StudentTabs({ studentId }: { studentId: string }) {
   const base = `/dashboard/students/${studentId}`;
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b border-border">
+    <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-border px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {TABS.map((tab) => {
         const href = `${base}${tab.href}`;
         const isActive = pathname === href;
@@ -25,7 +25,7 @@ export function StudentTabs({ studentId }: { studentId: string }) {
           <Link
             key={tab.href}
             href={href}
-            className={`-mb-px rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition-[color,transform] duration-100 active:scale-95 motion-reduce:active:scale-100 ${
+            className={`-mb-px shrink-0 whitespace-nowrap rounded-t-lg border-b-2 px-3 py-3 text-sm sm:py-2 font-medium transition-[color,transform] duration-100 active:scale-95 motion-reduce:active:scale-100 ${
               isActive
                 ? "border-brand text-ink"
                 : "border-transparent text-ink-muted hover:text-ink"

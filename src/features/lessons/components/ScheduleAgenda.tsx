@@ -11,6 +11,7 @@ export type AgendaLesson = {
   studentName: string;
   subjectName: string | null;
   startTime: string;
+  endTime: string;
   status: LessonStatus;
   paymentStatus: string;
 };
@@ -31,6 +32,7 @@ export function ScheduleAgenda({
   timeZone,
   locale,
   singleColumn,
+  hideLessonsOnMobile,
 }: {
   lessons: AgendaLesson[];
   homework: AgendaHomework[];
@@ -38,10 +40,12 @@ export function ScheduleAgenda({
   locale?: string;
   /** Stack the two lists instead of placing them side by side, for narrow layouts like the day-view sidebar. */
   singleColumn?: boolean;
+  /** Phones show the week as a day-by-day list already, so the flat lessons card would repeat it. */
+  hideLessonsOnMobile?: boolean;
 }) {
   return (
     <div className={`grid grid-cols-1 gap-6 ${singleColumn ? "" : "lg:grid-cols-2"}`}>
-      <Card className="p-0">
+      <Card className={`p-0 ${hideLessonsOnMobile ? "max-md:hidden" : ""}`}>
         <div className="border-b border-border px-4 py-3">
           <h3 className="text-sm font-semibold text-ink">Lessons</h3>
         </div>

@@ -2,6 +2,49 @@
 
 ## Current Milestone
 
+- Milestone: **TD-013 — Mobile usability pass (phones, ≤ 639px; tablets up to `lg` partly)**
+- Status: Implemented; **not verified on a real phone or against the hosted account**
+- Branch: `main`
+- Last updated: 2026-10-10
+
+Presentation-only change; no schema, data-layer, or server-action change (one extra `endTime` field
+is passed through the schedule page to the agenda list). Desktop (`lg`+) layout is intentionally
+unchanged. What changed, and why:
+
+- **Navigation** (`AppShell.tsx`, `PortalShell.tsx`): the hamburger that expanded a panel *in the page
+  flow* was replaced by a sticky top bar plus a fixed bottom tab bar (safe-area aware). Tutor tabs:
+  Today, Schedule, Students, Homework (unread badge) + **Menu**; Lessons, Subjects, Settings, the
+  Tutor/Student preview switch and sign-out live in the Menu sheet. The student portal gets the same
+  5-tab bottom bar. **Bug fixed:** the portal's student switcher was `hidden sm:block`, so a parent
+  with several children could not switch child on a phone; it now shows in a bar under the header.
+- **Dropdowns** (`Select.tsx`): on touch devices (`(pointer: coarse)`) the custom popover is replaced by
+  the platform's native `<select>` (16px font, 44px high). The custom popover was clipped by the
+  modal's scroll container, closed when the page was scrolled, and had ~32px rows. Desktop keeps the
+  custom listbox. `DatePicker.tsx` popover is now clamped to the viewport width.
+- **Bottom-sheet modal** (`Modal.tsx`): below `sm` the dialog docks to the bottom (full width, rounded
+  top, `dvh` height, safe-area padding, grab handle, 44px close button) and slides up.
+- **Inputs/buttons**: `inputClassName` is `text-base` below `sm` (iOS Safari zooms the page on focus
+  for inputs under 16px) with 44px min height; `Button` and `ThemeToggle` have 44/40px touch targets.
+- **Schedule** (`WeekAgenda.tsx`, new): the 7-column week grid (≈40px per day on a phone) is hidden
+  below `md` and replaced by a day-by-day list; tapping a day opens the day grid. `LessonCalendar`
+  no longer attempts long-press drag on touch (`touch-pan-y` makes the browser cancel the pointer on
+  vertical movement, so it could only ever move a lesson sideways); a tap opens the lesson, whose Edit
+  form changes the time. Mouse/pen drag is unchanged.
+- **Lessons list** (`LessonsListView.tsx`): below `md` the 640px-wide table (horizontal scroll) becomes
+  cards with 44px checkboxes, a sort selector (the table's clickable headers don't exist there), 2-column
+  filters, and a bulk-action bar docked above the bottom nav.
+- **Dashboard** (`TodayDashboard.tsx`): below `lg` the actionable cards (next lessons, students, needs
+  review) come before the charts; full-width "New lesson" button; card hover-lift only for mouse.
+- **Misc**: `viewport` export (`viewport-fit=cover`, theme-color; zoom left enabled), `min-h-dvh`
+  instead of `min-h-screen`, student-detail tabs scroll horizontally instead of wrapping.
+- Verification: `format:check`, `lint` (0 errors, same 1 pre-existing warning), `typecheck`, `test`
+  (46 passed), `build` all pass. Visually checked at 375×812 in the in-app browser using a temporary
+  fixture page (removed): bottom bar, Menu sheet, week agenda. **Not checked:** the native `<select>`
+  branch (the in-app emulation does not reliably report `pointer: coarse`), iOS Safari, the dashboard
+  reorder, the lessons card list, the portal shell — no interactive hosted session was available.
+
+## Previous Milestone (TD-012)
+
 - Milestone: **TD-012 — Total outstanding balance stat on the tutor dashboard**
 - Status: Implemented; independent review recommended
 - Branch: `main`
@@ -600,8 +643,8 @@ were restyled to the new tokens but their logic is untouched.
 - Supabase's advisor still reports leaked-password protection disabled for hosted Auth
   (pre-existing, unrelated to this task).
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
-- The week calendar view is visually cramped on narrow (≤375px) mobile viewports (pre-existing,
-  noted in TD-004; unchanged by this task's recoloring).
+- ~~The week calendar view is cramped on phones~~ — fixed in TD-013 (day-by-day list below `md`).
+  The `md`–`lg` range (tablets, narrow windows) still shows the 7-column grid.
 - The student color palette is only 4 hues (`brand`/`cyan`/`violet`/`warning`, same as `Avatar`), so
   a tutor with 5+ active students will see color repeats on the calendar — two students can share a
   color. Acceptable for now (still a big scan improvement over one color for everyone), but a wider
@@ -649,15 +692,14 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**A dedicated manual/hosted-browser verification pass across TD-006 through TD-012.** None of these
-seven changes have had a single interactive walkthrough against the live hosted account yet — only
-static analysis, typecheck, unit tests, and production builds. With `tutor_unpaid_summary` now applied
-(2026-09-29), every shipped feature is technically live; the highest-value next step is exercising
-each one for real (unpaid filter, bulk pay, reactivate, student search, duplicate lesson, calendar
-colors, homework nudges, per-student balance, dashboard revenue total) before adding more surface
-area. If that pass is deferred, the next-best code-only item is a lesson/homework notes search on the
-lessons list (`?q=` against `lesson.notes`, mirroring TD-006's student-name search pattern) — no
-migration needed.
+**Manual verification of TD-013 on a real phone (iOS Safari + Android Chrome), then the remaining
+mobile-adjacent follow-ups** (not done in TD-013, listed so they can be taken in one separate session):
+installable PWA (`app/manifest.ts` + 192/512 PNG icons + apple-touch-icon; current `icon.png` is
+471×471), detail-page quick actions for a phone (lesson page: "Join meeting" button and "Mark
+completed"/"Mark paid" above the edit form instead of at the bottom), a mobile reschedule path that
+needs no drag (a "Move" action on the lesson page), `StudentForm`/`SettingsForm` section layout
+check at 375px, and swapping `window.confirm` in `LessonStatusActions`/`ConfirmSubmitForm` for the
+sheet `Modal`. Then TD-006–TD-012 manual pass as before.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

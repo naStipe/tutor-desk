@@ -19,7 +19,9 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   }, []);
 
   if (isDark === null) {
-    return <span className={`inline-block h-8 w-8 ${className}`} aria-hidden="true" />;
+    return (
+      <span className={`inline-block h-10 w-10 sm:h-8 sm:w-8 ${className}`} aria-hidden="true" />
+    );
   }
 
   return (
@@ -34,7 +36,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       }}
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-border text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink ${className}`}
+      className={`flex h-10 w-10 items-center justify-center rounded-lg border border-border text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink sm:h-8 sm:w-8 ${className}`}
     >
       {isDark ? (
         <svg

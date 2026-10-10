@@ -106,7 +106,7 @@ export function DatePicker({
             type="button"
             aria-label="Clear date"
             onClick={() => commit("")}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-subtle hover:bg-surface-muted hover:text-ink"
+            className="absolute right-0.5 top-1/2 -translate-y-1/2 rounded p-2.5 sm:right-1.5 sm:p-0.5 text-ink-subtle hover:bg-surface-muted hover:text-ink"
           >
             <XIcon className="h-3.5 w-3.5" />
           </button>
@@ -119,7 +119,7 @@ export function DatePicker({
             if (el && !prefersReducedMotion())
               animate(el, { opacity: [0, 1], scale: [0.96, 1], y: [-4, 0] }, SPRING_POP);
           }}
-          className="absolute z-50 mt-1 w-72 origin-top rounded-lg border border-border bg-surface p-2 shadow-lg shadow-black/10"
+          className="absolute right-0 z-50 mt-1 w-72 max-w-[calc(100vw-2rem)] origin-top sm:left-0 sm:right-auto rounded-lg border border-border bg-surface p-2 shadow-lg shadow-black/10"
         >
           <MonthCalendar
             month={month}

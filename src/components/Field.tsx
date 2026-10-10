@@ -10,7 +10,7 @@ interface FieldProps {
 }
 
 export const inputClassName =
-  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-subtle focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25";
+  "min-h-11 w-full rounded-lg border border-border bg-surface px-3 py-2 text-base text-ink placeholder:text-ink-subtle focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 sm:min-h-0 sm:text-sm";
 
 export function Field({ label, htmlFor, required, errors, hint, children }: FieldProps) {
   const hasErrors = !!errors?.length;

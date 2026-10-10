@@ -41,8 +41,16 @@ const PAYMENT_FILTERS: { value: PaymentFilter; label: string }[] = [
   { value: "paid", label: "Paid" },
 ];
 
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: "date:desc", label: "Newest first" },
+  { value: "date:asc", label: "Oldest first" },
+  { value: "student:asc", label: "Student A–Z" },
+  { value: "subject:asc", label: "Subject A–Z" },
+  { value: "status:asc", label: "Status" },
+];
+
 const selectClass =
-  "flex w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100";
+  "flex w-full sm:w-auto items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-[border-color,transform] duration-100 hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 active:scale-[0.98] motion-reduce:active:scale-100";
 
 export function LessonsListView({
   lessons,
@@ -165,7 +173,7 @@ export function LessonsListView({
         }
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <Select
           value={statusFilter}
           onChange={(value) => pushParams({ status: value })}
@@ -196,10 +204,23 @@ export function LessonsListView({
           className={selectClass}
           options={PAYMENT_FILTERS}
         />
+        {/* The table's sortable column headers don't exist in the phone card list. */}
+        <div className="col-span-2 md:hidden">
+          <Select
+            value={`${sortKey}:${sortDir}`}
+            onChange={(value) => {
+              const [key, dir] = value.split(":");
+              pushParams({ sort: key, dir });
+            }}
+            className={selectClass}
+            options={SORT_OPTIONS}
+            aria-label="Sort lessons"
+          />
+        </div>
       </div>
 
       {selectedIds.size > 0 && (
-        <Card className="flex flex-wrap items-center justify-between gap-3 bg-surface-muted">
+        <Card className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 flex flex-wrap items-center justify-between gap-3 bg-surface-muted shadow-lg lg:static lg:shadow-sm">
           <span className="text-sm font-medium text-ink">
             {selectedIds.size} lesson{selectedIds.size === 1 ? "" : "s"} selected
           </span>
@@ -240,7 +261,55 @@ export function LessonsListView({
         </Card>
       ) : (
         <>
-          <Card className="overflow-x-auto p-0">
+          <div className="space-y-2 md:hidden">
+            <label className="flex min-h-11 items-center gap-3 px-1 text-sm text-ink-muted">
+              <input
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={toggleSelectAll}
+                className="h-5 w-5 rounded border-border-strong text-brand focus:outline-brand/25"
+              />
+              Select all on this page
+            </label>
+            <ul className="space-y-2">
+              {lessons.map((lesson) => (
+                <li
+                  key={lesson.id}
+                  className={`flex items-start gap-1 rounded-xl border bg-surface p-1 pr-3 ${
+                    selectedIds.has(lesson.id) ? "border-brand/50 bg-brand/5" : "border-border"
+                  }`}
+                >
+                  <label className="flex h-11 w-11 shrink-0 items-center justify-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select lesson on ${formatFullDateTime(lesson.startTime, timeZone, locale)}`}
+                      checked={selectedIds.has(lesson.id)}
+                      onChange={() => toggleSelectOne(lesson.id)}
+                      className="h-5 w-5 rounded border-border-strong text-brand focus:outline-brand/25"
+                    />
+                  </label>
+                  <Link
+                    href={`/dashboard/lessons/${lesson.id}`}
+                    className="min-w-0 flex-1 py-2.5 active:opacity-70"
+                  >
+                    <p className="text-sm font-medium text-ink">
+                      {formatFullDateTime(lesson.startTime, timeZone, locale)}
+                    </p>
+                    <p className="mt-0.5 truncate text-sm text-ink-muted">
+                      {lesson.studentName}
+                      {lesson.subjectName ? ` · ${lesson.subjectName}` : ""}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <StatusBadge status={lesson.status} />
+                      <PaymentBadge status={lesson.paymentStatus} />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <Card className="hidden overflow-x-auto p-0 md:block">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border">

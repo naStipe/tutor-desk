@@ -20,12 +20,14 @@ import type { RatesByStudent } from "./LessonForm";
 import { LessonForm } from "./LessonForm";
 import { MonthCalendar } from "./MonthCalendar";
 import { type AgendaHomework, type AgendaLesson, ScheduleAgenda } from "./ScheduleAgenda";
+import { WeekAgenda } from "./WeekAgenda";
 
 const navLinkClass =
-  "rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-95 motion-reduce:active:scale-100";
-const toggleActiveClass = "rounded-md bg-brand px-3 py-1 text-sm font-medium text-on-brand";
+  "flex min-h-11 items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-muted transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-95 motion-reduce:active:scale-100";
+const toggleActiveClass =
+  "flex min-h-9 items-center rounded-md bg-brand px-3 py-1 text-sm font-medium text-on-brand";
 const toggleInactiveClass =
-  "rounded-md px-3 py-1 text-sm font-medium text-ink-muted transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-95 motion-reduce:active:scale-100";
+  "flex min-h-9 items-center rounded-md px-3 py-1 text-sm font-medium text-ink-muted transition-[background-color,transform] duration-100 hover:bg-surface-muted active:scale-95 motion-reduce:active:scale-100";
 
 type Prefill = { dateParam: string; minutes: number; durationMinutes: number };
 type View = "day" | "week" | "month";
@@ -252,7 +254,12 @@ export function LessonsCalendarView({
               </p>
             ) : (
               <p className="text-xs text-ink-subtle">
-                Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
+                <span className="max-md:hidden">
+                  Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
+                </span>
+                <span className="md:hidden">
+                  Tap an empty slot to schedule a lesson, or tap a lesson to open or reschedule it.
+                </span>
               </p>
             )}
 
@@ -292,42 +299,55 @@ export function LessonsCalendarView({
         </div>
       ) : (
         <>
-          {students.length === 0 ? (
-            <p className="text-xs text-ink-subtle">
-              Add a student before you can schedule a lesson.
-            </p>
-          ) : (
-            <p className="text-xs text-ink-subtle">
-              Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
-            </p>
-          )}
+          {/* Phones: a day-by-day list. The 7-column time grid is only usable from `md` up. */}
+          <div className="md:hidden">
+            <WeekAgenda
+              dayStartValues={dayStartValues}
+              lessons={agendaLessons}
+              timeZone={timeZone}
+              locale={locale}
+            />
+          </div>
 
-          <LessonCalendar
-            dayStartValues={dayStartValues}
-            lessons={lessons}
-            students={students}
-            highlightLessonId={highlightLessonId}
-            homeworkDueCountByDate={homeworkDueCountByDate}
-            homeworkReviewCountByDate={homeworkReviewCountByDate}
-            timeZone={timeZone}
-            locale={locale}
-            workingHoursStartMinutes={workingHoursStartMinutes}
-            workingHoursEndMinutes={workingHoursEndMinutes}
-            onSlotClick={(dayIndex, startMinutes, endMinutes) => {
-              const day = new Date(dayStartValues[dayIndex]);
-              setCreatePrefill({
-                dateParam: toDateParam(day),
-                minutes: startMinutes,
-                durationMinutes: Math.max(15, endMinutes - startMinutes),
-              });
-            }}
-          />
+          <div className="hidden space-y-6 md:block">
+            {students.length === 0 ? (
+              <p className="text-xs text-ink-subtle">
+                Add a student before you can schedule a lesson.
+              </p>
+            ) : (
+              <p className="text-xs text-ink-subtle">
+                Click an empty slot to schedule a lesson, or drag a lesson to reschedule it.
+              </p>
+            )}
+
+            <LessonCalendar
+              dayStartValues={dayStartValues}
+              lessons={lessons}
+              students={students}
+              highlightLessonId={highlightLessonId}
+              homeworkDueCountByDate={homeworkDueCountByDate}
+              homeworkReviewCountByDate={homeworkReviewCountByDate}
+              timeZone={timeZone}
+              locale={locale}
+              workingHoursStartMinutes={workingHoursStartMinutes}
+              workingHoursEndMinutes={workingHoursEndMinutes}
+              onSlotClick={(dayIndex, startMinutes, endMinutes) => {
+                const day = new Date(dayStartValues[dayIndex]);
+                setCreatePrefill({
+                  dateParam: toDateParam(day),
+                  minutes: startMinutes,
+                  durationMinutes: Math.max(15, endMinutes - startMinutes),
+                });
+              }}
+            />
+          </div>
 
           <ScheduleAgenda
             lessons={agendaLessons}
             homework={agendaHomework}
             timeZone={timeZone}
             locale={locale}
+            hideLessonsOnMobile
           />
         </>
       )}

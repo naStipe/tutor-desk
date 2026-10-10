@@ -1,11 +1,31 @@
 "use client";
 
 import { animate } from "motion";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { prefersReducedMotion, SPRING_POP } from "../lib/motion";
 import { CheckIcon, ChevronDownIcon } from "./icons";
 
 export type SelectOption = { value: string; label: string; disabled?: boolean };
+
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
+
+function subscribeCoarsePointer(onChange: () => void) {
+  const query = window.matchMedia(COARSE_POINTER_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+/** True on touch-first devices (phones/tablets), where the OS's own picker beats a custom popover. */
+function useCoarsePointer() {
+  return useSyncExternalStore(
+    subscribeCoarsePointer,
+    () => window.matchMedia(COARSE_POINTER_QUERY).matches,
+    () => false,
+  );
+}
+
+const DEFAULT_TRIGGER_CLASS =
+  "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 disabled:cursor-not-allowed disabled:opacity-50";
 
 type SelectProps = {
   id?: string;
@@ -52,6 +72,7 @@ export function Select({
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const selected = options.find((option) => option.value === current);
+  const coarsePointer = useCoarsePointer();
 
   function commit(nextValue: string) {
     if (!isControlled) setInternal(nextValue);
@@ -148,6 +169,40 @@ export function Select({
     }
   }
 
+  if (coarsePointer) {
+    // Touch devices get the platform's own picker: a custom popover inside a scrolling modal is
+    // clipped, closes when the page is scrolled, and has tap targets far below 44px. Font size is
+    // pinned to 16px so iOS Safari doesn't zoom the page on focus.
+    return (
+      <div className="relative">
+        <select
+          id={triggerId}
+          name={name}
+          value={current}
+          disabled={disabled}
+          aria-label={ariaLabel}
+          aria-invalid={ariaInvalid || undefined}
+          aria-describedby={ariaDescribedBy}
+          onChange={(event) => commit(event.target.value)}
+          style={{ fontSize: 16 }}
+          className={`${className ?? DEFAULT_TRIGGER_CLASS} min-h-11 appearance-none pr-9 ${selected ? "" : "text-ink-subtle"}`}
+        >
+          {!selected && (
+            <option value="" disabled>
+              {placeholder ?? "Select…"}
+            </option>
+          )}
+          {options.map((option) => (
+            <option key={option.value} value={option.value} disabled={option.disabled}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
+      </div>
+    );
+  }
+
   return (
     <div ref={rootRef} className="relative">
       {name && <input type="hidden" name={name} value={current} />}
@@ -171,10 +226,7 @@ export function Select({
               )
         }
         onKeyDown={handleTriggerKeyDown}
-        className={
-          className ??
-          "flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm text-ink transition-colors hover:border-border-strong focus:border-brand focus:outline-2 focus:outline-offset-1 focus:outline-brand/25 disabled:cursor-not-allowed disabled:opacity-50"
-        }
+        className={className ?? DEFAULT_TRIGGER_CLASS}
       >
         <span className={selected ? "truncate" : "truncate text-ink-subtle"}>
           {selected ? selected.label : (placeholder ?? "Select…")}

@@ -190,6 +190,7 @@ export default async function SchedulePage({
     studentName: lesson.student?.name ?? "Unknown student",
     subjectName: lesson.subject?.name ?? null,
     startTime: lesson.start_time,
+    endTime: lesson.end_time,
     status: lesson.status as "scheduled" | "completed" | "cancelled" | "no_show",
     paymentStatus: lesson.payment_status,
   }));

@@ -1,5 +1,5 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -31,6 +31,18 @@ export const metadata: Metadata = {
   },
 };
 
+// viewport-fit=cover lets the app draw under the notch / home indicator so the mobile bottom nav can
+// pad itself with env(safe-area-inset-*). Page zoom is deliberately left enabled (accessibility).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ecede8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0b0b" },
+  ],
+};
+
 const THEME_INIT_SCRIPT = `
 try {
   var stored = localStorage.getItem("td-theme");
@@ -51,7 +63,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static, non-user-controlled inline script */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-screen bg-canvas text-ink antialiased">
+      <body className="min-h-dvh bg-canvas text-ink antialiased">
         {children}
         <SpeedInsights />
       </body>

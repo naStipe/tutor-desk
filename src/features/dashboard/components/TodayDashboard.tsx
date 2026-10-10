@@ -112,23 +112,24 @@ function Card({
   return (
     <div
       ref={ref}
-      onPointerEnter={() => {
-        if (prefersReducedMotion() || !ref.current) return;
+      onPointerEnter={(event) => {
+        // Touch fires pointerenter on tap and never "leaves", which would leave cards stuck raised.
+        if (event.pointerType !== "mouse" || prefersReducedMotion() || !ref.current) return;
         animate(
           ref.current,
           { y: -3, boxShadow: "0 10px 24px rgba(0,0,0,0.07)" },
           { type: "spring", bounce: 0.15, duration: 0.35 },
         );
       }}
-      onPointerLeave={() => {
-        if (prefersReducedMotion() || !ref.current) return;
+      onPointerLeave={(event) => {
+        if (event.pointerType !== "mouse" || prefersReducedMotion() || !ref.current) return;
         animate(
           ref.current,
           { y: 0, boxShadow: "0 0px 0px rgba(0,0,0,0)" },
           { type: "spring", bounce: 0.2, duration: 0.4 },
         );
       }}
-      className={`rounded-[16px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[22px_24px] ${className}`}
+      className={`rounded-[16px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] p-[18px] sm:p-[22px_24px] ${className}`}
     >
       {children}
     </div>
@@ -170,7 +171,7 @@ function GreetingHeader({
       </div>
       <Link
         href="/dashboard/schedule?create=1"
-        className="inline-flex items-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 active:duration-75 active:brightness-95 motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-[11px] bg-[var(--td2-primary-bg)] px-[18px] py-[11px] text-[14px] sm:w-auto font-medium text-[var(--td2-primary-fg)] transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 active:scale-95 active:duration-75 active:brightness-95 motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
       >
         + New lesson
       </Link>
@@ -492,7 +493,7 @@ function ScheduleAheadCard({
                 href={`/dashboard/lessons/${item.id}`}
                 className="flex items-center gap-3 border-t border-[var(--td2-border-hairline)] py-3 first:border-t-0 transition-[background-color,transform] duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.99] active:bg-[var(--td2-bg-row-hover)] motion-reduce:active:scale-100"
               >
-                <span className="w-[52px] shrink-0 font-mono text-[10.5px] text-[var(--td2-text-secondary)]">
+                <span className="w-[76px] shrink-0 font-mono text-[11px] text-[var(--td2-text-secondary)] sm:w-[52px] sm:text-[10.5px]">
                   {start.toLocaleDateString(locale, { weekday: "short" }).toUpperCase()}{" "}
                   {start.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
                 </span>
@@ -759,7 +760,7 @@ export function TodayDashboard({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/dashboard/lessons?status=completed&payment=unpaid"
-            className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-[10px] border border-[var(--td2-border-card)] bg-[var(--td2-bg-card)] px-3.5 py-2 text-[12.5px] text-[var(--td2-text-secondary)] sm:min-h-0 transition-transform duration-100 hover:bg-[var(--td2-bg-row-hover)] active:scale-[0.97] motion-reduce:active:scale-100"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--td2-accent-dot)]" />
             {unbilled.count} unbilled lesson{unbilled.count === 1 ? "" : "s"}
@@ -775,12 +776,13 @@ export function TodayDashboard({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.6fr_1fr] lg:gap-[22px]">
+      {/* Below lg the actionable cards (schedule, students, needs review) come before the charts. */}
+      <div className="order-3 grid grid-cols-1 gap-[18px] lg:order-none lg:grid-cols-[1.6fr_1fr] lg:gap-[22px]">
         <HoursTrendCard analytics={analytics} />
         <SubjectSplitCard analytics={analytics} />
       </div>
 
-      <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2 xl:grid-cols-3 lg:gap-[22px]">
+      <div className="order-1 grid grid-cols-1 gap-[18px] md:grid-cols-2 xl:grid-cols-3 lg:order-none lg:gap-[22px]">
         <ScheduleAheadCard
           now={now}
           lessons={lessons}
@@ -791,7 +793,9 @@ export function TodayDashboard({
         <TermHeatmapCard analytics={analytics} />
       </div>
 
-      <NeedsReviewStrip now={now} items={homework} />
+      <div className="order-2 lg:order-none">
+        <NeedsReviewStrip now={now} items={homework} />
+      </div>
     </div>
   );
 }

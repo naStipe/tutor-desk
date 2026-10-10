@@ -10,16 +10,16 @@ import {
   useState,
   useTransition,
 } from "react";
+import { assignStudentHues, type StudentHue } from "../../../lib/color";
 import { moveLessonAction } from "../actions";
 import { layoutDayIntervals } from "../calendar-layout";
-import { type BrandHue, hashToHue } from "../../../lib/color";
 import {
+  dayRelativeToToday,
   formatHourLabel,
   formatMinutesOfDay,
   formatWeekdayShort,
   isSameDay,
   minutesSinceMidnightInZone,
-  startOfDay,
   toDateParam,
   zonedMinutesToDate,
 } from "../date-utils";
@@ -44,13 +44,17 @@ export type CalendarLesson = {
 // Lesson blocks are colored by student (a consistent hue per student, so a busy week is scannable
 // at a glance) with lesson status layered on top as a secondary cue — a left accent stripe, a small
 // status dot, and (for cancelled) a strikethrough — rather than status displacing the student color
-// the way a single status-only fill used to. Same hash-based hue-cycling approach as `Avatar`
-// (`src/lib/color.ts`), keyed by student id so a student keeps one color across the whole calendar.
-const STUDENT_BLOCK_FILL_CLASSES: Record<BrandHue, string> = {
+// the way a single status-only fill used to. Hues come from an 8-color palette (`src/lib/color.ts`),
+// derived from student ids (no stored color), so a student keeps one color across the calendar.
+const STUDENT_BLOCK_FILL_CLASSES: Record<StudentHue, string> = {
   brand: "bg-brand/20 hover:bg-brand/30 text-ink",
   cyan: "bg-cyan/20 hover:bg-cyan/30 text-ink",
   violet: "bg-violet/20 hover:bg-violet/30 text-ink",
   warning: "bg-warning/20 hover:bg-warning/30 text-ink",
+  blue: "bg-hue-blue/20 hover:bg-hue-blue/30 text-ink",
+  pink: "bg-hue-pink/20 hover:bg-hue-pink/30 text-ink",
+  orange: "bg-hue-orange/20 hover:bg-hue-orange/30 text-ink",
+  lime: "bg-hue-lime/20 hover:bg-hue-lime/30 text-ink",
 };
 
 const STATUS_ACCENT_CLASSES: Record<LessonStatus, string> = {
@@ -129,8 +133,18 @@ export function LessonCalendar({
     return () => clearInterval(id);
   }, []);
 
+  // "Now" as the tutor's timezone sees it (not the browser's): today's date and the minutes since
+  // midnight, used for the today/past highlighting and the now-line.
+  const nowMinutes = minutesSinceMidnightInZone(now, timeZone);
+
   const [lessons, setLessons] = useState(initialLessons);
   useEffect(() => setLessons(initialLessons), [initialLessons]);
+
+  // Distinct colors across every student the calendar can show, computed from ids only.
+  const studentHues = useMemo(
+    () => assignStudentHues([...students.map((s) => s.id), ...lessons.map((l) => l.studentId)]),
+    [students, lessons],
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{
@@ -178,7 +192,7 @@ export function LessonCalendar({
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const currentHour = now.getHours() + now.getMinutes() / 60;
+    const currentHour = nowMinutes / 60;
     const targetHour =
       currentHour >= START_HOUR && currentHour < END_HOUR ? currentHour : START_HOUR;
     container.scrollTop = Math.max(0, (targetHour - START_HOUR - 1) * PX_PER_HOUR);
@@ -354,9 +368,10 @@ export function LessonCalendar({
         style={{ paddingLeft: GUTTER_PX }}
       >
         {days.map((day) => {
-          const isToday = isSameDay(day, now);
-          const isPast = startOfDay(day) < startOfDay(now);
           const dateParam = toDateParam(day);
+          const relativeToToday = dayRelativeToToday(dateParam, now, timeZone);
+          const isToday = relativeToToday === "today";
+          const isPast = relativeToToday === "past";
           const dueCount = homeworkDueCountByDate?.[dateParam] ?? 0;
           const reviewCount = homeworkReviewCountByDate?.[dateParam] ?? 0;
           return (
@@ -429,10 +444,10 @@ export function LessonCalendar({
           ))}
 
           {days.map((day, dayIndex) => {
-            const isToday = isSameDay(day, now);
-            const isPastDay = startOfDay(day) < startOfDay(now);
-            const nowLineTop =
-              ((minutesSinceMidnightInZone(now, timeZone) - START_HOUR * 60) / 60) * PX_PER_HOUR;
+            const relativeToToday = dayRelativeToToday(toDateParam(day), now, timeZone);
+            const isToday = relativeToToday === "today";
+            const isPastDay = relativeToToday === "past";
+            const nowLineTop = ((nowMinutes - START_HOUR * 60) / 60) * PX_PER_HOUR;
             const pastOverlayHeight = isPastDay
               ? GRID_HEIGHT
               : isToday
@@ -464,7 +479,7 @@ export function LessonCalendar({
                   />
                 )}
 
-                {isToday && now.getHours() >= START_HOUR && now.getHours() < END_HOUR && (
+                {isToday && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60 && (
                   <div
                     className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-danger"
                     style={{ top: nowLineTop }}
@@ -495,7 +510,7 @@ export function LessonCalendar({
                   const columns = isDragging ? 1 : (layout?.columns ?? 1);
                   const column = isDragging ? 0 : (layout?.column ?? 0);
                   const widthPct = 100 / columns;
-                  const studentHue = hashToHue(lesson.studentId);
+                  const studentHue = studentHues.get(lesson.studentId) ?? "brand";
 
                   return (
                     <button

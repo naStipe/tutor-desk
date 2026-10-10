@@ -44,6 +44,12 @@
   --color-warning-strong: var(--td2-warning-strong);
   --color-on-warning: var(--td2-on-warning);
 
+  /* Extra hues for per-student calendar colors (see STUDENT_HUES in src/lib/color.ts). */
+  --color-hue-blue: var(--td2-hue-blue);
+  --color-hue-pink: var(--td2-hue-pink);
+  --color-hue-orange: var(--td2-hue-orange);
+  --color-hue-lime: var(--td2-hue-lime);
+
   --font-sans: var(--font-space-grotesk), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -121,6 +127,11 @@
   --td2-warning-strong: #92400e;
   --td2-on-warning: #ffffff;
 
+  --td2-hue-blue: #2563eb;
+  --td2-hue-pink: #db2777;
+  --td2-hue-orange: #ea580c;
+  --td2-hue-lime: #65a30d;
+
   color-scheme: light;
 }
 
@@ -186,6 +197,11 @@
   --td2-warning: #fbbf24;
   --td2-warning-strong: #fde047;
   --td2-on-warning: #2c1a02;
+
+  --td2-hue-blue: #60a5fa;
+  --td2-hue-pink: #f472b6;
+  --td2-hue-orange: #fb923c;
+  --td2-hue-lime: #a3e635;
 
   color-scheme: dark;
 }

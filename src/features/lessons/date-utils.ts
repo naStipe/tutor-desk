@@ -8,12 +8,66 @@ export function startOfDay(date: Date) {
   return result;
 }
 
-export function startOfWeek(date: Date) {
+/** `weekStartsOn` uses `Date#getDay` numbering (0 = Sunday ... 6 = Saturday); defaults to Monday. */
+export function startOfWeek(date: Date, weekStartsOn = 1) {
   const result = startOfDay(date);
-  const day = result.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  result.setDate(result.getDate() + diffToMonday);
+  const diff = (result.getDay() - weekStartsOn + 7) % 7;
+  result.setDate(result.getDate() - diff);
   return result;
+}
+
+type WeekInfoLocale = Intl.Locale & {
+  getWeekInfo?: () => { firstDay: number };
+  weekInfo?: { firstDay: number };
+};
+
+/**
+ * First day of the week for a locale, in `Date#getDay` numbering (0 = Sunday). Uses
+ * `Intl.Locale` week info (`getWeekInfo()`, or the older `weekInfo` property, whose `firstDay`
+ * is 1 = Monday ... 7 = Sunday) and falls back to Monday when it is unavailable or the locale is
+ * missing/invalid.
+ */
+export function firstDayOfWeek(locale?: string): number {
+  if (!locale) return 1;
+  try {
+    const intlLocale = new Intl.Locale(locale) as WeekInfoLocale;
+    const info = intlLocale.getWeekInfo?.() ?? intlLocale.weekInfo;
+    if (info && Number.isInteger(info.firstDay) && info.firstDay >= 1 && info.firstDay <= 7) {
+      return info.firstDay % 7;
+    }
+  } catch {
+    // Invalid locale tag: use the default below.
+  }
+  return 1;
+}
+
+/** Short weekday names for a week that starts on `weekStartsOn` (`Date#getDay` numbering). */
+export function weekdayLabels(weekStartsOn: number, locale = DISPLAY_LOCALE): string[] {
+  // 2024-01-07 is a Sunday; formatting local-midnight dates without a timeZone keeps the weekday.
+  const format = (resolvedLocale: string) =>
+    Array.from({ length: 7 }, (_, i) =>
+      new Date(2024, 0, 7 + ((weekStartsOn + i) % 7)).toLocaleDateString(resolvedLocale, {
+        weekday: "short",
+      }),
+    );
+  try {
+    return format(locale);
+  } catch {
+    return format(DISPLAY_LOCALE);
+  }
+}
+
+/**
+ * Whether a calendar day (YYYY-MM-DD) is before, on, or after "today" as the given timezone sees
+ * it, instead of the browser's own clock. Without a timezone, falls back to the browser-local day.
+ */
+export function dayRelativeToToday(
+  dateParam: string,
+  now: Date,
+  timeZone?: string,
+): "past" | "today" | "future" {
+  const today = toDateParamInZone(now, timeZone);
+  return dateParam < today ? "past" : dateParam === today ? "today" : "future";
 }
 
 export function addDays(date: Date, days: number) {

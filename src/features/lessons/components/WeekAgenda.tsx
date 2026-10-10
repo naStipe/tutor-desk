@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  dayRelativeToToday,
   formatTimeRange,
   formatWeekdayShort,
-  isSameDay,
   toDateParam,
   toDateParamInZone,
 } from "../date-utils";
@@ -36,7 +36,7 @@ export function WeekAgenda({
     <div className="space-y-4">
       {days.map((day) => {
         const dateParam = toDateParam(day);
-        const isToday = isSameDay(day, now);
+        const isToday = dayRelativeToToday(dateParam, now, timeZone) === "today";
         const dayLessons = lessons
           .filter((lesson) => toDateParamInZone(new Date(lesson.startTime), timeZone) === dateParam)
           .sort((a, b) => a.startTime.localeCompare(b.startTime));

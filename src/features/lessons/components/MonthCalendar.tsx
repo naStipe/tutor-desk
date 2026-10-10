@@ -3,15 +3,15 @@
 import {
   addDays,
   addMonths,
+  dayRelativeToToday,
+  firstDayOfWeek,
   formatMonthHeading,
   isSameDay,
-  startOfDay,
   startOfMonth,
   startOfWeek,
   toDateParam,
+  weekdayLabels,
 } from "../date-utils";
-
-const WEEKDAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 type MonthCalendarProps = {
   month: Date;
@@ -45,9 +45,11 @@ export function MonthCalendar({
   locale,
 }: MonthCalendarProps) {
   const monthStart = startOfMonth(month);
-  const gridStart = startOfWeek(monthStart);
+  const weekStartsOn = firstDayOfWeek(locale);
+  const weekdayHeaders = weekdayLabels(weekStartsOn, locale);
+  const gridStart = startOfWeek(monthStart, weekStartsOn);
   const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
-  const today = new Date();
+  const now = new Date();
 
   const canGoPrev = !minDate || addDays(startOfMonth(addMonths(month, -1)), 6) >= minDate;
   const canGoNext = !maxDate || startOfMonth(addMonths(month, 1)) <= maxDate;
@@ -79,8 +81,9 @@ export function MonthCalendar({
       </div>
 
       <div className="grid grid-cols-7 gap-1 px-1 pb-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-ink-subtle">
-        {WEEKDAY_LABELS.map((label) => (
-          <span key={label}>{label}</span>
+        {weekdayHeaders.map((label, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed 7-entry header; labels can repeat in some locales
+          <span key={index}>{label}</span>
         ))}
       </div>
 
@@ -88,8 +91,9 @@ export function MonthCalendar({
         {days.map((day) => {
           const dateParam = toDateParam(day);
           const inMonth = day.getMonth() === month.getMonth();
-          const isToday = isSameDay(day, today);
-          const isPast = startOfDay(day) < startOfDay(today) && !isToday;
+          const relativeToToday = dayRelativeToToday(dateParam, now, timeZone);
+          const isToday = relativeToToday === "today";
+          const isPast = relativeToToday === "past";
           const isSelected = selectedDate === dateParam;
           const isDisabled =
             (minDate && day < minDate && !isSameDay(day, minDate)) ||

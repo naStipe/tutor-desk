@@ -2,9 +2,60 @@
 
 ## Current Milestone
 
-- Milestone: **TD-015 — Visible error handling for client-called server actions**
+- Milestone: **TD-016 — Calendar polish (student colors, locale week start, tutor-timezone "now")**
 - Status: Implemented; **not verified against the hosted account or a real phone**
 - Branch: `main` (uncommitted)
+- Last updated: 2026-10-10
+
+No schema change, migration, new dependency, server action or authorization change.
+
+- **Student colors**: `src/lib/color.ts` gains an 8-hue `STUDENT_HUES` palette (brand, blue, violet,
+  pink, orange, warning, lime, cyan), `studentHue(id)` and `assignStudentHues(ids)`. The last hashes each
+  id to a start hue (same hash as before) and linearly probes to the next free hue, ids processed in
+  sorted order, so up to 8 students shown together are all distinct, independent of input order, with
+  nothing stored. Hues repeat only beyond 8. Trade-off: a student's color depends on the set of
+  students (active `students` prop plus any lesson student ids), so adding/archiving a student can
+  shift a colliding student's color; a plain per-id hash would be stable but, for 5 students, collides
+  about 80% of the time. `LessonCalendar` uses it. Four new design tokens `--td2-hue-{blue,pink,orange,lime}`
+  in `globals.css` (light and `.dark`) mapped to `--color-hue-*` in `@theme`; blocks use `bg-hue-*/20`
+  with `text-ink`, status stripe and dot unchanged. `hashToHue`/`BRAND_HUES` and `Avatar` untouched.
+  `CalendarLegend` does not list student colors, so it is unchanged.
+- **Week start**: `firstDayOfWeek(locale)` (`date-utils.ts`) reads `Intl.Locale#getWeekInfo()` (or the
+  older `weekInfo`), converted to `Date#getDay` numbering, Monday on a missing/invalid locale or no
+  support. `startOfWeek(date, weekStartsOn = 1)` takes an optional first day (default unchanged, so every
+  other caller still gets Monday). `MonthCalendar` uses both for its grid offset and `weekdayLabels()`
+  for locale-formatted short headers (replacing the hard-coded English "Mo..Su"; now e.g. "Sun/Mon" or
+  "пн/вт").
+- **Tutor timezone "now"**: new pure `dayRelativeToToday(dateParam, now, timeZone)`. `LessonCalendar`
+  (header and column today/past, past overlay, now-line, initial scroll via `minutesSinceMidnightInZone`),
+  `MonthCalendar` (today/past) and `WeekAgenda` (today) now use it. The once-a-minute refresh in
+  `LessonCalendar` is kept. `MonthCalendar` and `WeekAgenda` still read the clock once per render/mount
+  (no timer; "today" only changes at midnight).
+- **Found, not fixed (out of scope)**: (1) the server schedule pages (`dashboard/schedule`,
+  `student-view/schedule`, `portal/schedule`) and `dashboard/data.ts` still use Monday weeks for the week
+  view range, `formatWeekRange` and the month fetch range. For a Sunday/Saturday-first locale the month
+  grid can start 1-2 days before the fetched range, so leading out-of-month days may show no lesson
+  count. (2) `LessonCalendar` assigns lessons to day columns with browser-local `isSameDay`, while
+  `WeekAgenda` uses the tutor zone; they disagree when browser and tutor zones differ. (3)
+  `StudentLessonCalendar`, `TimeSlotGrid`, `LessonForm` min dates, `LessonsCalendarView` "Schedule lesson"
+  default date, `NextLessonCard` and the dashboard still use the browser clock. (4) `DatePicker` and
+  `LessonDateTimePicker` render `MonthCalendar`; they now follow the locale/timezone only if they pass
+  `locale`/`timeZone` (not checked).
+- Verification: `format:check`, `lint` (0 errors, same 1 warning + 1 info), `typecheck`, `test` (59 passed,
+  13 new in `color.test.ts` and `date-utils.test.ts`), `build` pass (`.next` removed first). In the in-app
+  browser, on a temporary public fixture route (removed) with the tutor timezone set to Pacific/Auckland
+  while the browser was on Oct 10 (NZ already Oct 11): week grid and `WeekAgenda` marked Sunday Oct 11 as
+  today and earlier days as past; `MonthCalendar` showed Sun-first for `en-US`, Mon-first for `en-GB`,
+  `ru-RU` ("пн..вс") and with no locale, with the grid offset and today ring matching; 8 students
+  rendered 8 distinct fills, legible in light and dark at 1280 and 375 wide, no horizontal page overflow.
+  **Not verified:** any hosted/authenticated page or real data; real phone; the once-a-minute refresh
+  crossing midnight; runtimes without `getWeekInfo`/`weekInfo` (fallback only unit-tested through invalid
+  locales); contrast measured by eye, not by tool.
+
+## Previous Milestone (TD-015)
+
+- Milestone: **TD-015 — Visible error handling for client-called server actions**
+- Status: Implemented; **not verified against the hosted account or a real phone**
 - Last updated: 2026-10-10
 
 Presentation/error-path only; no schema, validation, `requireTutorId`, RLS or ownership change, no new
@@ -737,15 +788,13 @@ were restyled to the new tokens but their logic is untouched.
 - `e2e/auth.spec.ts` is stale relative to the current `AuthForm` component (pre-existing).
 - ~~The week calendar view is cramped on phones~~ — fixed in TD-013 (day-by-day list below `md`).
   TD-014 also moved the agenda/grid switch from `md` to `lg`.
-- The student color palette is only 4 hues (`brand`/`cyan`/`violet`/`warning`, same as `Avatar`), so
-  a tutor with 5+ active students will see color repeats on the calendar — two students can share a
-  color. Acceptable for now (still a big scan improvement over one color for everyone), but a wider
-  palette or a persisted per-student color would remove the collision if it becomes a real
-  complaint.
+- Calendar student colors (TD-016) are distinct for up to 8 students shown together and repeat beyond
+  that; they are derived, not stored, so adding/archiving a student can shift another's color. A
+  persisted per-student color would fix both but needs a schema change (not approved).
 - Theme preference is per-browser (`localStorage`), not per-account — see Not Implemented.
-- The dashboard's time-based greeting and the lesson calendar's "now" indicator both evaluate in the
-  server/browser's own time zone rather than an explicit tutor timezone setting (pre-existing,
-  documented simplification, not a regression here).
+- The dashboard's time-based greeting still evaluates in the server/browser's own time zone. The
+  lesson calendar's "now" and today/past highlighting use the tutor timezone as of TD-016; other
+  browser-clock uses are listed in TD-016's "Found, not fixed".
 - The `.next` build cache occasionally corrupts on this Windows environment after many rapid rebuilds
   (`TypeError: Cannot read properties of undefined (reading 'length')` in `WasmHash`, or the older
   `__webpack_modules__[moduleId] is not a function`) — pre-existing, unrelated to any specific code
@@ -784,9 +833,9 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Manual phone/hosted pass of TD-013, TD-014 and TD-015** (sign in to the hosted account on a real
+**Manual phone/hosted pass of TD-013 to TD-016** (sign in to the hosted account on a real
 phone: bottom nav, quick actions, Move, confirm sheet, status/payment/bulk/move success and failure
-paths, PWA install). Nothing from these three tickets has been verified against real data.
+paths, PWA install, 5+ student colors, Sunday-first month grid, today in the tutor timezone). Nothing from these four tickets has been verified against real data.
 
 **Payment-tracking design note (2026-09-29, in response to an explicit owner question):** verified
 there is no in-app payment processing anywhere in this codebase — no Stripe/PayPal/checkout

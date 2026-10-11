@@ -3,11 +3,14 @@
 ## Current Milestone
 
 - Milestone: **TD-022 — Different payer, live lesson status, prepaid lesson packages**
-- Status: Implemented and verified locally (format, lint, typecheck, 153 tests, build). **The migration
-  `supabase/migrations/20261011000000_lesson_packages.sql` is written but NOT applied** to the hosted project, and
-  `database.types.ts` was edited by hand to match. Until it is applied: the package card is hidden (its query is
-  caught), package sync and auto-complete calls fail silently (wrapped in try/catch), but the lessons queries that
-  now select `lesson.package_id` will error, so **apply the migration before deploying this code**.
+- Status: Implemented and verified locally (format, lint, typecheck, 154 tests, build) and on a local Supabase stack.
+  **Hosted project (checked 2026-10-11 through the Supabase tools, read-only)**: `supabase/migrations/20261011000000_lesson_packages.sql`
+  is applied (the owner ran it in the SQL editor). Present: `lesson.package_id`, FK `lesson_package_same_student_fkey`, table
+  `lesson_package` with RLS and its 3 policies, `complete_elapsed_lessons` and `sync_student_package_credits` (both
+  SECURITY INVOKER, no `anon` execute); Postgres 17.6. The security advisors list nothing new from it. The generated types
+  match the hand-edited `database.types.ts` for these objects. It does **not** appear in the hosted migration history
+  (`list_migrations`, which was already out of step with the local file versions), so do not `supabase db push` it again.
+  `20261010000000_notification_log.sql` is still **not** applied on the hosted project.
 - Last updated: 2026-10-11
 - Uncommitted work was committed at the end of this session (see git log).
 

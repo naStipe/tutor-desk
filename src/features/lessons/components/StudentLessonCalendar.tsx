@@ -10,6 +10,7 @@ import {
   startOfDay,
   toDateParam,
 } from "../date-utils";
+import { displayStatus } from "../status";
 import { type CalendarLesson, STATUS_GLYPHS, STATUS_LABELS } from "./LessonCalendar";
 
 const DEFAULT_START_HOUR = 7;
@@ -20,6 +21,7 @@ const GRID_MAX_HEIGHT_PX = 560;
 
 const STATUS_BLOCK_CLASSES: Record<string, string> = {
   scheduled: "bg-cyan text-on-cyan",
+  in_progress: "bg-violet text-on-violet",
   completed: "bg-brand text-on-brand",
   cancelled: "bg-surface-muted text-ink-muted line-through",
   no_show: "bg-warning text-on-warning",
@@ -223,8 +225,13 @@ export function StudentLessonCalendar({
                   const top = ((startMinutes - START_HOUR * 60) / 60) * PX_PER_HOUR;
                   const height = Math.max((durationMinutes / 60) * PX_PER_HOUR, 22);
                   const compact = height < 40;
-                  const statusClass =
-                    STATUS_BLOCK_CLASSES[lesson.status] ?? STATUS_BLOCK_CLASSES.scheduled;
+                  const shown = displayStatus(
+                    lesson.status,
+                    lesson.startTime,
+                    lesson.endTime,
+                    now.getTime(),
+                  );
+                  const statusClass = STATUS_BLOCK_CLASSES[shown] ?? STATUS_BLOCK_CLASSES.scheduled;
 
                   return (
                     <div
@@ -235,14 +242,14 @@ export function StudentLessonCalendar({
                     >
                       <span className="block truncate font-medium leading-tight">
                         <span aria-hidden="true" className="mr-1 font-bold">
-                          {STATUS_GLYPHS[lesson.status]}
+                          {STATUS_GLYPHS[shown]}
                         </span>
                         {formatMinutesOfDay(startMinutes)} · {lesson.studentName}
-                        <span className="sr-only">, {STATUS_LABELS[lesson.status]}</span>
+                        <span className="sr-only">, {STATUS_LABELS[shown]}</span>
                       </span>
                       {!compact && (
                         <span className="block truncate text-xs opacity-90">
-                          {durationMinutes} min · {STATUS_LABELS[lesson.status]}
+                          {durationMinutes} min · {STATUS_LABELS[shown]}
                         </span>
                       )}
                     </div>

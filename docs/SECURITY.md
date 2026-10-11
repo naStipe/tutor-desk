@@ -98,3 +98,11 @@ Template and transport checklist:
 - Auth emails (confirmation, recovery) are owned by Supabase Auth; the sender, SMTP credentials and
   redirect allow-list are configured in the Supabase dashboard (docs/EMAIL_SETUP.md). The recovery
   flow does not reveal whether an address is registered.
+
+## Lesson packages (TD-022)
+
+`lesson_package` is tutor-owned with RLS (select/insert/delete own; insert requires the student to belong to the tutor). A
+composite foreign key `lesson(package_id, student_id)` → `lesson_package(id, student_id)` makes the database reject a
+lesson that points at a package of another student, so a forged `package_id` cannot consume another tutor's credits. The
+SQL functions `sync_student_package_credits` and `complete_elapsed_lessons` run as the caller (security invoker, RLS
+applies), are not executable by `anon`, and only touch rows with `tutor_id = auth.uid()`.

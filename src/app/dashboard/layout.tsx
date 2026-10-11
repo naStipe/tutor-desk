@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "../../components/AppShell";
 import { countHomeworkNeedingAttention } from "../../features/homework/data";
+import { tryCompleteElapsedLessons } from "../../features/packages/data";
 import { listActiveStudents } from "../../features/students/data";
 import { TimezoneAutoDetect } from "../../features/tutor-profile/components/TimezoneAutoDetect";
 import { ensureCurrentTutorProfile } from "../../features/tutor-profile/data";
@@ -16,6 +17,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (!user) redirect("/sign-in");
 
   const client = accessToken ? createTokenClient(accessToken) : supabase;
+
+  // Lessons whose end time has passed become completed (and their package credit "used").
+  await tryCompleteElapsedLessons(client);
 
   const [profileResult, homeworkCountResult, studentsResult] = await Promise.allSettled([
     cachedForTutor("tutor-profile", [user.id], [`tutor-profile:${user.id}`], 5 * 60, () =>

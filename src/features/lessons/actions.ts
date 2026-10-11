@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { tutorTag } from "../../lib/query-cache";
 import { createClient } from "../../lib/supabase/server";
+import { trySyncPackageCredits } from "../packages/data";
 import { listRatesForTutor } from "../rates/data";
 import { listActiveStudents } from "../students/data";
 import { listSubjects } from "../subjects/data";
@@ -156,6 +157,7 @@ export async function createLessonAction(
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to schedule lesson." };
   }
+  await trySyncPackageCredits(supabase, parsed.data.studentId);
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
@@ -184,10 +186,24 @@ export async function updateLessonAction(
   );
   if (workingHoursError) return { error: workingHoursError };
 
+  const existing = await getLesson(supabase, id);
+  const studentChanged = !!existing && existing.student_id !== parsed.data.studentId;
+  // A package-covered lesson loses its package when the student changes or it is set unpaid by hand.
+  const releasePackage =
+    !!existing?.package_id && (studentChanged || parsed.data.paymentStatus === "unpaid");
   try {
-    await updateLesson(supabase, id, parsed.data);
+    // A lesson that leaves its student's package is no longer paid by it.
+    const input =
+      studentChanged && releasePackage
+        ? { ...parsed.data, paymentStatus: "unpaid" as const }
+        : parsed.data;
+    await updateLesson(supabase, id, input, releasePackage);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to update lesson." };
+  }
+  if (studentChanged && existing) await trySyncPackageCredits(supabase, existing.student_id);
+  if (!(existing?.package_id && parsed.data.paymentStatus === "unpaid" && !studentChanged)) {
+    await trySyncPackageCredits(supabase, parsed.data.studentId);
   }
 
   revalidateTag(tutorTag("lessons", tutorId));
@@ -243,7 +259,9 @@ export async function updateLessonStatusAction(id: string, status: string) {
   }
 
   const { supabase, tutorId } = await requireTutorId();
-  await updateLessonStatus(supabase, id, parsedStatus.data);
+  const studentId = await updateLessonStatus(supabase, id, parsedStatus.data);
+  // Cancelling gives a package credit back; restoring a lesson can take one again.
+  if (studentId) await trySyncPackageCredits(supabase, studentId);
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");
@@ -398,7 +416,8 @@ export async function cancelSeriesAction(formData: FormData) {
   }
 
   const { supabase, tutorId } = await requireTutorId();
-  await cancelLessonSeries(supabase, seriesId);
+  const seriesStudentId = await cancelLessonSeries(supabase, seriesId);
+  if (seriesStudentId) await trySyncPackageCredits(supabase, seriesStudentId);
 
   revalidateTag(tutorTag("lessons", tutorId));
   revalidatePath("/dashboard/lessons");

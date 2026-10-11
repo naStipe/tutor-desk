@@ -35,6 +35,12 @@
 * Remaining anticipated attributes (seriesId, durationMinutes, subject, hourlyRate) are deliberately
   deferred — TD-003 is single lessons only, no recurrence or pricing.
 
+### 4a. LessonPackage (TD-022)
+* A prepaid set of lessons bought by one student (`public.lesson_package`: `total_lessons`, optional price/currency/note).
+* A lesson covered by a package has `lesson.package_id` set and is marked paid. Balance is derived: booked (covered,
+  still scheduled), used (covered, completed or no-show), remaining. Cancelling a lesson releases its credit.
+* `in progress` is a display status derived from times; only scheduled/completed/cancelled/no_show are stored.
+
 ### 5. LessonSeries
 * Represents a recurring schedule rule (e.g., "Every Thursday at 17:00 for 60 minutes").
 * Generates concrete `Lesson` instances.

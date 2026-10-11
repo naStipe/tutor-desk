@@ -82,7 +82,11 @@ export default async function StudentViewLessonsPage({
                   </td>
                   <td className="px-4 py-3 text-ink-muted">{lesson.subject?.name ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={lesson.status} />
+                    <StatusBadge
+                      status={lesson.status}
+                      startTime={lesson.start_time}
+                      endTime={lesson.end_time}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <PaymentBadge status={lesson.payment_status} />

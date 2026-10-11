@@ -66,6 +66,16 @@ export function StudentForm({
     defaultValues?.defaultCurrency ?? tutorDefaultCurrency ?? "RUB",
   );
 
+  const [hasPayer, setHasPayer] = useState(
+    Boolean(
+      defaultValues?.guardianName ||
+        defaultValues?.guardianEmail ||
+        defaultValues?.guardianPhone ||
+        defaultValues?.guardianTelegram,
+    ),
+  );
+  const isNewStudent = !studentId;
+
   const showIdentity = section === "full" || section === "identity";
   const showContact = section === "full" || section === "contact";
   const showBilling = section === "full" || section === "billing";
@@ -177,63 +187,100 @@ export function StudentForm({
             </Field>
           </div>
 
-          <div className="space-y-4 rounded-lg border border-border p-3">
-            <div>
-              <h3 className="text-sm font-semibold text-ink">Payer / guardian contact</h3>
-              <p className="mt-1 text-sm text-ink-muted">
-                Who to reach about scheduling and payment, if different from the learner — for
-                example a parent.
-              </p>
+          {isNewStudent ? (
+            <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-ink">
+              <input
+                type="checkbox"
+                checked={hasPayer}
+                onChange={(event) => setHasPayer(event.target.checked)}
+                className="h-4 w-4 rounded border-border-strong text-brand focus:outline-brand/25"
+              />
+              Someone else pays or is responsible (different payer)
+            </label>
+          ) : (
+            !hasPayer && (
+              <Button type="button" variant="secondary" onClick={() => setHasPayer(true)}>
+                Add payer / responsible person
+              </Button>
+            )
+          )}
+
+          {hasPayer ? (
+            <div className="space-y-4 rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-ink">Payer / responsible person</h3>
+                  <p className="mt-1 text-sm text-ink-muted">
+                    Who to reach about scheduling and payment, for example a parent.
+                  </p>
+                </div>
+                {!isNewStudent && (
+                  <button
+                    type="button"
+                    onClick={() => setHasPayer(false)}
+                    className="min-h-11 shrink-0 rounded-lg px-2 text-sm text-ink-muted hover:text-danger sm:min-h-0"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <Field label="Name" htmlFor="guardianName" errors={state.fieldErrors?.guardianName}>
+                <input
+                  id="guardianName"
+                  name="guardianName"
+                  type="text"
+                  autoComplete="name"
+                  defaultValue={defaultValues?.guardianName}
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field
+                label="Email"
+                htmlFor="guardianEmail"
+                errors={state.fieldErrors?.guardianEmail}
+              >
+                <input
+                  id="guardianEmail"
+                  name="guardianEmail"
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={defaultValues?.guardianEmail}
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field
+                label="Phone"
+                htmlFor="guardianPhone"
+                errors={state.fieldErrors?.guardianPhone}
+              >
+                <input
+                  id="guardianPhone"
+                  name="guardianPhone"
+                  type="tel"
+                  autoComplete="tel"
+                  defaultValue={defaultValues?.guardianPhone}
+                  className={inputClassName}
+                />
+              </Field>
+
+              <Field
+                label="Telegram"
+                htmlFor="guardianTelegram"
+                errors={state.fieldErrors?.guardianTelegram}
+              >
+                <input
+                  id="guardianTelegram"
+                  name="guardianTelegram"
+                  type="text"
+                  placeholder="@username"
+                  defaultValue={defaultValues?.guardianTelegram}
+                  className={inputClassName}
+                />
+              </Field>
             </div>
-
-            <Field label="Name" htmlFor="guardianName" errors={state.fieldErrors?.guardianName}>
-              <input
-                id="guardianName"
-                name="guardianName"
-                type="text"
-                autoComplete="name"
-                defaultValue={defaultValues?.guardianName}
-                className={inputClassName}
-              />
-            </Field>
-
-            <Field label="Email" htmlFor="guardianEmail" errors={state.fieldErrors?.guardianEmail}>
-              <input
-                id="guardianEmail"
-                name="guardianEmail"
-                type="email"
-                autoComplete="email"
-                defaultValue={defaultValues?.guardianEmail}
-                className={inputClassName}
-              />
-            </Field>
-
-            <Field label="Phone" htmlFor="guardianPhone" errors={state.fieldErrors?.guardianPhone}>
-              <input
-                id="guardianPhone"
-                name="guardianPhone"
-                type="tel"
-                autoComplete="tel"
-                defaultValue={defaultValues?.guardianPhone}
-                className={inputClassName}
-              />
-            </Field>
-
-            <Field
-              label="Telegram"
-              htmlFor="guardianTelegram"
-              errors={state.fieldErrors?.guardianTelegram}
-            >
-              <input
-                id="guardianTelegram"
-                name="guardianTelegram"
-                type="text"
-                placeholder="@username"
-                defaultValue={defaultValues?.guardianTelegram}
-                className={inputClassName}
-              />
-            </Field>
-          </div>
+          ) : null}
         </>
       )}
 

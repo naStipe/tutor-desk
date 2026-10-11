@@ -18,7 +18,7 @@ export type LessonWithStudent = Lesson & {
 };
 
 const LESSON_COLUMNS =
-  "id, tutor_id, student_id, subject_id, series_id, start_time, end_time, status, notes, meeting_url, price, currency, payment_status, payment_method, paid_at, created_at, updated_at, student:student_id (id, name), subject:subject_id (id, name)";
+  "id, tutor_id, student_id, subject_id, series_id, start_time, end_time, status, notes, meeting_url, price, currency, payment_status, payment_method, paid_at, package_id, created_at, updated_at, student:student_id (id, name), subject:subject_id (id, name)";
 
 function addMinutes(iso: string, minutes: number) {
   return new Date(new Date(iso).getTime() + minutes * 60000).toISOString();
@@ -250,10 +250,13 @@ export async function updateLesson(
   supabase: SupabaseClient<Database>,
   id: string,
   input: LessonInput,
+  /** Package link to drop: the student changed, or the tutor set the lesson unpaid by hand. */
+  releasePackage = false,
 ) {
   const { data, error } = await supabase
     .from("lesson")
     .update({
+      ...(releasePackage ? { package_id: null } : {}),
       student_id: input.studentId,
       subject_id: input.subjectId ?? null,
       start_time: input.startTime,
@@ -296,12 +299,15 @@ export async function updateLessonStatus(
   id: string,
   status: LessonStatus,
 ) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("lesson")
     .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .select("student_id")
+    .maybeSingle();
 
   if (error) throw new Error(`Unable to update lesson status: ${error.message}`);
+  return data?.student_id ?? null;
 }
 
 export async function deleteLesson(supabase: SupabaseClient<Database>, id: string) {
@@ -321,6 +327,7 @@ export async function updateLessonPayment(
       payment_status: paymentStatus,
       payment_method: paymentMethod,
       paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+      ...(paymentStatus === "unpaid" ? { package_id: null } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -347,6 +354,7 @@ export async function bulkUpdateLessonPayment(
     .update({
       payment_status: paymentStatus,
       paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+      ...(paymentStatus === "unpaid" ? { package_id: null } : {}),
       updated_at: new Date().toISOString(),
     })
     .in("id", ids)
@@ -391,6 +399,7 @@ export async function bulkUpdateLessonPaymentByFilter(
       .update({
         payment_status: paymentStatus,
         paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+        ...(paymentStatus === "unpaid" ? { package_id: null } : {}),
         updated_at: new Date().toISOString(),
       })
       .eq("tutor_id", tutorId)
@@ -467,11 +476,11 @@ export async function getFirstLessonForSeries(
 export async function cancelLessonSeries(supabase: SupabaseClient<Database>, id: string) {
   const { data: series, error: fetchError } = await supabase
     .from("lesson_series")
-    .select("id")
+    .select("id, student_id")
     .eq("id", id)
     .maybeSingle();
   if (fetchError) throw new Error(`Unable to load recurring lesson: ${fetchError.message}`);
-  if (!series) return;
+  if (!series) return null;
 
   const { error: seriesError } = await supabase
     .from("lesson_series")
@@ -486,6 +495,7 @@ export async function cancelLessonSeries(supabase: SupabaseClient<Database>, id:
     .eq("status", "scheduled")
     .gte("start_time", new Date().toISOString());
   if (lessonError) throw new Error(`Unable to cancel upcoming lessons: ${lessonError.message}`);
+  return series.student_id;
 }
 
 export async function listActiveLessonSeriesForGeneration(

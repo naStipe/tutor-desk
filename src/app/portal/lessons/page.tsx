@@ -78,7 +78,11 @@ export default async function PortalLessonsPage({
                   </td>
                   <td className="px-4 py-3 text-ink-muted">{lesson.subject_name ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={lesson.status} />
+                    <StatusBadge
+                      status={lesson.status}
+                      startTime={lesson.start_time}
+                      endTime={lesson.end_time}
+                    />
                   </td>
                   <td className="px-4 py-3 text-ink-muted">
                     {lesson.price != null

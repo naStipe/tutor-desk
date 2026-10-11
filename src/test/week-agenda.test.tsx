@@ -74,9 +74,29 @@ describe("WeekAgenda", () => {
     expect(within(section).getByText("10:00 AM – 11:00 AM")).toBeTruthy();
     expect(within(section).getByText("Ann Student · Math")).toBeTruthy();
     expect(within(section).getByText("Bob Student")).toBeTruthy();
-    expect(within(section).getByText("Scheduled")).toBeTruthy();
-    expect(within(section).getByText("Completed")).toBeTruthy();
+    // Ann's scheduled 10:00-11:00 lesson has ended at the faked 12:00 (UTC), so it reads Completed.
+    expect(within(section).getAllByText("Completed")).toHaveLength(2);
     expect(within(section).getByText("Paid")).toBeTruthy();
+  });
+
+  it("shows a scheduled lesson as in progress while it is happening, and scheduled before", () => {
+    renderAgenda([
+      lesson({
+        id: "now",
+        studentName: "Now Student",
+        startTime: "2026-10-14T11:30:00.000Z",
+        endTime: "2026-10-14T12:30:00.000Z",
+      }),
+      lesson({
+        id: "later",
+        studentName: "Later Student",
+        startTime: "2026-10-14T13:00:00.000Z",
+        endTime: "2026-10-14T14:00:00.000Z",
+      }),
+    ]);
+    const section = screen.getByRole("region", { name: "2026-10-14" });
+    expect(within(section).getByText("In progress")).toBeTruthy();
+    expect(within(section).getByText("Scheduled")).toBeTruthy();
   });
 
   it("orders a day's lessons by start time", () => {

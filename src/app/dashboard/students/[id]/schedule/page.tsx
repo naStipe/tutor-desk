@@ -53,7 +53,11 @@ export default async function StudentSchedulePage({ params }: { params: Promise<
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <StatusBadge status={lesson.status} />
+            <StatusBadge
+              status={lesson.status}
+              startTime={lesson.start_time}
+              endTime={lesson.end_time}
+            />
             <PaymentBadge status={lesson.payment_status} />
           </div>
         </Link>

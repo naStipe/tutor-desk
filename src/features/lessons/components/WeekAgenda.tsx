@@ -86,7 +86,11 @@ export function WeekAgenda({
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <StatusBadge status={lesson.status} />
+                        <StatusBadge
+                          status={lesson.status}
+                          startTime={lesson.startTime}
+                          endTime={lesson.endTime}
+                        />
                         <PaymentBadge status={lesson.paymentStatus} />
                       </div>
                     </Link>

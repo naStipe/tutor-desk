@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/supabase/database.types";
+import { trySyncPackageCredits } from "../packages/data";
 import { getRate } from "../rates/data";
 import { addDays, startOfDay, toDateParam } from "./date-utils";
 import {
@@ -81,6 +82,7 @@ export async function ensureUpcomingLessonsGenerated(
 
     if (rows.length > 0) {
       await insertGeneratedLessons(supabase, rows);
+      await trySyncPackageCredits(supabase, series.student_id);
       generatedAny = true;
     }
 

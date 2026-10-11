@@ -31,6 +31,7 @@ function makeLessons(count: number): ListLesson[] {
     subjectId: null,
     subjectName: index % 2 === 0 ? "Math" : null,
     startTime: `2026-10-${String(index + 1).padStart(2, "0")}T10:00:00.000Z`,
+    endTime: `2026-10-${String(index + 1).padStart(2, "0")}T11:00:00.000Z`,
     status: "completed",
     paymentStatus: "unpaid",
     price: 40,

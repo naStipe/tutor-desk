@@ -39,12 +39,16 @@ function PaymentQuickButton({ paid }: { paid: boolean }) {
 export function LessonStatusActions({
   lessonId,
   initialStatus,
+  startTime,
+  endTime,
   meetingUrl,
   paymentStatus,
   paymentMethod,
 }: {
   lessonId: string;
   initialStatus: LessonStatus;
+  startTime: string;
+  endTime: string;
   meetingUrl?: string | null;
   paymentStatus: PaymentStatus;
   paymentMethod?: PaymentMethod | null;
@@ -154,7 +158,7 @@ export function LessonStatusActions({
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-ink">Status</span>
           <span className={`transition-opacity duration-150 ${isPending ? "opacity-60" : ""}`}>
-            <StatusBadge status={optimisticStatus} />
+            <StatusBadge status={optimisticStatus} startTime={startTime} endTime={endTime} />
           </span>
         </div>
         <div className="flex flex-wrap gap-2">

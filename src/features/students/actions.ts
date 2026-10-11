@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { cancelScheduledLessonsForStudent } from "../lessons/data";
+import { trySyncPackageCredits } from "../packages/data";
 import { createClient } from "../../lib/supabase/server";
 import { tutorTag } from "../../lib/query-cache";
 import {
@@ -30,10 +31,12 @@ function fields(formData: FormData) {
     email: formData.get("email"),
     phone: formData.get("phone"),
     telegram: formData.get("telegram"),
-    guardianName: formData.get("guardianName"),
-    guardianEmail: formData.get("guardianEmail"),
-    guardianPhone: formData.get("guardianPhone"),
-    guardianTelegram: formData.get("guardianTelegram"),
+    // The payer fields are not rendered at all when the tutor has no separate payer, so a missing
+    // field means "empty", not an invalid value.
+    guardianName: formData.get("guardianName") ?? "",
+    guardianEmail: formData.get("guardianEmail") ?? "",
+    guardianPhone: formData.get("guardianPhone") ?? "",
+    guardianTelegram: formData.get("guardianTelegram") ?? "",
     notes: formData.get("notes"),
     defaultHourlyRate: formData.get("defaultHourlyRate"),
     defaultCurrency: formData.get("defaultCurrency") ?? "RUB",
@@ -126,6 +129,7 @@ export async function archiveStudentAction(formData: FormData) {
 
   const { supabase, tutorId } = await requireTutorId();
   await cancelScheduledLessonsForStudent(supabase, id);
+  await trySyncPackageCredits(supabase, id);
   await archiveStudent(supabase, id);
 
   revalidateTag(tutorTag("students", tutorId));

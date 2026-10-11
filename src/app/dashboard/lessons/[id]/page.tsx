@@ -68,12 +68,21 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ i
         <div className="flex items-center gap-2">
           <span className="text-sm text-ink-muted">Payment</span>
           <PaymentBadge status={lesson.payment_status} />
+          {lesson.package_id && (
+            <span className="text-sm text-ink-muted">
+              {lesson.status === "scheduled"
+                ? "Covered by a lesson package (booked)"
+                : "Covered by a lesson package"}
+            </span>
+          )}
         </div>
       </div>
 
       <LessonStatusActions
         lessonId={lesson.id}
         initialStatus={lesson.status as LessonStatus}
+        startTime={lesson.start_time}
+        endTime={lesson.end_time}
         meetingUrl={lesson.meeting_url}
         paymentStatus={lesson.payment_status as (typeof PAYMENT_STATUSES)[number]}
         paymentMethod={lesson.payment_method as (typeof PAYMENT_METHODS)[number] | null}

@@ -23,6 +23,7 @@ export type ListLesson = {
   subjectId: string | null;
   subjectName: string | null;
   startTime: string;
+  endTime: string;
   status: LessonStatus;
   paymentStatus: string;
   price: number | null;
@@ -429,7 +430,11 @@ export function LessonsListView({
                       {lesson.subjectName ? ` · ${lesson.subjectName}` : ""}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <StatusBadge status={lesson.status} />
+                      <StatusBadge
+                        status={lesson.status}
+                        startTime={lesson.startTime}
+                        endTime={lesson.endTime}
+                      />
                       <PaymentBadge status={lesson.paymentStatus} />
                     </div>
                   </Link>
@@ -519,7 +524,11 @@ export function LessonsListView({
                     <td className="px-4 py-3 text-ink-muted">{lesson.studentName}</td>
                     <td className="px-4 py-3 text-ink-muted">{lesson.subjectName ?? "—"}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={lesson.status} />
+                      <StatusBadge
+                        status={lesson.status}
+                        startTime={lesson.startTime}
+                        endTime={lesson.endTime}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <PaymentBadge status={lesson.paymentStatus} />

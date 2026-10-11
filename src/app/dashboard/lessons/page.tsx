@@ -82,6 +82,7 @@ export default async function LessonsPage({
     subjectId: lesson.subject_id,
     subjectName: lesson.subject?.name ?? null,
     startTime: lesson.start_time,
+    endTime: lesson.end_time,
     status: lesson.status as LessonStatus,
     paymentStatus: lesson.payment_status,
     price: lesson.price,

@@ -201,6 +201,7 @@ export type Database = {
           id: string
           meeting_url: string | null
           notes: string | null
+          package_id: string | null
           paid_at: string | null
           payment_method: string | null
           payment_status: string
@@ -220,6 +221,7 @@ export type Database = {
           id?: string
           meeting_url?: string | null
           notes?: string | null
+          package_id?: string | null
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: string
@@ -239,6 +241,7 @@ export type Database = {
           id?: string
           meeting_url?: string | null
           notes?: string | null
+          package_id?: string | null
           paid_at?: string | null
           payment_method?: string | null
           payment_status?: string
@@ -252,6 +255,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lesson_package_same_student_fkey"
+            columns: ["package_id", "student_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_package"
+            referencedColumns: ["id", "student_id"]
+          },
           {
             foreignKeyName: "lesson_series_id_fkey"
             columns: ["series_id"]
@@ -275,6 +285,60 @@ export type Database = {
           },
           {
             foreignKeyName: "lesson_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      lesson_package: {
+        Row: {
+          created_at: string
+          currency: string | null
+          id: string
+          note: string | null
+          price: number | null
+          purchased_at: string
+          student_id: string
+          total_lessons: number
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          note?: string | null
+          price?: number | null
+          purchased_at?: string
+          student_id: string
+          total_lessons: number
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          note?: string | null
+          price?: number | null
+          purchased_at?: string
+          student_id?: string
+          total_lessons?: number
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_package_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_package_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profile"
@@ -716,6 +780,7 @@ export type Database = {
     }
     Functions: {
       accept_portal_invite: { Args: { p_token: string }; Returns: string }
+      complete_elapsed_lessons: { Args: never; Returns: number }
       claim_balance_reminder: {
         Args: {
           p_cooldown?: unknown
@@ -789,6 +854,7 @@ export type Database = {
           total: number
         }[]
       }
+      sync_student_package_credits: { Args: { p_student_id: string }; Returns: undefined }
       submit_homework: {
         Args: { p_homework_id: string; p_submission_text: string }
         Returns: undefined

@@ -24,6 +24,7 @@ import {
   zonedMinutesToDate,
 } from "../date-utils";
 import type { LessonStatus } from "../schemas";
+import { type DisplayStatus, displayStatus } from "../status";
 
 const DEFAULT_START_HOUR = 7;
 const DEFAULT_END_HOUR = 21;
@@ -57,30 +58,34 @@ const STUDENT_BLOCK_FILL_CLASSES: Record<StudentHue, string> = {
   lime: "bg-hue-lime/20 hover:bg-hue-lime/30 text-ink",
 };
 
-const STATUS_ACCENT_CLASSES: Record<LessonStatus, string> = {
+const STATUS_ACCENT_CLASSES: Record<DisplayStatus, string> = {
   scheduled: "border-l-cyan",
+  in_progress: "border-l-violet",
   completed: "border-l-brand",
   cancelled: "border-l-ink-subtle",
   no_show: "border-l-warning",
 };
 
 /** Non-color status cue: a glyph that differs per status (the dot color alone is not enough). */
-export const STATUS_GLYPHS: Record<LessonStatus, string> = {
+export const STATUS_GLYPHS: Record<DisplayStatus, string> = {
   scheduled: "○",
+  in_progress: "◐",
   completed: "✓",
   cancelled: "⊘",
   no_show: "!",
 };
 
-export const STATUS_TEXT_CLASSES: Record<LessonStatus, string> = {
+export const STATUS_TEXT_CLASSES: Record<DisplayStatus, string> = {
   scheduled: "text-cyan",
+  in_progress: "text-violet",
   completed: "text-brand",
   cancelled: "text-ink-muted",
   no_show: "text-warning",
 };
 
-export const STATUS_LABELS: Record<LessonStatus, string> = {
+export const STATUS_LABELS: Record<DisplayStatus, string> = {
   scheduled: "Scheduled",
+  in_progress: "In progress",
   completed: "Completed",
   cancelled: "Cancelled",
   no_show: "No-show",
@@ -525,18 +530,24 @@ export function LessonCalendar({
                   const column = isDragging ? 0 : (layout?.column ?? 0);
                   const widthPct = 100 / columns;
                   const studentHue = studentHues.get(lesson.studentId) ?? "brand";
+                  const shown = displayStatus(
+                    lesson.status,
+                    lesson.startTime,
+                    lesson.endTime,
+                    now.getTime(),
+                  );
 
                   return (
                     <button
                       key={lesson.id}
                       type="button"
-                      title={`${lesson.studentName} · ${STATUS_LABELS[lesson.status]}`}
-                      aria-label={`${formatMinutesOfDay(startMinutes)} to ${formatMinutesOfDay(startMinutes + durationMinutes)}, ${lesson.studentName}, ${STATUS_LABELS[lesson.status]}`}
+                      title={`${lesson.studentName} · ${STATUS_LABELS[shown]}`}
+                      aria-label={`${formatMinutesOfDay(startMinutes)} to ${formatMinutesOfDay(startMinutes + durationMinutes)}, ${lesson.studentName}, ${STATUS_LABELS[shown]}`}
                       onPointerDown={(event) => handleBlockPointerDown(event, lesson, dayIndex)}
                       onPointerMove={handleBlockPointerMove}
                       onPointerUp={(event) => handleBlockPointerUp(event, lesson)}
                       onPointerCancel={handleBlockPointerCancel}
-                      className={`absolute z-20 touch-pan-y overflow-hidden rounded-md border-l-4 px-2 text-left text-xs shadow-sm transition-colors ${STUDENT_BLOCK_FILL_CLASSES[studentHue]} ${STATUS_ACCENT_CLASSES[lesson.status]} ${lesson.status === "cancelled" ? "opacity-75 line-through" : ""} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
+                      className={`absolute z-20 touch-pan-y overflow-hidden rounded-md border-l-4 px-2 text-left text-xs shadow-sm transition-colors ${STUDENT_BLOCK_FILL_CLASSES[studentHue]} ${STATUS_ACCENT_CLASSES[shown]} ${shown === "cancelled" ? "opacity-75 line-through" : ""} ${isDragging ? "cursor-grabbing opacity-90 shadow-lg" : "cursor-grab"} ${isHighlighted ? "ring-2 ring-danger ring-offset-1" : ""}`}
                       style={{
                         top,
                         height,
@@ -547,9 +558,9 @@ export function LessonCalendar({
                       <span className="flex items-center gap-1">
                         <span
                           aria-hidden="true"
-                          className={`shrink-0 text-xs font-bold leading-none ${STATUS_TEXT_CLASSES[lesson.status]}`}
+                          className={`shrink-0 text-xs font-bold leading-none ${STATUS_TEXT_CLASSES[shown]}`}
                         >
-                          {STATUS_GLYPHS[lesson.status]}
+                          {STATUS_GLYPHS[shown]}
                         </span>
                         <span className="truncate font-medium leading-tight">
                           {formatMinutesOfDay(startMinutes)} · {lesson.studentName}
@@ -557,7 +568,7 @@ export function LessonCalendar({
                       </span>
                       {!compact && (
                         <span className="block truncate text-xs opacity-90">
-                          {durationMinutes} min · {STATUS_LABELS[lesson.status]}
+                          {durationMinutes} min · {STATUS_LABELS[shown]}
                         </span>
                       )}
                     </button>

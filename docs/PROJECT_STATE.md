@@ -2,6 +2,51 @@
 
 ## Current Milestone
 
+- Milestone: **TD-022 — Different payer, live lesson status, prepaid lesson packages**
+- Status: Implemented and verified locally (format, lint, typecheck, 153 tests, build). **The migration
+  `supabase/migrations/20261011000000_lesson_packages.sql` is written but NOT applied** to the hosted project, and
+  `database.types.ts` was edited by hand to match. Until it is applied: the package card is hidden (its query is
+  caught), package sync and auto-complete calls fail silently (wrapped in try/catch), but the lessons queries that
+  now select `lesson.package_id` will error, so **apply the migration before deploying this code**.
+- Last updated: 2026-10-11
+- Uncommitted work was committed at the end of this session (see git log).
+
+- **Different payer** (`StudentForm.tsx`): new student form has a checkbox "Someone else pays or is responsible
+  (different payer)" that reveals the existing guardian fields. On an existing student (Contacts tab) an "Add payer /
+  responsible person" button reveals them and "Remove" hides them; saving with the section hidden clears the
+  guardian columns. `fields()` in `students/actions.ts` now maps missing guardian inputs to `""` (they are not
+  rendered when hidden). No schema change (the guardian columns already existed).
+- **Live lesson status** (`lessons/status.ts`, `StatusBadge`, calendars): `in_progress` is a *derived display
+  status*, never stored. `displayStatus()` shows a scheduled lesson as "In progress" between start and end and as
+  "Completed" after the end. `StatusBadge` takes optional `startTime`/`endTime`, ticks every 30 s and shows the
+  stored status until mounted (no hydration mismatch). `LessonCalendar` and `StudentLessonCalendar` use it (new
+  violet glyph `◐`, legend entry). The stored value catches up through `complete_elapsed_lessons()`, called on every
+  dashboard layout render (own lessons only, RLS applies, errors swallowed). Portal/student-view lists use the badge
+  with times; a portal's stored status is only as fresh as the tutor's last dashboard visit.
+- **Lesson packages** (`src/features/packages/`, billing tab "Lesson packages"): a tutor records that a student bought
+  N lessons (optional price/currency/note). Balance is derived, not stored: *booked* = covered lessons still
+  scheduled, *used* = covered lessons completed or no-show, *remaining* = total − booked − used. SQL
+  `sync_student_package_credits(student)` (security invoker, advisory lock per student) releases credits of cancelled
+  lessons (unpaid again) and then covers the earliest uncovered scheduled+unpaid lessons from the oldest package with
+  room, marking them paid with `package_id` set. It runs after: lesson create, edit, status change, series cancel,
+  recurring generation, student archive, package add/delete. Deleting a package returns its still-scheduled lessons to
+  unpaid; held lessons stay paid. No-shows consume a credit (decision; easy to change in the SQL and `balance.ts`).
+  Marking a package lesson unpaid by hand (single, bulk, or edit form) detaches it from the package; changing a
+  lesson's student does too.
+- **Security**: `lesson_package` has RLS (select/insert/delete own; insert requires the student to belong to the tutor).
+  `lesson` gets a composite FK `(package_id, student_id)` → `lesson_package(id, student_id)`, so a forged package id of
+  another student or tutor is rejected by the database; `ON DELETE SET NULL (package_id)` needs Postgres 15+. Actions use
+  `requireTutorId`, Zod (`packageInputSchema`) and never take a tutor id from the client.
+- **Tests**: `src/test/packages-and-status.test.ts` (displayStatus, balance, schema) and two new
+  `week-agenda.test.tsx` cases. **Not tested**: the SQL functions and policies (never run on Postgres), the server
+  actions, the layout sweep, the billing card against real data. Visual check only of the payer toggle and badges on a
+  temporary fixture page at 375px (removed).
+- **Known limits**: the credit sync only covers lessons that are scheduled and unpaid; a package bought after lessons
+  were already completed does not pay them. A package does not expire. The email reminder and unpaid-balance logic still
+  read `payment_status`, so package lessons count as paid there, which is intended.
+
+## Previous Milestone (TD-020)
+
 - Milestone: **TD-020 — Email via Resend (built, NOT activated)**
 - Status: Implemented and verified locally (format, lint, typecheck, 141 tests, build). **Nothing sent, nothing
   applied**: the migration is not applied to the hosted project, no `vercel.json` cron exists, and the master
@@ -1059,8 +1104,8 @@ were restyled to the new tokens but their logic is untouched.
 
 ## Next Recommended Task
 
-**Owner activation pass for TD-020** (owner-driven, in order): review and apply
-`supabase/migrations/20261010000000_notification_log.sql`, rerun `pnpm run db:types` and reconcile
+**Owner activation pass for TD-020 and TD-022** (owner-driven, in order): review and apply
+`supabase/migrations/20261010000000_notification_log.sql` and `supabase/migrations/20261011000000_lesson_packages.sql`, rerun `pnpm run db:types` and reconcile
 `database.types.ts`, finish the Resend/Supabase SMTP setup in `docs/EMAIL_SETUP.md`, set the env vars with the
 switch still false, test sign-up and password-reset emails, then enable the switch, try the balance button on
 a student whose guardian email is the owner's own, and only then add the `vercel.json` cron entry. Still

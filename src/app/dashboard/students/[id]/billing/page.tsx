@@ -9,6 +9,8 @@ import { SendBalanceReminder } from "../../../../../features/notifications/compo
 import { maskEmail, pickRecipient } from "../../../../../features/notifications/schemas";
 import { updateStudentAction } from "../../../../../features/students/actions";
 import { StudentForm } from "../../../../../features/students/components/StudentForm";
+import { PackagesCard } from "../../../../../features/packages/components/PackagesCard";
+import { listPackagesForStudent } from "../../../../../features/packages/data";
 import { getStudent, getStudentUnpaidSummary } from "../../../../../features/students/data";
 import { listSubjects } from "../../../../../features/subjects/data";
 import { getTutorFormatSettings } from "../../../../../features/tutor-profile/data";
@@ -23,11 +25,12 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
   const student = await getStudent(supabase, id);
   if (!student) notFound();
 
-  const [rates, subjects, unpaidSummary, { locale }] = await Promise.all([
+  const [rates, subjects, unpaidSummary, { locale }, packageData] = await Promise.all([
     listRatesForStudent(supabase, id),
     listSubjects(supabase),
     getStudentUnpaidSummary(supabase, id),
     getTutorFormatSettings(supabase, student.tutor_id),
+    listPackagesForStudent(supabase, id).catch(() => null),
   ]);
   const ratedSubjectIds = new Set(rates.map((rate) => rate.subject_id));
   const reminderRecipient = pickRecipient(student.guardian_email, student.email);
@@ -64,6 +67,16 @@ export default async function StudentBillingPage({ params }: { params: Promise<{
             />
           )}
         </Card>
+      )}
+
+      {packageData && (
+        <PackagesCard
+          studentId={student.id}
+          packages={packageData.packages}
+          totals={packageData.totals}
+          locale={locale}
+          defaultCurrency={student.default_currency ?? "RUB"}
+        />
       )}
 
       <Card>

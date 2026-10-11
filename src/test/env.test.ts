@@ -25,6 +25,24 @@ describe("Environment Validation", () => {
     expect(() => validateEnv(invalidConfig)).toThrow(/Environment validation failed/);
   });
 
+  it("accepts plain HTTP only for the local Supabase stack", () => {
+    const base = {
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test-value",
+    };
+
+    expect(
+      validateEnv({ ...base, NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321" })
+        .NEXT_PUBLIC_SUPABASE_URL,
+    ).toBe("http://127.0.0.1:54321");
+    expect(() =>
+      validateEnv({ ...base, NEXT_PUBLIC_SUPABASE_URL: "http://localhost.evil.test" }),
+    ).toThrow(/Environment validation failed/);
+    expect(() =>
+      validateEnv({ ...base, NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1.evil.test" }),
+    ).toThrow(/Environment validation failed/);
+  });
+
   it("rejects a missing publishable key", () => {
     const missingKeyConfig = {
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000",

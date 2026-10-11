@@ -10,7 +10,25 @@ Scope: desktop and mobile (375x812) pass over the running app (dev server) plus 
 - Nothing was run against the hosted database. The TD-022 migration is not applied, so packages and auto-complete are
   untested end to end.
 
-## Verified in the browser
+## Signed-in pass (local stack, added later the same day)
+
+After the first draft, a local Supabase stack with a seeded tutor was set up (`docs/LOCAL_DEV.md`) and the dashboard was
+walked at 375px (dashboard, schedule, lessons, students, contacts, billing, settings, homework, subjects) and on desktop
+(lessons, billing, lesson detail). No horizontal overflow and no text under 12px on any of these pages at 375px.
+
+| # | Finding | Mobile | Desktop | Severity |
+|---|---------|--------|---------|----------|
+| S1 | Schedule view switcher (Day / Week / Month) is 36px high at 375px, below the 44px target used elsewhere. | yes | no | medium |
+| S2 | Text links under 44px on phone: "Archived students" (20px), "← Back to students" (20px), "Add a subject" (18px). | yes | no | low |
+| S3 | Lessons list checkboxes are 20x20 (their row/label is larger, so tapping the row works; tapping beside the box does not). | yes | no | low |
+| S4 | The package row date uses `toLocaleDateString` ("10/11/2026"), while the rest of the app writes dates out in full ("October 11"); ambiguous for a non-US tutor. | yes | yes | low |
+| S5 | Student list shows no balance, payer or package state, so a tutor must open each student to see who has credits left or who is owed money. | yes | yes | low |
+| S6 | Dev only: React streaming leaves a hidden duplicate of the page body in the DOM until hydration finishes (looks like duplicate forms to automation). Not a user-facing bug. | n/a | n/a | none |
+
+Everything in the earlier "Code-read findings" section that is marked `[code]` was **not** re-checked on screen in this pass,
+except that the lesson/status/package flows now run correctly on a real database.
+
+## Verified in the browser (public pages)
 
 | # | Area | Finding | Mobile | Desktop | Severity |
 |---|------|---------|--------|---------|----------|

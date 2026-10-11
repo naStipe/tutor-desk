@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/** Plain HTTP is accepted only for the local Supabase stack (`supabase start`). */
+const LOCAL_HTTP_URL = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/;
+
 /**
  * Runtime environment variable schema.
  * Validates all required environment variables at application initialization.
@@ -10,7 +13,10 @@ export const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z
     .string()
     .url("NEXT_PUBLIC_SUPABASE_URL must be a valid URL")
-    .refine((value) => value.startsWith("https://"), "Supabase URL must use HTTPS"),
+    .refine(
+      (value) => value.startsWith("https://") || LOCAL_HTTP_URL.test(value),
+      "Supabase URL must use HTTPS (plain HTTP is allowed only for localhost / 127.0.0.1)",
+    ),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z
     .string()
     .min(20, "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is required"),

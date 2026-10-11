@@ -14,3 +14,7 @@ test-results/
 .env*
 !.env.example
 .claude/scheduled_tasks.lock
+
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp

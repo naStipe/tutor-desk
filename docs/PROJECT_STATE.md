@@ -41,6 +41,17 @@
   `week-agenda.test.tsx` cases. **Not tested**: the SQL functions and policies (never run on Postgres), the server
   actions, the layout sweep, the billing card against real data. Visual check only of the payer toggle and badges on a
   temporary fixture page at 375px (removed).
+- **Local verification (added after the commit above)**: `docs/LOCAL_DEV.md` describes a local Supabase stack
+  (`supabase start`, `supabase/seed.sql`, `.env.development.local`). On it, all migrations including
+  `20261011000000_lesson_packages.sql` applied cleanly, and a SQL script run as the seeded tutors confirmed: the sweep
+  completes elapsed lessons, a package of 2 covers 2 of 3 scheduled lessons, cancelling one hands its credit to the next,
+  the composite FK rejects a package of another student, and tutor B cannot read or create packages for tutor A's
+  student. In the app (signed in as the seeded tutor, desktop and 375px): "In progress" and auto-"Completed" show in the
+  lessons list and schedule, adding a package from the Billing tab pays two lessons (2 booked, 0 remaining), cancelling
+  a covered lesson from its page moves the credit, and "Add payer / responsible person" saves to `student.guardian_*`.
+  `src/lib/env.ts` now accepts `http://localhost` / `http://127.0.0.1` Supabase URLs (hosted URLs still need HTTPS).
+  **Still not verified**: the hosted project (migration not applied there), the lesson create/edit form paths that call
+  the sync, recurring generation with packages, the student portal view, real phone.
 - **Known limits**: the credit sync only covers lessons that are scheduled and unpaid; a package bought after lessons
   were already completed does not pay them. A package does not expire. The email reminder and unpaid-balance logic still
   read `payment_status`, so package lessons count as paid there, which is intended.

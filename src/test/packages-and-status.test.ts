@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { computePackageBalance } from "../features/packages/balance";
-import { packageInputSchema } from "../features/packages/schemas";
+import {
+  applyTemplateSchema,
+  packageInputSchema,
+  templateInputSchema,
+} from "../features/packages/schemas";
 import { displayStatus } from "../features/lessons/status";
 
 const START = "2026-10-11T10:00:00.000Z";
@@ -81,5 +85,38 @@ describe("packageInputSchema", () => {
 
   it("rejects a foreign-shaped student id", () => {
     expect(packageInputSchema.safeParse({ studentId: "x", totalLessons: "5" }).success).toBe(false);
+  });
+});
+
+describe("templateInputSchema / applyTemplateSchema", () => {
+  const id = "5f4f3a52-3b1f-4f5b-9a55-7c1f4f1a2b3c";
+
+  it("accepts a named preset and treats price as optional", () => {
+    const parsed = templateInputSchema.safeParse({
+      name: "  10-lesson pack ",
+      totalLessons: "10",
+      price: "350",
+      currency: "EUR",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.name).toBe("10-lesson pack");
+      expect(parsed.data.price).toBe(350);
+    }
+    expect(templateInputSchema.safeParse({ name: "x", totalLessons: "5" }).success).toBe(true);
+  });
+
+  it("rejects a blank name, bad counts and unknown currencies", () => {
+    expect(templateInputSchema.safeParse({ name: "  ", totalLessons: "5" }).success).toBe(false);
+    expect(templateInputSchema.safeParse({ name: "x", totalLessons: "0" }).success).toBe(false);
+    expect(
+      templateInputSchema.safeParse({ name: "x", totalLessons: "5", currency: "USD" }).success,
+    ).toBe(false);
+  });
+
+  it("only accepts uuid student and preset ids when applying", () => {
+    expect(applyTemplateSchema.safeParse({ studentId: id, templateId: id }).success).toBe(true);
+    expect(applyTemplateSchema.safeParse({ studentId: id, templateId: "" }).success).toBe(false);
+    expect(applyTemplateSchema.safeParse({ studentId: "x", templateId: id }).success).toBe(false);
   });
 });

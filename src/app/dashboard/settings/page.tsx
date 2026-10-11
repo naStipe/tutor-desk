@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { PageHeader } from "../../../components/PageHeader";
+import { TemplatesCard } from "../../../features/packages/components/TemplatesCard";
+import { listPackageTemplates } from "../../../features/packages/data";
 import { updateTutorProfileAction } from "../../../features/tutor-profile/actions";
 import { SettingsForm } from "../../../features/tutor-profile/components/SettingsForm";
 import { getTutorProfile } from "../../../features/tutor-profile/data";
@@ -20,7 +22,10 @@ export default async function SettingsPage() {
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const profile = await getTutorProfile(supabase, user.id);
+  const [profile, templates] = await Promise.all([
+    getTutorProfile(supabase, user.id),
+    listPackageTemplates(supabase).catch(() => null),
+  ]);
 
   return (
     <div className="max-w-xl space-y-6">
@@ -45,6 +50,13 @@ export default async function SettingsPage() {
           }}
         />
       </Card>
+      {templates && (
+        <TemplatesCard
+          templates={templates}
+          locale={profile?.locale ?? "en-US"}
+          defaultCurrency={profile?.currency ?? "RUB"}
+        />
+      )}
     </div>
   );
 }

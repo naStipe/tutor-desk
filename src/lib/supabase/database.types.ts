@@ -480,6 +480,44 @@ export type Database = {
           },
         ]
       }
+      package_template: {
+        Row: {
+          created_at: string
+          currency: string | null
+          id: string
+          name: string
+          price: number | null
+          total_lessons: number
+          tutor_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          name: string
+          price?: number | null
+          total_lessons: number
+          tutor_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          name?: string
+          price?: number | null
+          total_lessons?: number
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_template_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profile"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       portal_invite: {
         Row: {
           accepted_at: string | null

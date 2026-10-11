@@ -55,6 +55,19 @@
   `src/lib/env.ts` now accepts `http://localhost` / `http://127.0.0.1` Supabase URLs (hosted URLs still need HTTPS).
   **Still not verified**: the hosted project (migration not applied there), the lesson create/edit form paths that call
   the sync, recurring generation with packages, the student portal view, real phone.
+- **Follow-up (2026-10-11): lesson form + fixed packages.** (1) The "New lesson" form (`LessonForm`, schedule page and
+  Duplicate) now receives `packageCreditsByStudent` and, for a student with credit left, replaces the payment status and
+  method controls with a "Paid from lesson package (N left)" notice and posts `paymentStatus=unpaid`; the server links the
+  lesson to the package after saving (`trySyncPackageCredits`). The edit form is unchanged. (2) New table
+  `package_template` (`supabase/migrations/20261011010000_package_templates.sql`, RLS select/insert/delete own): a tutor
+  defines fixed packages (name, lessons, optional price) in Settings ("Lesson packages" card) and adds a student to one from
+  the Billing tab ("Add one of your packages"; the custom form moved into a collapsed "Or add a custom package").
+  Applying copies the preset into a `lesson_package` (note = preset name), so later edits or deletes of the preset do not
+  change existing packages. `applyPackageTemplateAction` reads the preset with an explicit `tutor_id` filter and the insert
+  policy requires the student to be the tutor's. **Verified on the local stack** (preset saved, applied to a student: 9 left /
+  1 booked; new lesson created through the form was linked and paid) with 157 tests. **The hosted project does not have
+  `package_template` until that migration is applied**; until then Settings hides the card and Billing shows no preset
+  picker (queries are caught), nothing else breaks.
 - **Known limits**: the credit sync only covers lessons that are scheduled and unpaid; a package bought after lessons
   were already completed does not pay them. A package does not expire. The email reminder and unpaid-balance logic still
   read `payment_status`, so package lessons count as paid there, which is intended.

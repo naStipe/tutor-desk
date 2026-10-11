@@ -30,3 +30,17 @@ export const packageInputSchema = z.object({
 });
 
 export type PackageInput = z.infer<typeof packageInputSchema>;
+
+export const templateInputSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name").max(100, "Name is too long"),
+  totalLessons: packageInputSchema.shape.totalLessons,
+  price: packageInputSchema.shape.price,
+  currency: packageInputSchema.shape.currency,
+});
+
+export type TemplateInput = z.infer<typeof templateInputSchema>;
+
+export const applyTemplateSchema = z.object({
+  studentId: z.string().uuid("Missing student reference"),
+  templateId: z.string().uuid("Choose a package"),
+});

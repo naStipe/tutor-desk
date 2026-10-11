@@ -40,6 +40,8 @@ type LessonFormProps = {
   students: { id: string; name: string }[];
   subjects: { id: string; name: string }[];
   ratesByStudent?: RatesByStudent;
+  /** Lessons left in each student's packages (only students with credit). New-lesson form only. */
+  packageCreditsByStudent?: Record<string, number>;
   allowRecurrence?: boolean;
   /** Other lessons, used to show per-day counts and block out busy slots in the picker. */
   pickerLessons?: PickerLesson[];
@@ -73,6 +75,7 @@ export function LessonForm({
   students,
   subjects,
   ratesByStudent,
+  packageCreditsByStudent,
   allowRecurrence,
   pickerLessons,
   defaultValues,
@@ -122,6 +125,11 @@ export function LessonForm({
     setPrice(String(computed));
     setCurrency(rate.currency);
   }, [rate, durationMinutes, priceTouched]);
+
+  // A new lesson for a student with package credit is paid from the package automatically (the
+  // server links it after saving), so the payment controls would only mislead.
+  const packageCreditsLeft = !lessonId ? (packageCreditsByStudent?.[studentId] ?? 0) : 0;
+  const paidFromPackage = packageCreditsLeft > 0;
 
   const startTime =
     minutes !== null ? zonedMinutesToDate(dateParam, minutes, timeZone).toISOString() : "";
@@ -225,7 +233,22 @@ export function LessonForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {paidFromPackage && (
+        <div
+          role="status"
+          className="rounded-lg border border-brand/25 bg-brand/10 p-3 text-sm text-ink"
+        >
+          <p className="font-medium text-brand-strong">Paid from lesson package</p>
+          <p className="mt-1 text-ink-muted">
+            This student has {packageCreditsLeft} lesson{packageCreditsLeft === 1 ? "" : "s"} left.
+            The lesson is booked against the package and marked paid. It is only used up once the
+            lesson has happened, and cancelling it gives the credit back.
+          </p>
+          <input type="hidden" name="paymentStatus" value="unpaid" />
+        </div>
+      )}
+
+      <div className={paidFromPackage ? "hidden" : "grid grid-cols-1 gap-4 sm:grid-cols-2"}>
         <Field
           label="Payment status"
           htmlFor="paymentStatus"

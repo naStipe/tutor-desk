@@ -1,9 +1,10 @@
 import { Card } from "../../../components/Card";
 import { ConfirmSubmitForm } from "../../../components/ConfirmSubmitForm";
 import { formatMoney } from "../../../lib/formatting";
-import { createPackageAction, deletePackageAction } from "../actions";
+import { applyPackageTemplateAction, createPackageAction, deletePackageAction } from "../actions";
 import type { PackageBalance } from "../balance";
-import type { PackageWithBalance } from "../data";
+import type { PackageTemplate, PackageWithBalance } from "../data";
+import { ApplyTemplateForm } from "./ApplyTemplateForm";
 import { PackageForm } from "./PackageForm";
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -19,12 +20,14 @@ export function PackagesCard({
   studentId,
   packages,
   totals,
+  templates,
   locale,
   defaultCurrency,
 }: {
   studentId: string;
   packages: PackageWithBalance[];
   totals: PackageBalance;
+  templates: PackageTemplate[];
   locale: string;
   defaultCurrency: string;
 }) {
@@ -83,11 +86,33 @@ export function PackagesCard({
         </>
       )}
 
-      <PackageForm
-        action={createPackageAction}
-        studentId={studentId}
-        defaultCurrency={defaultCurrency}
-      />
+      {templates.length > 0 && (
+        <ApplyTemplateForm
+          action={applyPackageTemplateAction}
+          studentId={studentId}
+          options={templates.map((template) => ({
+            value: template.id,
+            label: `${template.name} · ${template.total_lessons} lessons${
+              template.price !== null && template.currency
+                ? ` · ${formatMoney(template.price, template.currency, locale)}`
+                : ""
+            }`,
+          }))}
+        />
+      )}
+
+      <details className="rounded-lg border border-border p-3">
+        <summary className="cursor-pointer text-sm font-medium text-ink">
+          {templates.length > 0 ? "Or add a custom package" : "Add a package"}
+        </summary>
+        <div className="mt-4">
+          <PackageForm
+            action={createPackageAction}
+            studentId={studentId}
+            defaultCurrency={defaultCurrency}
+          />
+        </div>
+      </details>
     </Card>
   );
 }

@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { tutorTag } from "../../lib/query-cache";
 import { createClient } from "../../lib/supabase/server";
-import { trySyncPackageCredits } from "../packages/data";
+import { tryGetPackageCreditsByStudent, trySyncPackageCredits } from "../packages/data";
 import { listRatesForTutor } from "../rates/data";
 import { listActiveStudents } from "../students/data";
 import { listSubjects } from "../subjects/data";
@@ -477,19 +477,22 @@ export async function getScheduleCreateDataAction() {
   const pickerStart = addDays(startOfDay(new Date()), -7);
   const pickerEnd = addDays(startOfDay(new Date()), 120);
 
-  const [activeStudents, subjects, rates, pickerLessonRows] = await Promise.all([
-    listActiveStudents(supabase),
-    listSubjects(supabase),
-    listRatesForTutor(supabase),
-    listLessonSlotsInRange(supabase, {
-      start: pickerStart.toISOString(),
-      end: pickerEnd.toISOString(),
-    }),
-  ]);
+  const [activeStudents, subjects, rates, pickerLessonRows, packageCreditsByStudent] =
+    await Promise.all([
+      listActiveStudents(supabase),
+      listSubjects(supabase),
+      listRatesForTutor(supabase),
+      listLessonSlotsInRange(supabase, {
+        start: pickerStart.toISOString(),
+        end: pickerEnd.toISOString(),
+      }),
+      tryGetPackageCreditsByStudent(supabase),
+    ]);
 
   return {
     subjects: subjects.map((subject) => ({ id: subject.id, name: subject.name })),
     ratesByStudent: buildRatesByStudent(rates, activeStudents),
+    packageCreditsByStudent,
     pickerLessons: pickerLessonRows.map((row) => ({
       id: row.id,
       startTime: row.start_time,
@@ -521,7 +524,14 @@ export async function getLessonDuplicateDataAction(lessonId: string) {
   const pickerStart = addDays(startOfDay(new Date()), -7);
   const pickerEnd = addDays(startOfDay(new Date()), 120);
 
-  const [activeStudents, subjects, rates, pickerLessonRows, formatSettings] = await Promise.all([
+  const [
+    activeStudents,
+    subjects,
+    rates,
+    pickerLessonRows,
+    formatSettings,
+    packageCreditsByStudent,
+  ] = await Promise.all([
     listActiveStudents(supabase),
     listSubjects(supabase),
     listRatesForTutor(supabase),
@@ -530,6 +540,7 @@ export async function getLessonDuplicateDataAction(lessonId: string) {
       end: pickerEnd.toISOString(),
     }),
     getTutorFormatSettings(supabase, tutorId),
+    tryGetPackageCreditsByStudent(supabase),
   ]);
 
   const pickerLessons = pickerLessonRows.map((row) => ({
@@ -574,6 +585,7 @@ export async function getLessonDuplicateDataAction(lessonId: string) {
     students: students.map((student) => ({ id: student.id, name: student.name })),
     subjects: subjects.map((subject) => ({ id: subject.id, name: subject.name })),
     ratesByStudent: buildRatesByStudent(rates, activeStudents),
+    packageCreditsByStudent,
     pickerLessons,
   };
 }

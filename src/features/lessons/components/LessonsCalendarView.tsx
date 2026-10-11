@@ -94,6 +94,7 @@ export function LessonsCalendarView({
   const [createData, setCreateData] = useState<{
     subjects: { id: string; name: string }[];
     ratesByStudent: RatesByStudent;
+    packageCreditsByStudent: Record<string, number>;
     pickerLessons: PickerLesson[];
   } | null>(null);
   const [isLoadingCreateData, startLoadingCreateData] = useTransition();
@@ -137,6 +138,7 @@ export function LessonsCalendarView({
       setCreateData({
         subjects: data.subjects,
         ratesByStudent: data.ratesByStudent,
+        packageCreditsByStudent: data.packageCreditsByStudent,
         pickerLessons: data.pickerLessons,
       });
       setDuplicateSource({
@@ -370,6 +372,7 @@ export function LessonsCalendarView({
               students={duplicateSource?.students ?? students}
               subjects={createData.subjects}
               ratesByStudent={createData.ratesByStudent}
+              packageCreditsByStudent={createData.packageCreditsByStudent}
               pickerLessons={createData.pickerLessons}
               locale={locale}
               timeZone={timeZone}

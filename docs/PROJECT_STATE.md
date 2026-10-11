@@ -65,7 +65,7 @@
   Applying copies the preset into a `lesson_package` (note = preset name), so later edits or deletes of the preset do not
   change existing packages. `applyPackageTemplateAction` reads the preset with an explicit `tutor_id` filter and the insert
   policy requires the student to be the tutor's. **Verified on the local stack** (preset saved, applied to a student: 9 left /
-  1 booked; new lesson created through the form was linked and paid) with 157 tests. **The hosted project does not have
+  1 booked; new lesson created through the form was linked and paid) with 157 tests. **Applied to the hosted project on 2026-10-11 (via the Supabase tool, recorded in its migration history as `package_templates`; RLS on, 3 policies, no `anon` access, advisors show nothing new).** Before that it did not have
   `package_template` until that migration is applied**; until then Settings hides the card and Billing shows no preset
   picker (queries are caught), nothing else breaks.
 - **Known limits**: the credit sync only covers lessons that are scheduled and unpaid; a package bought after lessons

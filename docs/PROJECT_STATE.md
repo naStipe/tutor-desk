@@ -72,6 +72,14 @@
   were already completed does not pay them. A package does not expire. The email reminder and unpaid-balance logic still
   read `payment_status`, so package lessons count as paid there, which is intended.
 
+- **Marketing visual overhaul (2026-10-13, uncommitted)**: landing page (`src/app/(marketing)/page.tsx`) and the four auth
+  pages restyled. New `src/features/marketing/components/` (`Reveal` scroll reveal, `SpotlightCard` cursor glow, `CountUp`,
+  `HeroPreview` demo dashboard with made-up data, `AuthBackdrop` shared shell); new effect classes (`td-aurora`, `td-grid-bg`,
+  `td-grain`, `td-gradient-text`, `td-glass`, `td-spot`, marquee, etc.) appended to `globals.css`, all disabled under
+  `prefers-reduced-motion`. No new dependency, no schema or data change; dashboard and portal untouched. Checked: format, lint,
+  typecheck, 157 tests, dev server at desktop and 375px (landing and sign-in, dark theme; no horizontal overflow). **Not
+  checked**: light theme, `next build`, forgot/reset-password pages, real phone.
+
 ## Previous Milestone (TD-020)
 
 - Milestone: **TD-020 — Email via Resend (built, NOT activated)**

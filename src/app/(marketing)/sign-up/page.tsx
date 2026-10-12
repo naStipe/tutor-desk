@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ThemeToggle } from "../../../components/ThemeToggle";
+import { AuthBackdrop } from "../../../features/marketing/components/AuthBackdrop";
 import { AuthForm } from "../../../features/auth/components/AuthForm";
 import { signUpAction, signInWithGoogleAction } from "../../../features/auth/actions";
 import { hasPortalMembership } from "../../../features/students/data";
@@ -14,10 +14,7 @@ export default async function SignUpPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center p-6">
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
-        <ThemeToggle />
-      </div>
+    <AuthBackdrop>
       <AuthForm
         action={signUpAction}
         googleAction={signInWithGoogleAction}
@@ -29,6 +26,6 @@ export default async function SignUpPage() {
         alternateHref="/sign-in"
         alternateLabel="Sign in"
       />
-    </main>
+    </AuthBackdrop>
   );
 }

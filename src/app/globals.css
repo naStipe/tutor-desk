@@ -310,8 +310,81 @@ button {
 }
 
 /* ------------------------------------------------------------------------------------------
- * Marketing (landing + auth pages). Restrained: slow reveals, hairline rules, no moving color.
+ * Marketing / showcase effects (landing + auth pages). Everything here is decorative and is
+ * switched off by the reduced-motion block at the end of this section.
  * ---------------------------------------------------------------------------------------- */
+
+@keyframes tdAuroraA {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(8%, 10%, 0) scale(1.15);
+  }
+}
+
+@keyframes tdAuroraB {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-10%, 6%, 0) scale(0.9);
+  }
+}
+
+@keyframes tdFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes tdGradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes tdMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes tdWordIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em) rotate(2deg);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes tdPop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
 @keyframes tdDraw {
   from {
@@ -333,28 +406,110 @@ button {
   }
 }
 
-@keyframes tdPop {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.td-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
 
-@keyframes tdMaskUp {
-  from {
-    transform: translateY(108%);
-  }
-  to {
-    transform: translateY(0);
-  }
+.td-aurora > span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.dark .td-aurora > span {
+  opacity: 0.28;
+}
+
+.td-aurora > span:nth-child(1) {
+  top: -18%;
+  left: -8%;
+  width: 55vw;
+  height: 55vw;
+  max-width: 760px;
+  max-height: 760px;
+  background: var(--td2-accent-dot);
+  animation: tdAuroraA 18s ease-in-out infinite;
+}
+
+.td-aurora > span:nth-child(2) {
+  top: 5%;
+  right: -12%;
+  width: 46vw;
+  height: 46vw;
+  max-width: 640px;
+  max-height: 640px;
+  background: var(--td2-cyan);
+  animation: tdAuroraB 22s ease-in-out infinite;
+}
+
+.td-aurora > span:nth-child(3) {
+  bottom: -25%;
+  left: 25%;
+  width: 40vw;
+  height: 40vw;
+  max-width: 560px;
+  max-height: 560px;
+  background: var(--td2-violet);
+  opacity: 0.2;
+  animation: tdAuroraA 26s ease-in-out infinite reverse;
+}
+
+.td-grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(to right, var(--td2-border-card) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--td2-border-card) 1px, transparent 1px);
+  background-size: 56px 56px;
+  opacity: 0.55;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+}
+
+.td-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.td-gradient-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--td2-accent-text-strong),
+    var(--td2-cyan),
+    var(--td2-violet),
+    var(--td2-accent-text-strong)
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: tdGradientShift 7s linear infinite;
+}
+
+.td-word {
+  display: inline-block;
+  animation: tdWordIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.td-float {
+  animation: tdFloat 6s ease-in-out infinite;
 }
 
 .td-pop {
-  animation: tdPop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tdPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .td-block-grow {
@@ -367,19 +522,276 @@ button {
   animation: tdDraw 2.2s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
+.td-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: tdMarquee 38s linear infinite;
+}
+
+.td-marquee:hover .td-marquee-track {
+  animation-play-state: paused;
+}
+
 /* Scroll reveal: the element is visible in the server HTML; Reveal.tsx only flips it to
    "pending" if it is below the fold, then to "in" when it scrolls into view. */
 [data-reveal="pending"] {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(28px);
 }
 
 [data-reveal="in"] {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--td-delay, 0ms),
-    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--td-delay, 0ms);
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--td-delay, 0ms),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--td-delay, 0ms);
+}
+
+/* Cursor spotlight card. SpotlightCard.tsx sets --mx/--my in px. */
+.td-spot {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.td-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--td2-accent-dot) 22%, transparent),
+    transparent 65%
+  );
+}
+
+.td-spot:hover::before {
+  opacity: 1;
+}
+
+.td-spot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    300px circle at var(--mx, 50%) var(--my, 50%),
+    var(--td2-accent-dot),
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.td-spot:hover::after {
+  opacity: 0.9;
+}
+
+.td-glass {
+  background: color-mix(in srgb, var(--td2-bg-card) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+.td-cta-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.td-cta-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.td-cta-shine:hover::after {
+  transform: translateX(120%) skewX(-20deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-aurora > span,
+  .td-gradient-text,
+  .td-word,
+  .td-float,
+  .td-pop,
+  .td-block-grow,
+  .td-draw,
+  .td-marquee-track {
+    animation: none;
+  }
+
+  .td-gradient-text {
+    background-size: 100% 100%;
+  }
+
+  .td-draw {
+    stroke-dasharray: none;
+  }
+
+  [data-reveal="pending"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-reveal="in"] {
+    transition: none;
+  }
+
+  .td-cta-shine::after {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Landing effects layer (src/features/marketing/components/FxLayer.tsx).
+   Everything gated on html.td-fx is only active when motion is allowed.
+   ------------------------------------------------------------------ */
+.td-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 100;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: var(--td2-accent-dot);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.td-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.td-cursor.is-on {
+  opacity: 1;
+}
+
+.td-cursor::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--td2-accent-dot);
+  background-color: var(--td2-accent-dot);
+  transition:
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.3s,
+    transform 0.2s;
+}
+
+.td-cursor > span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font: 600 0.72rem / 1 var(--font-sans);
+  color: var(--td2-on-brand);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.td-cursor.is-link::before {
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  background-color: color-mix(in srgb, var(--td2-accent-dot) 14%, transparent);
+}
+
+.td-cursor.is-big::before {
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
+}
+
+.td-cursor.is-big > span {
+  opacity: 1;
+}
+
+.td-cursor.is-down::before {
+  transform: scale(0.8);
+}
+
+html.td-hide-cursor,
+html.td-hide-cursor * {
+  cursor: none !important;
+}
+
+html.td-hide-cursor :is(input, textarea, select),
+html.td-hide-cursor [aria-modal="true"],
+html.td-hide-cursor [aria-modal="true"] * {
+  cursor: auto !important;
+}
+
+/* Magnetic buttons: FxLayer sets --td-mx/--td-my; they spring back on leave. */
+[data-magnetic] {
+  transform: translate3d(var(--td-mx, 0), var(--td-my, 0), 0);
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s,
+    box-shadow 0.3s;
+}
+
+[data-magnetic].td-magnet-active {
+  transition-duration: 0.12s, 0.4s, 0.2s, 0.3s;
+}
+
+[data-parallax] {
+  transform: translate3d(0, var(--td-py, 0), 0);
+  will-change: transform;
+}
+
+/* Buttons: a curved fill rises from the bottom on hover. */
+.td-fill {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.td-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--td-fill, var(--td2-text-primary));
+  transform: translateY(101%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .td-fill:hover {
+    color: var(--td-fill-text, var(--td2-bg-page));
+  }
+
+  .td-fill:hover::before {
+    transform: translateY(0);
+    border-radius: 0;
+  }
 }
 
 /* Plain links: the underline slides in from the left. */
@@ -392,7 +804,7 @@ button {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -3px;
+  bottom: -2px;
   height: 1px;
   background: currentColor;
   transform: scaleX(0);
@@ -418,45 +830,96 @@ button {
 
 .td-up {
   display: inline-block;
-  animation: tdMaskUp 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: tdMaskUp 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tdMaskUp {
+  from {
+    transform: translateY(108%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .td-range {
-  accent-color: var(--td2-brand);
+  accent-color: var(--td2-accent-dot);
   height: 1.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-up {
+    animation: none;
+  }
+
+  [data-magnetic],
+  [data-parallax] {
+    transform: none;
+    transition: none;
+  }
+
+  .td-fill::before,
+  .td-link::after {
+    display: none;
+  }
+}
+
+/* Tilt: FxLayer sets --td-rx/--td-ry on [data-tilt] while the pointer moves over it. */
+[data-tilt] {
+  transform: perspective(1100px) rotateX(var(--td-rx, 0deg)) rotateY(var(--td-ry, 0deg));
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+[data-tilt].is-tilting {
+  transition-duration: 0.1s;
+}
+
+/* Marquee strip with edge fade. */
+.td-marquee {
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+@keyframes tdShimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes tdBreathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--td2-accent-dot) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--td2-accent-dot) 0%, transparent);
+  }
+}
+
+.td-breathe {
+  animation: tdBreathe 3s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-tilt] {
+    transform: none;
+    transition: none;
+  }
+
+  .td-breathe {
+    animation: none;
+  }
 }
 
 /* Small-caps style label used above headings. */
 .td-eyebrow {
   font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--td2-accent-dot);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .td-pop,
-  .td-block-grow,
-  .td-draw,
-  .td-up {
-    animation: none;
-  }
-
-  .td-draw {
-    stroke-dasharray: none;
-  }
-
-  [data-reveal="pending"] {
-    opacity: 1;
-    transform: none;
-  }
-
-  [data-reveal="in"] {
-    transition: none;
-  }
-
-  .td-link::after {
-    display: none;
-  }
+  color: var(--td2-accent-text);
 }

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "../../components/Button";
 import { ThemeToggle } from "../../components/ThemeToggle";
+import { FxLayer } from "../../features/marketing/components/FxLayer";
 import { HeroPreview } from "../../features/marketing/components/HeroPreview";
 import { Patchwork } from "../../features/marketing/components/Patchwork";
 import { Reveal } from "../../features/marketing/components/Reveal";
@@ -60,6 +61,16 @@ const JSON_LD = {
 const HEADLINE = ["Run", "your", "tutoring", "business", "from"];
 const HEADLINE_END = ["one", "place."];
 
+const MARQUEE = [
+  "Scheduling",
+  "Homework",
+  "Payments",
+  "Lesson packages",
+  "Student portal",
+  "Reminders",
+  "No commission",
+];
+
 const FEATURES = [
   {
     title: "A calendar that moves with you",
@@ -88,6 +99,7 @@ const STEPS = [
 export default function HomePage() {
   return (
     <main id="main-content" className="relative overflow-hidden bg-canvas">
+      <FxLayer />
       <script
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD built from constants; "<" is escaped
@@ -133,7 +145,7 @@ export default function HomePage() {
             >
               Sign in
             </Link>
-            <LinkButton href="/sign-up" className="px-4 py-1.5">
+            <LinkButton href="/sign-up" data-magnetic className="td-fill px-4 py-1.5">
               Get started
             </LinkButton>
             <ThemeToggle />
@@ -156,10 +168,10 @@ export default function HomePage() {
             {HEADLINE_END.map((word, i) => (
               <span key={word} className="td-line mr-[0.22em]">
                 <span
-                  className="td-up italic text-brand"
+                  className="td-up italic"
                   style={{ animationDelay: `${(i + HEADLINE.length) * 70 + 80}ms` }}
                 >
-                  {word}
+                  <span className="td-gradient-text">{word}</span>
                 </span>
               </span>
             ))}
@@ -177,10 +189,20 @@ export default function HomePage() {
             className="td-fade-in-up mt-8 flex flex-wrap items-center gap-3"
             style={{ animationDelay: "750ms" }}
           >
-            <LinkButton id="sign-in-link" href="/sign-in" className="px-7 py-3 text-base">
+            <LinkButton
+              id="sign-in-link"
+              href="/sign-in"
+              data-magnetic
+              className="td-fill px-7 py-3 text-base"
+            >
               Sign in
             </LinkButton>
-            <LinkButton href="/sign-up" variant="secondary" className="px-7 py-3 text-base">
+            <LinkButton
+              href="/sign-up"
+              variant="secondary"
+              data-magnetic
+              className="td-fill px-7 py-3 text-base"
+            >
               Create a free account &rarr;
             </LinkButton>
           </div>
@@ -193,10 +215,27 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="td-fade-in-up" style={{ animationDelay: "500ms" }}>
-          <HeroPreview />
+        <div className="td-fade-in-up" style={{ animationDelay: "500ms" }} data-cursor="Your week">
+          <div data-tilt>
+            <HeroPreview />
+          </div>
         </div>
       </section>
+
+      <div className="td-marquee overflow-hidden border-y border-border py-5" aria-hidden>
+        <div className="td-marquee-track font-serif text-2xl italic text-ink-subtle">
+          {[0, 1].map((n) => (
+            <div key={n} className="flex shrink-0 items-center">
+              {MARQUEE.map((item) => (
+                <span key={item} className="flex items-center">
+                  <span className="px-8">{item}</span>
+                  <span className="td-breathe h-1.5 w-1.5 rounded-full bg-brand" />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <section
         id="compare"
@@ -229,7 +268,7 @@ export default function HomePage() {
           {FEATURES.map((feature, index) => (
             <li key={feature.title}>
               <Reveal>
-                <div className="group grid gap-3 border-b border-border py-8 transition-colors hover:bg-surface-muted/40 sm:grid-cols-[4rem_1.1fr_1fr] sm:gap-8">
+                <div className="group td-spot grid gap-3 border-b border-border px-3 py-8 transition-colors hover:bg-surface-muted/40 sm:grid-cols-[4rem_1.1fr_1fr] sm:gap-8">
                   <span className="font-serif text-2xl italic text-ink-subtle">0{index + 1}</span>
                   <h3 className="font-serif text-2xl font-semibold text-ink transition-colors group-hover:text-brand">
                     {feature.title}
@@ -324,7 +363,9 @@ export default function HomePage() {
             <LinkButton
               href="/sign-up"
               variant="secondary"
-              className="mt-8 !border-transparent !bg-canvas px-8 py-3 text-base !text-ink hover:!bg-surface"
+              data-magnetic
+              data-cursor="Go"
+              className="td-fill mt-8 !border-transparent !bg-canvas px-8 py-3 text-base !text-ink hover:!bg-surface"
             >
               Create a free account
             </LinkButton>

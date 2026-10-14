@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import type { CSSProperties } from "react";
 import { LinkButton } from "../../components/Button";
 import { ThemeToggle } from "../../components/ThemeToggle";
-import { FxLayer } from "../../features/marketing/components/FxLayer";
 import { HeroPreview } from "../../features/marketing/components/HeroPreview";
 import { Patchwork } from "../../features/marketing/components/Patchwork";
 import { Reveal } from "../../features/marketing/components/Reveal";
@@ -95,10 +93,8 @@ export default function HomePage() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD built from constants; "<" is escaped
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\\u003c") }}
       />
-      <FxLayer />
-
-      <header className="sticky top-0 z-30 border-b border-border bg-canvas/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-border bg-canvas/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <div id="brand-title" className="flex items-center gap-2">
             <Image
               src="/brand/tutordesk-icon.png"
@@ -108,7 +104,7 @@ export default function HomePage() {
               priority
               className="h-7 w-auto"
             />
-            <span className="text-lg font-bold tracking-tight text-ink">
+            <span className="font-serif text-2xl font-semibold tracking-tight text-ink">
               Tutor<span className="text-brand">Desk</span>
             </span>
           </div>
@@ -137,7 +133,7 @@ export default function HomePage() {
             >
               Sign in
             </Link>
-            <LinkButton href="/sign-up" data-magnetic className="td-fill px-4 py-1.5">
+            <LinkButton href="/sign-up" className="px-4 py-1.5">
               Get started
             </LinkButton>
             <ThemeToggle />
@@ -147,11 +143,9 @@ export default function HomePage() {
 
       <section className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-24 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1fr_1.05fr]">
         <div>
-          <p className="td-fade-in-up text-sm font-medium text-ink-muted">
-            For independent private tutors
-          </p>
+          <p className="td-fade-in-up td-eyebrow">For independent private tutors</p>
 
-          <h1 className="mt-4 font-serif text-5xl font-semibold leading-[1.04] tracking-tight text-ink sm:text-6xl xl:text-7xl">
+          <h1 className="mt-4 font-serif text-6xl font-medium leading-[1] tracking-tight text-ink sm:text-7xl xl:text-8xl">
             {HEADLINE.map((word, i) => (
               <span key={word} className="td-line mr-[0.22em]">
                 <span className="td-up" style={{ animationDelay: `${i * 70 + 80}ms` }}>
@@ -169,21 +163,6 @@ export default function HomePage() {
                 </span>
               </span>
             ))}
-            <svg
-              viewBox="0 0 300 14"
-              className="mt-1 block h-3 w-44 text-brand sm:w-60"
-              fill="none"
-              aria-hidden
-            >
-              <path
-                d="M3 9 C 40 2, 70 13, 110 7 S 190 3, 230 8 S 275 11, 297 5"
-                stroke="currentColor"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                className="td-draw"
-                style={{ "--td-len": 330, animationDelay: "900ms" } as CSSProperties}
-              />
-            </svg>
           </h1>
 
           <p
@@ -198,20 +177,10 @@ export default function HomePage() {
             className="td-fade-in-up mt-8 flex flex-wrap items-center gap-3"
             style={{ animationDelay: "750ms" }}
           >
-            <LinkButton
-              id="sign-in-link"
-              href="/sign-in"
-              data-magnetic
-              className="td-fill px-7 py-3 text-base"
-            >
+            <LinkButton id="sign-in-link" href="/sign-in" className="px-7 py-3 text-base">
               Sign in
             </LinkButton>
-            <LinkButton
-              href="/sign-up"
-              variant="secondary"
-              data-magnetic
-              className="td-fill px-7 py-3 text-base"
-            >
+            <LinkButton href="/sign-up" variant="secondary" className="px-7 py-3 text-base">
               Create a free account &rarr;
             </LinkButton>
           </div>
@@ -224,7 +193,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="td-fade-in-up" style={{ animationDelay: "500ms" }} data-cursor="Your week">
+        <div className="td-fade-in-up" style={{ animationDelay: "500ms" }}>
           <HeroPreview />
         </div>
       </section>
@@ -232,12 +201,12 @@ export default function HomePage() {
       <section
         id="compare"
         aria-labelledby="compare-h"
-        className="border-y border-border bg-surface-muted/50 px-4 py-24 text-center sm:px-6"
+        className="border-y border-border bg-surface-muted/50 px-4 py-28 text-center sm:px-6"
       >
         <Reveal className="mx-auto max-w-5xl">
           <h2
             id="compare-h"
-            className="font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl"
+            className="font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl"
           >
             Most tutors run on five tools
           </h2>
@@ -251,7 +220,8 @@ export default function HomePage() {
 
       <section id="features" className="mx-auto max-w-5xl px-4 py-24 sm:px-6">
         <Reveal>
-          <h2 className="max-w-2xl font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+          <p className="td-eyebrow mb-5">Features</p>
+          <h2 className="max-w-2xl font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl">
             Everything a solo tutor needs, nothing a school does.
           </h2>
         </Reveal>
@@ -260,8 +230,8 @@ export default function HomePage() {
             <li key={feature.title}>
               <Reveal>
                 <div className="group grid gap-3 border-b border-border py-8 transition-colors hover:bg-surface-muted/40 sm:grid-cols-[4rem_1.1fr_1fr] sm:gap-8">
-                  <span className="font-serif text-2xl text-ink-subtle">0{index + 1}</span>
-                  <h3 className="font-serif text-2xl font-semibold text-ink transition-colors group-hover:text-brand">
+                  <span className="font-serif text-2xl italic text-ink-subtle">0{index + 1}</span>
+                  <h3 className="font-serif text-3xl font-medium text-ink transition-colors group-hover:text-brand">
                     {feature.title}
                   </h3>
                   <p className="leading-relaxed text-ink-muted">{feature.text}</p>
@@ -274,7 +244,8 @@ export default function HomePage() {
 
       <section id="how" className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
         <Reveal>
-          <h2 className="font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+          <p className="td-eyebrow mb-5">How it works</p>
+          <h2 className="font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl">
             Set up in one sitting
           </h2>
         </Reveal>
@@ -282,10 +253,10 @@ export default function HomePage() {
           {STEPS.map((step, index) => (
             <li key={step.title}>
               <Reveal delay={index * 100}>
-                <span className="font-serif text-6xl font-semibold italic text-brand">
+                <span className="font-serif text-7xl font-medium italic text-brand">
                   {index + 1}
                 </span>
-                <h3 className="mt-2 text-lg font-semibold text-ink">{step.title}</h3>
+                <h3 className="mt-2 text-base font-medium tracking-wide text-ink">{step.title}</h3>
                 <p className="mt-1 text-ink-muted">{step.text}</p>
               </Reveal>
             </li>
@@ -299,10 +270,10 @@ export default function HomePage() {
         className="mx-auto max-w-5xl px-4 pb-24 sm:px-6"
       >
         <Reveal>
-          <div className="rounded-xl border border-border-strong bg-surface-muted/50 p-6 sm:p-12">
+          <div className="rounded-lg border border-border-strong bg-surface p-6 sm:p-14">
             <h2
               id="calc-h"
-              className="font-serif text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
+              className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl"
             >
               See your week in numbers
             </h2>
@@ -318,14 +289,14 @@ export default function HomePage() {
         <Reveal>
           <h2
             id="faq-h"
-            className="font-serif text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
+            className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl"
           >
             Questions tutors ask
           </h2>
           <div className="mt-8 border-t border-border-strong">
             {FAQ.map(({ q, a }) => (
               <details key={q} className="group border-b border-border">
-                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-2 font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-2 font-medium text-ink [&::-webkit-details-marker]:hidden">
                   {q}
                   <span
                     aria-hidden
@@ -343,8 +314,8 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
         <Reveal>
-          <div className="rounded-xl bg-brand-strong px-6 py-14 text-center text-on-brand sm:px-14 sm:py-20">
-            <h2 className="mx-auto max-w-xl font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
+          <div className="rounded-lg bg-brand-strong px-6 py-16 text-center text-on-brand sm:px-14 sm:py-24">
+            <h2 className="mx-auto max-w-xl font-serif text-5xl font-medium tracking-tight sm:text-6xl">
               Give your evenings back.
             </h2>
             <p className="mx-auto mt-4 max-w-md opacity-90">
@@ -353,9 +324,7 @@ export default function HomePage() {
             <LinkButton
               href="/sign-up"
               variant="secondary"
-              data-magnetic
-              data-cursor="Go"
-              className="td-fill mt-8 px-8 py-3 text-base"
+              className="mt-8 !border-transparent !bg-canvas px-8 py-3 text-base !text-ink hover:!bg-surface"
             >
               Create a free account
             </LinkButton>

@@ -24,11 +24,11 @@ const BLOCKS = [
 export function HeroPreview() {
   return (
     <div className="relative mx-auto w-full max-w-4xl">
-      <div className="relative overflow-hidden rounded-xl border border-border-strong bg-surface text-left shadow-[6px_6px_0_var(--td2-border-strong)]">
+      <div className="relative overflow-hidden rounded-lg border border-border-strong bg-surface text-left shadow-[0_40px_80px_-40px_rgba(40,30,10,0.35)]">
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-          <span className="h-2.5 w-2.5 rounded-full bg-danger/70" />
-          <span className="h-2.5 w-2.5 rounded-full bg-warning/70" />
-          <span className="h-2.5 w-2.5 rounded-full bg-brand/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />
+          <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />
+          <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />
           <span className="ml-3 rounded-md bg-surface-muted px-3 py-0.5 font-mono text-xs text-ink-subtle">
             tutordesk / schedule
           </span>

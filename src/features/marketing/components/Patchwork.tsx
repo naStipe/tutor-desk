@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 const TOOLS = [
-  { name: "Calendar app", pain: "Reschedules get lost in the thread.", tilt: -2 },
-  { name: "Spreadsheet", pain: "Hours and rates typed by hand.", tilt: 1.5 },
-  { name: "Chat apps", pain: "Reminders buried under other messages.", tilt: -1 },
-  { name: "Notes and drive", pain: "Where did that worksheet go?", tilt: 2 },
-  { name: "Bank app", pain: "Chasing payments, awkwardly.", tilt: -1.5 },
+  { name: "Calendar app", pain: "Reschedules get lost in the thread." },
+  { name: "Spreadsheet", pain: "Hours and rates typed by hand." },
+  { name: "Chat apps", pain: "Reminders buried under other messages." },
+  { name: "Notes and drive", pain: "Where did that worksheet go?" },
+  { name: "Bank app", pain: "Chasing payments, awkwardly." },
 ];
 
 const BENEFITS = [
@@ -29,7 +29,7 @@ export function Patchwork() {
 
   return (
     <div>
-      <fieldset className="mx-auto mt-8 inline-flex rounded-full border border-border bg-surface-muted p-1">
+      <fieldset className="mx-auto mt-8 inline-flex rounded-md border border-border bg-surface-muted p-1">
         <legend className="sr-only">Compare</legend>
         {[
           { label: "The patchwork", value: false },
@@ -40,7 +40,7 @@ export function Patchwork() {
             type="button"
             aria-pressed={after === option.value}
             onClick={() => setAfter(option.value)}
-            className={`min-h-11 rounded-full px-5 text-sm font-semibold transition-colors duration-300 ${
+            className={`min-h-11 rounded px-5 text-sm font-medium tracking-wide transition-colors duration-300 ${
               after === option.value
                 ? "bg-brand-strong text-on-brand"
                 : "text-ink-muted hover:text-ink"
@@ -56,8 +56,8 @@ export function Patchwork() {
           {TOOLS.map((tool, index) => (
             <li
               key={tool.name}
-              className="td-pop w-44 rounded-lg border border-border-strong bg-surface p-5 shadow-[3px_3px_0_var(--td2-border-strong)] text-left sm:w-48"
-              style={{ transform: `rotate(${tool.tilt}deg)`, animationDelay: `${index * 70}ms` }}
+              className="td-pop w-44 rounded-lg border border-border-strong bg-surface p-5 text-left sm:w-48"
+              style={{ animationDelay: `${index * 70}ms` }}
             >
               <strong className="block text-base text-ink">{tool.name}</strong>
               <span className="mt-1.5 block text-sm leading-snug text-ink-muted">{tool.pain}</span>
@@ -68,7 +68,7 @@ export function Patchwork() {
           {BENEFITS.map((benefit, index) => (
             <div
               key={benefit.title}
-              className="td-pop rounded-lg border border-brand bg-surface p-5 shadow-[4px_4px_0_var(--td2-accent-dot)]"
+              className="td-pop rounded-lg border border-brand bg-surface p-5"
               style={{ animationDelay: `${index * 90}ms` }}
             >
               <strong className="block text-base text-ink">{benefit.title}</strong>

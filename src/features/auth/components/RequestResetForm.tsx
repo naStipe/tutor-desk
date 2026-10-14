@@ -25,7 +25,7 @@ export function RequestResetForm() {
   const [state, formAction] = useActionState(requestPasswordResetAction, initialState);
 
   return (
-    <div className="w-full max-w-md td-glass rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
+    <div className="w-full max-w-md rounded-lg border border-border bg-surface p-7 shadow-[0_1px_0_rgba(0,0,0,0.02),0_24px_48px_-24px_rgba(40,30,10,0.18)] sm:p-10">
       <h1 className="text-xl font-bold tracking-tight text-ink">Reset your password</h1>
       <p className="mt-1 text-sm text-ink-muted">
         Enter your email and we'll send you a link to reset your password.

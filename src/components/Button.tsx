@@ -3,9 +3,9 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from "react";
 
 const VARIANT_CLASSES = {
   primary:
-    "bg-brand text-on-brand shadow-sm hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50",
+    "bg-brand text-on-brand hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50",
   secondary:
-    "border border-border bg-surface text-ink hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50",
+    "border border-border-strong bg-transparent text-ink hover:border-ink hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50",
   danger:
     "border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-50",
 } as const;
@@ -13,7 +13,7 @@ const VARIANT_CLASSES = {
 export type ButtonVariant = keyof typeof VARIANT_CLASSES;
 
 const BASE_CLASSES =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all sm:min-h-0 duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand active:scale-[0.97] motion-reduce:active:scale-100";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-2 text-sm font-medium tracking-wide transition-all sm:min-h-0 duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand active:scale-[0.985] motion-reduce:active:scale-100";
 
 export function buttonClassName(variant: ButtonVariant = "primary", className = "") {
   return [BASE_CLASSES, VARIANT_CLASSES[variant], className].filter(Boolean).join(" ");

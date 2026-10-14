@@ -89,9 +89,7 @@
   `metadata` (title, description, canonical, Open Graph, Twitter), JSON-LD (`SoftwareApplication` + `FAQPage`), new
   `src/app/sitemap.ts` and `src/app/robots.ts` (both read `NEXT_PUBLIC_SITE_URL`; private routes disallowed). No new
   dependency, no schema change. Checked: format, lint (0 errors), typecheck, 160 tests, dev server at desktop and 375px
-  (no console errors, no horizontal overflow, toggle and sliders work). **Known issue**: `pnpm run build` crashes with
-  `TypeError ... reading 'length'` in webpack `WasmHash` on Node v24.16.0; it fails the same on clean HEAD, so it is not
-  from this change. **Not checked**: production build, light theme, real phone, Lighthouse, social preview image
+  (no console errors, no horizontal overflow, toggle and sliders work). **Build fix (2026-10-14)**: `pnpm run build` crashed with `TypeError ... reading 'length'` in webpack `WasmHash` on Node v24.16.0 (also on clean HEAD). The `build` script is now `next build --turbopack`, which builds all 17 routes cleanly. `dev` and `start` are unchanged. **Not checked**: light theme, real phone, Lighthouse, social preview image
   (`og` still uses the logo PNG).
 
 ## Previous Milestone (TD-020)

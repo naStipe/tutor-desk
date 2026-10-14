@@ -171,10 +171,10 @@ export default function HomePage() {
             {HEADLINE_END.map((word, i) => (
               <span key={word} className="td-line mr-[0.22em]">
                 <span
-                  className="td-up italic"
+                  className="td-up italic text-brand"
                   style={{ animationDelay: `${(i + HEADLINE.length) * 70 + 80}ms` }}
                 >
-                  <span className="td-gradient-text">{word}</span>
+                  {word}
                 </span>
               </span>
             ))}

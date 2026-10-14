@@ -232,9 +232,8 @@ export default function HomePage() {
           {[0, 1].map((n) => (
             <div key={n} className="flex shrink-0 items-center">
               {MARQUEE.map((item) => (
-                <span key={item} className="flex items-center">
-                  <span className="px-10">{item}</span>
-                  <span className="h-px w-8 bg-border-strong" />
+                <span key={item} className="px-14">
+                  {item}
                 </span>
               ))}
             </div>

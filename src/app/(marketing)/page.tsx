@@ -155,7 +155,10 @@ export default function HomePage() {
 
       <section className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-24 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1fr_1.05fr]">
         <div>
-          <p className="td-fade-in-up td-eyebrow">For independent private tutors</p>
+          <p className="td-fade-in-up td-eyebrow flex items-center gap-2.5">
+            <span className="td-pulse-dot h-1.5 w-1.5 rounded-full bg-brand" />
+            For independent private tutors
+          </p>
 
           <h1 className="mt-4 font-serif text-5xl font-semibold leading-[1.04] tracking-tight text-ink sm:text-6xl xl:text-7xl">
             {HEADLINE.map((word, i) => (
@@ -217,19 +220,21 @@ export default function HomePage() {
 
         <div className="td-fade-in-up" style={{ animationDelay: "500ms" }} data-cursor="Your week">
           <div data-tilt>
-            <HeroPreview />
+            <div className="td-float">
+              <HeroPreview />
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="td-marquee overflow-hidden border-y border-border py-5" aria-hidden>
-        <div className="td-marquee-track font-serif text-2xl italic text-ink-subtle">
+      <div className="td-marquee overflow-hidden py-7" aria-hidden>
+        <div className="td-marquee-track text-xs font-medium uppercase tracking-[0.28em] text-ink-subtle">
           {[0, 1].map((n) => (
             <div key={n} className="flex shrink-0 items-center">
               {MARQUEE.map((item) => (
                 <span key={item} className="flex items-center">
-                  <span className="px-8">{item}</span>
-                  <span className="td-breathe h-1.5 w-1.5 rounded-full bg-brand" />
+                  <span className="px-10">{item}</span>
+                  <span className="h-px w-8 bg-border-strong" />
                 </span>
               ))}
             </div>
@@ -263,11 +268,12 @@ export default function HomePage() {
           <h2 className="max-w-2xl font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
             Everything a solo tutor needs, nothing a school does.
           </h2>
+          <span className="td-rule" />
         </Reveal>
         <ol className="mt-14 border-t border-border-strong">
           {FEATURES.map((feature, index) => (
             <li key={feature.title}>
-              <Reveal>
+              <Reveal delay={index * 90}>
                 <div className="group td-spot grid gap-3 border-b border-border px-3 py-8 transition-colors hover:bg-surface-muted/40 sm:grid-cols-[4rem_1.1fr_1fr] sm:gap-8">
                   <span className="font-serif text-2xl italic text-ink-subtle">0{index + 1}</span>
                   <h3 className="font-serif text-2xl font-semibold text-ink transition-colors group-hover:text-brand">
@@ -287,10 +293,11 @@ export default function HomePage() {
           <h2 className="font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
             Set up in one sitting
           </h2>
+          <span className="td-rule" />
         </Reveal>
         <ol className="mt-12 grid gap-10 md:grid-cols-3">
           {STEPS.map((step, index) => (
-            <li key={step.title}>
+            <li key={step.title} className="td-lift">
               <Reveal delay={index * 100}>
                 <span className="font-serif text-6xl font-semibold italic text-brand">
                   {index + 1}
@@ -353,7 +360,9 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
         <Reveal>
-          <div className="rounded-lg bg-brand-strong px-6 py-16 text-center text-on-brand sm:px-14 sm:py-24">
+          <div className="td-orbs relative isolate overflow-hidden rounded-lg bg-brand-strong px-6 py-16 text-center text-on-brand sm:px-14 sm:py-24">
+            <span aria-hidden />
+            <span aria-hidden />
             <h2 className="mx-auto max-w-xl font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
               Give your evenings back.
             </h2>

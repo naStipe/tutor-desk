@@ -488,8 +488,9 @@ button {
   background-image: linear-gradient(
     90deg,
     var(--td2-accent-text-strong),
+    var(--td2-accent-dot),
     var(--td2-cyan),
-    var(--td2-violet),
+    var(--td2-accent-dot),
     var(--td2-accent-text-strong)
   );
   background-size: 200% 100%;
@@ -525,7 +526,7 @@ button {
 .td-marquee-track {
   display: flex;
   width: max-content;
-  animation: tdMarquee 38s linear infinite;
+  animation: tdMarquee 45s linear infinite;
 }
 
 .td-marquee:hover .td-marquee-track {
@@ -876,11 +877,6 @@ html.td-hide-cursor [aria-modal="true"] * {
 }
 
 /* Marquee strip with edge fade. */
-.td-marquee {
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
-
 @keyframes tdShimmer {
   from {
     background-position: -200% 0;
@@ -922,4 +918,82 @@ html.td-hide-cursor [aria-modal="true"] * {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--td2-accent-text);
+}
+
+/* Lift-on-hover for cards and steps. */
+.td-lift {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s;
+}
+
+@media (hover: hover) {
+  .td-lift:hover {
+    transform: translateY(-6px);
+  }
+}
+
+/* Slow drifting glow orbs inside the closing call-to-action. */
+.td-orbs > span {
+  position: absolute;
+  border-radius: 9999px;
+  z-index: -1;
+  filter: blur(70px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.td-orbs > span:nth-child(1) {
+  top: -40%;
+  left: -10%;
+  width: 26rem;
+  height: 26rem;
+  background: var(--td2-accent-dot);
+  animation: tdAuroraA 16s ease-in-out infinite;
+}
+
+.td-orbs > span:nth-child(2) {
+  bottom: -50%;
+  right: -10%;
+  width: 24rem;
+  height: 24rem;
+  background: var(--td2-cyan);
+  animation: tdAuroraB 20s ease-in-out infinite;
+}
+
+@keyframes tdSweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Hairline that draws itself under a section heading once revealed. */
+[data-reveal="in"] .td-rule {
+  animation: tdSweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+.td-rule {
+  display: block;
+  height: 1px;
+  width: 6rem;
+  margin-top: 1.5rem;
+  transform-origin: left;
+  background: var(--td2-accent-dot);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-orbs > span {
+    animation: none;
+  }
+
+  .td-lift:hover {
+    transform: none;
+  }
+
+  [data-reveal="in"] .td-rule {
+    animation: none;
+  }
 }

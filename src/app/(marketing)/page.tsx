@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "../../components/Button";
@@ -10,9 +11,62 @@ import {
   ReceiptIcon,
   UsersIcon,
 } from "../../components/icons";
+import { FxLayer } from "../../features/marketing/components/FxLayer";
 import { HeroPreview } from "../../features/marketing/components/HeroPreview";
+import { Patchwork } from "../../features/marketing/components/Patchwork";
 import { Reveal } from "../../features/marketing/components/Reveal";
 import { SpotlightCard } from "../../features/marketing/components/SpotlightCard";
+import { Tilt } from "../../features/marketing/components/Tilt";
+import { WeekCalculator } from "../../features/marketing/components/WeekCalculator";
+import { FAQ } from "../../features/marketing/faq";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const PAGE_TITLE = "TutorDesk | Scheduling, homework and payments for private tutors";
+const PAGE_DESCRIPTION =
+  "Run your tutoring business from one place. Schedule lessons, track homework, manage lesson packages and payments, and share a student portal. No marketplace fees.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: { absolute: PAGE_TITLE },
+  description: PAGE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "TutorDesk",
+    title: "TutorDesk: run your tutoring business from one place",
+    description: PAGE_DESCRIPTION,
+    url: "/",
+    images: ["/brand/tutordesk-logo-green.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TutorDesk: run your tutoring business from one place",
+    description: PAGE_DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "TutorDesk",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description: PAGE_DESCRIPTION,
+      url: SITE_URL,
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQ.map(({ q, a }) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: { "@type": "Answer", text: a },
+      })),
+    },
+  ],
+};
 
 const HEADLINE = ["Run", "your", "tutoring", "business"];
 const HEADLINE_ACCENT = ["from", "one", "calm", "place"];
@@ -78,12 +132,18 @@ const MARQUEE = [
 export default function HomePage() {
   return (
     <main id="main-content" className="td-grain relative isolate overflow-hidden bg-canvas">
-      <div className="td-aurora" aria-hidden>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD built from constants; "<" is escaped
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\\u003c") }}
+      />
+      <FxLayer />
+      <div className="td-aurora" aria-hidden data-parallax="70">
         <span />
         <span />
         <span />
       </div>
-      <div className="td-grid-bg" aria-hidden />
+      <div className="td-grid-bg" aria-hidden data-parallax="40" />
 
       <header className="td-glass sticky top-0 z-30 border-b border-border/60">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
@@ -103,13 +163,13 @@ export default function HomePage() {
           <nav className="flex items-center gap-2 sm:gap-4">
             <a
               href="#features"
-              className="hidden text-sm font-medium text-ink-muted hover:text-ink sm:inline"
+              className="td-link hidden text-sm font-medium text-ink-muted hover:text-ink sm:inline"
             >
               Features
             </a>
             <a
               href="#how"
-              className="hidden text-sm font-medium text-ink-muted hover:text-ink sm:inline"
+              className="td-link hidden text-sm font-medium text-ink-muted hover:text-ink sm:inline"
             >
               How it works
             </a>
@@ -132,22 +192,21 @@ export default function HomePage() {
 
         <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-6xl lg:text-7xl">
           {HEADLINE.map((word, i) => (
-            <span
-              key={word}
-              className="td-word mr-[0.25em]"
-              style={{ animationDelay: `${i * 90}ms` }}
-            >
-              {word}
+            <span key={word} className="td-line mr-[0.25em]">
+              <span className="td-up" style={{ animationDelay: `${i * 70 + 80}ms` }}>
+                {word}
+              </span>
             </span>
           ))}
           <br />
           {HEADLINE_ACCENT.map((word, i) => (
-            <span
-              key={word}
-              className="td-word mr-[0.25em]"
-              style={{ animationDelay: `${(i + HEADLINE.length) * 90}ms` }}
-            >
-              <span className="td-gradient-text">{word}</span>
+            <span key={word} className="td-line mr-[0.25em]">
+              <span
+                className="td-up"
+                style={{ animationDelay: `${(i + HEADLINE.length) * 70 + 80}ms` }}
+              >
+                <span className="td-gradient-text">{word}</span>
+              </span>
             </span>
           ))}
         </h1>
@@ -167,21 +226,36 @@ export default function HomePage() {
           <LinkButton
             id="sign-in-link"
             href="/sign-in"
-            className="td-cta-shine px-7 py-3 text-base shadow-lg shadow-brand/30 hover:-translate-y-0.5"
+            data-magnetic
+            className="td-fill td-cta-shine px-7 py-3 text-base shadow-lg shadow-brand/30 hover:-translate-y-0.5"
           >
             Sign in
           </LinkButton>
           <LinkButton
             href="/sign-up"
             variant="secondary"
-            className="px-7 py-3 text-base hover:-translate-y-0.5"
+            data-magnetic
+            className="td-fill px-7 py-3 text-base hover:-translate-y-0.5"
           >
             Create a free account &rarr;
           </LinkButton>
         </div>
 
-        <div className="td-fade-in-up mt-16 sm:mt-20" style={{ animationDelay: "1000ms" }}>
-          <HeroPreview />
+        <div className="td-fade-in-up relative mt-16 sm:mt-20" style={{ animationDelay: "1000ms" }}>
+          <span
+            aria-hidden
+            className="td-orb -left-10 top-10 h-56 w-56 bg-[var(--td2-cyan)]"
+            data-parallax="-50"
+          />
+          <span
+            aria-hidden
+            className="td-orb -right-8 bottom-0 h-64 w-64 bg-[var(--td2-violet)]"
+            data-parallax="50"
+            style={{ animationDelay: "-4s" }}
+          />
+          <Tilt data-cursor="Your week">
+            <HeroPreview />
+          </Tilt>
         </div>
       </section>
 
@@ -204,6 +278,28 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <section
+        id="compare"
+        aria-labelledby="compare-h"
+        className="relative z-10 mx-auto max-w-5xl px-4 pt-24 text-center sm:px-6"
+      >
+        <Reveal>
+          <p className="font-mono text-xs uppercase tracking-widest text-brand">
+            Your tutoring day
+          </p>
+          <h2
+            id="compare-h"
+            className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-5xl"
+          >
+            With and without TutorDesk
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-ink-muted">
+            Most tutors patch five tools together. Flip the switch.
+          </p>
+          <Patchwork />
+        </Reveal>
+      </section>
 
       <section id="features" className="relative z-10 mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
@@ -259,34 +355,98 @@ export default function HomePage() {
         </ol>
       </section>
 
+      <section
+        id="calculator"
+        aria-labelledby="calc-h"
+        className="relative z-10 mx-auto max-w-5xl px-4 pb-24 sm:px-6"
+      >
+        <Reveal>
+          <div className="rounded-3xl border border-border bg-surface-muted/60 p-6 sm:p-12">
+            <p className="text-center font-mono text-xs uppercase tracking-widest text-brand">
+              Your week
+            </p>
+            <h2
+              id="calc-h"
+              className="mt-3 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl"
+            >
+              See your week in numbers
+            </h2>
+            <p className="mx-auto mb-10 mt-3 max-w-lg text-center text-ink-muted">
+              Slide to match your practice. This is your own estimate, nothing is stored.
+            </p>
+            <WeekCalculator />
+          </div>
+        </Reveal>
+      </section>
+
+      <section
+        id="faq"
+        aria-labelledby="faq-h"
+        className="relative z-10 mx-auto max-w-3xl px-4 pb-24 sm:px-6"
+      >
+        <Reveal>
+          <h2
+            id="faq-h"
+            className="text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl"
+          >
+            Questions tutors ask
+          </h2>
+          <div className="mt-10 space-y-3">
+            {FAQ.map(({ q, a }) => (
+              <details
+                key={q}
+                className="group rounded-2xl border border-border bg-surface px-5 transition-colors open:border-brand/40"
+              >
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                  {q}
+                  <span
+                    aria-hidden
+                    className="text-2xl leading-none text-brand transition-transform duration-300 group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="pb-5 text-sm leading-relaxed text-ink-muted">{a}</p>
+              </details>
+            ))}
+          </div>
+        </Reveal>
+      </section>
+
       <section className="relative z-10 mx-auto max-w-5xl px-4 pb-24 sm:px-6">
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-8 text-center sm:p-14">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--td2-accent-surface),transparent_70%)]"
-            />
-            <div className="relative">
-              <ClockIcon className="mx-auto h-8 w-8 text-brand" />
-              <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-                Give your evenings back
-              </h2>
-              <p className="mx-auto mt-3 max-w-lg text-ink-muted">
-                Set up your workspace and start scheduling today. It is free to create an account.
-              </p>
-              <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-ink-muted">
-                {["Light and dark themes", "Phone-friendly", "Student portal included"].map((t) => (
-                  <li key={t} className="flex items-center gap-1.5">
-                    <CheckCircleIcon className="h-4 w-4 text-brand" /> {t}
-                  </li>
-                ))}
-              </ul>
-              <LinkButton
-                href="/sign-up"
-                className="td-cta-shine mt-8 px-8 py-3 text-base shadow-lg shadow-brand/30 hover:-translate-y-0.5"
-              >
-                Create a free account
-              </LinkButton>
+          <div className="td-conic">
+            <div className="relative overflow-hidden rounded-[calc(1.5rem-1.5px)] bg-surface p-8 text-center sm:p-14">
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--td2-accent-surface),transparent_70%)]"
+              />
+              <div className="relative">
+                <ClockIcon className="mx-auto h-8 w-8 text-brand" />
+                <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                  Give your evenings back
+                </h2>
+                <p className="mx-auto mt-3 max-w-lg text-ink-muted">
+                  Set up your workspace and start scheduling today. It is free to create an account.
+                </p>
+                <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-ink-muted">
+                  {["Light and dark themes", "Phone-friendly", "Student portal included"].map(
+                    (t) => (
+                      <li key={t} className="flex items-center gap-1.5">
+                        <CheckCircleIcon className="h-4 w-4 text-brand" /> {t}
+                      </li>
+                    ),
+                  )}
+                </ul>
+                <LinkButton
+                  href="/sign-up"
+                  data-magnetic
+                  data-cursor="Go"
+                  className="td-fill td-cta-shine mt-8 px-8 py-3 text-base shadow-lg shadow-brand/30 hover:-translate-y-0.5"
+                >
+                  Create a free account
+                </LinkButton>
+              </div>
             </div>
           </div>
         </Reveal>

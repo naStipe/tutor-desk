@@ -653,3 +653,267 @@ button {
     display: none;
   }
 }
+
+/* ------------------------------------------------------------------
+   Landing effects layer (src/features/marketing/components/FxLayer.tsx).
+   Everything gated on html.td-fx is only active when motion is allowed.
+   ------------------------------------------------------------------ */
+.td-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 100;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--td2-accent-dot), var(--td2-cyan), var(--td2-violet));
+  pointer-events: none;
+  will-change: transform;
+}
+
+.td-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.td-cursor.is-on {
+  opacity: 1;
+}
+
+.td-cursor::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--td2-accent-dot);
+  background-color: var(--td2-accent-dot);
+  transition:
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.3s,
+    transform 0.2s;
+}
+
+.td-cursor > span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font: 600 0.72rem / 1 var(--font-sans);
+  color: var(--td2-on-brand);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.td-cursor.is-link::before {
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  background-color: color-mix(in srgb, var(--td2-accent-dot) 14%, transparent);
+}
+
+.td-cursor.is-big::before {
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
+}
+
+.td-cursor.is-big > span {
+  opacity: 1;
+}
+
+.td-cursor.is-down::before {
+  transform: scale(0.8);
+}
+
+html.td-hide-cursor,
+html.td-hide-cursor * {
+  cursor: none !important;
+}
+
+html.td-hide-cursor :is(input, textarea, select),
+html.td-hide-cursor [aria-modal="true"],
+html.td-hide-cursor [aria-modal="true"] * {
+  cursor: auto !important;
+}
+
+/* Magnetic buttons: FxLayer sets --td-mx/--td-my; they spring back on leave. */
+[data-magnetic] {
+  transform: translate3d(var(--td-mx, 0), var(--td-my, 0), 0);
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s,
+    box-shadow 0.3s;
+}
+
+[data-magnetic].td-magnet-active {
+  transition-duration: 0.12s, 0.4s, 0.2s, 0.3s;
+}
+
+[data-parallax] {
+  transform: translate3d(0, var(--td-py, 0), 0);
+  will-change: transform;
+}
+
+/* Buttons: a curved fill rises from the bottom on hover. */
+.td-fill {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.td-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--td-fill, var(--td2-cyan));
+  transform: translateY(101%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .td-fill:hover {
+    color: var(--td2-on-cyan);
+  }
+
+  .td-fill:hover::before {
+    transform: translateY(0);
+    border-radius: 0;
+  }
+}
+
+/* Plain links: the underline slides in from the left. */
+.td-link {
+  position: relative;
+}
+
+.td-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .td-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* Hero headline: each word slides up out of a mask. */
+.td-line {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.td-up {
+  display: inline-block;
+  animation: tdMaskUp 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tdMaskUp {
+  from {
+    transform: translateY(108%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Pointer tilt (Tilt.tsx sets --rx/--ry). */
+.td-tilt {
+  transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+}
+
+/* Slowly spinning conic border for the closing call to action. */
+.td-conic {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  padding: 1.5px;
+}
+
+.td-conic::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 220%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 60%,
+    var(--td2-accent-dot),
+    var(--td2-cyan),
+    var(--td2-violet),
+    transparent
+  );
+  animation: tdSpin 7s linear infinite;
+}
+
+@keyframes tdSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Soft glowing orb behind the hero preview. */
+.td-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(70px);
+  opacity: 0.35;
+  animation: tdFloat 9s ease-in-out infinite;
+}
+
+.td-range {
+  accent-color: var(--td2-accent-dot);
+  height: 1.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-up,
+  .td-conic::before,
+  .td-orb {
+    animation: none;
+  }
+
+  .td-tilt,
+  [data-magnetic],
+  [data-parallax] {
+    transform: none;
+    transition: none;
+  }
+
+  .td-fill::before,
+  .td-link::after {
+    display: none;
+  }
+}

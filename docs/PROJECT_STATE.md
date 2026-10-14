@@ -80,6 +80,20 @@
   typecheck, 157 tests, dev server at desktop and 375px (landing and sign-in, dark theme; no horizontal overflow). **Not
   checked**: light theme, `next build`, forgot/reset-password pages, real phone.
 
+- **Landing hero v2 + SEO (2026-10-14, uncommitted)**: on top of the overhaul above. New client effects layer
+  `FxLayer.tsx` (scroll progress bar, trailing cursor dot/ring with `data-cursor` labels, magnetic `data-magnetic`
+  buttons, `data-parallax` drift; skipped for reduced motion, cursor only for fine pointers), `Tilt.tsx` (pointer tilt
+  on the hero preview), `Patchwork.tsx` (patchwork vs TutorDesk toggle), `WeekCalculator.tsx` + `week-math.ts` (visitor's
+  own estimate, nothing stored), native `<details>` FAQ from `faq.ts`. Headline words slide up from a mask; buttons get a
+  curved fill on hover (`td-fill`); closing CTA has a spinning conic border. CSS appended to `globals.css`. SEO: page
+  `metadata` (title, description, canonical, Open Graph, Twitter), JSON-LD (`SoftwareApplication` + `FAQPage`), new
+  `src/app/sitemap.ts` and `src/app/robots.ts` (both read `NEXT_PUBLIC_SITE_URL`; private routes disallowed). No new
+  dependency, no schema change. Checked: format, lint (0 errors), typecheck, 160 tests, dev server at desktop and 375px
+  (no console errors, no horizontal overflow, toggle and sliders work). **Known issue**: `pnpm run build` crashes with
+  `TypeError ... reading 'length'` in webpack `WasmHash` on Node v24.16.0; it fails the same on clean HEAD, so it is not
+  from this change. **Not checked**: production build, light theme, real phone, Lighthouse, social preview image
+  (`og` still uses the logo PNG).
+
 ## Previous Milestone (TD-020)
 
 - Milestone: **TD-020 — Email via Resend (built, NOT activated)**

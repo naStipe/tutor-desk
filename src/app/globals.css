@@ -353,15 +353,6 @@ button {
   }
 }
 
-@keyframes tdMarquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @keyframes tdWordIn {
   from {
     opacity: 0;
@@ -523,16 +514,6 @@ button {
   animation: tdDraw 2.2s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
-.td-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: tdMarquee 45s linear infinite;
-}
-
-.td-marquee:hover .td-marquee-track {
-  animation-play-state: paused;
-}
-
 /* Scroll reveal: the element is visible in the server HTML; Reveal.tsx only flips it to
    "pending" if it is below the fold, then to "in" when it scrolls into view. */
 [data-reveal="pending"] {
@@ -629,8 +610,7 @@ button {
   .td-float,
   .td-pop,
   .td-block-grow,
-  .td-draw,
-  .td-marquee-track {
+  .td-draw {
     animation: none;
   }
 
@@ -876,7 +856,6 @@ html.td-hide-cursor [aria-modal="true"] * {
   transition-duration: 0.1s;
 }
 
-/* Marquee strip with edge fade. */
 @keyframes tdShimmer {
   from {
     background-position: -200% 0;

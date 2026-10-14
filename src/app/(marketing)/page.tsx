@@ -61,16 +61,6 @@ const JSON_LD = {
 const HEADLINE = ["Run", "your", "tutoring", "business", "from"];
 const HEADLINE_END = ["one", "place."];
 
-const MARQUEE = [
-  "Scheduling",
-  "Homework",
-  "Payments",
-  "Lesson packages",
-  "Student portal",
-  "Reminders",
-  "No commission",
-];
-
 const FEATURES = [
   {
     title: "A calendar that moves with you",
@@ -226,20 +216,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      <div className="td-marquee overflow-hidden py-7" aria-hidden>
-        <div className="td-marquee-track text-xs font-medium uppercase tracking-[0.28em] text-ink-subtle">
-          {[0, 1].map((n) => (
-            <div key={n} className="flex shrink-0 items-center">
-              {MARQUEE.map((item) => (
-                <span key={item} className="px-14">
-                  {item}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
 
       <section
         id="compare"

@@ -104,7 +104,7 @@ export default function HomePage() {
               priority
               className="h-7 w-auto"
             />
-            <span className="font-serif text-2xl font-semibold tracking-tight text-ink">
+            <span className="font-serif text-xl font-semibold tracking-tight text-ink">
               Tutor<span className="text-brand">Desk</span>
             </span>
           </div>
@@ -145,7 +145,7 @@ export default function HomePage() {
         <div>
           <p className="td-fade-in-up td-eyebrow">For independent private tutors</p>
 
-          <h1 className="mt-4 font-serif text-6xl font-medium leading-[1] tracking-tight text-ink sm:text-7xl xl:text-8xl">
+          <h1 className="mt-4 font-serif text-5xl font-semibold leading-[1.04] tracking-tight text-ink sm:text-6xl xl:text-7xl">
             {HEADLINE.map((word, i) => (
               <span key={word} className="td-line mr-[0.22em]">
                 <span className="td-up" style={{ animationDelay: `${i * 70 + 80}ms` }}>
@@ -206,7 +206,7 @@ export default function HomePage() {
         <Reveal className="mx-auto max-w-5xl">
           <h2
             id="compare-h"
-            className="font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl"
+            className="font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl"
           >
             Most tutors run on five tools
           </h2>
@@ -221,7 +221,7 @@ export default function HomePage() {
       <section id="features" className="mx-auto max-w-5xl px-4 py-24 sm:px-6">
         <Reveal>
           <p className="td-eyebrow mb-5">Features</p>
-          <h2 className="max-w-2xl font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl">
+          <h2 className="max-w-2xl font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
             Everything a solo tutor needs, nothing a school does.
           </h2>
         </Reveal>
@@ -231,7 +231,7 @@ export default function HomePage() {
               <Reveal>
                 <div className="group grid gap-3 border-b border-border py-8 transition-colors hover:bg-surface-muted/40 sm:grid-cols-[4rem_1.1fr_1fr] sm:gap-8">
                   <span className="font-serif text-2xl italic text-ink-subtle">0{index + 1}</span>
-                  <h3 className="font-serif text-3xl font-medium text-ink transition-colors group-hover:text-brand">
+                  <h3 className="font-serif text-2xl font-semibold text-ink transition-colors group-hover:text-brand">
                     {feature.title}
                   </h3>
                   <p className="leading-relaxed text-ink-muted">{feature.text}</p>
@@ -245,7 +245,7 @@ export default function HomePage() {
       <section id="how" className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
         <Reveal>
           <p className="td-eyebrow mb-5">How it works</p>
-          <h2 className="font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl">
+          <h2 className="font-serif text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
             Set up in one sitting
           </h2>
         </Reveal>
@@ -253,7 +253,7 @@ export default function HomePage() {
           {STEPS.map((step, index) => (
             <li key={step.title}>
               <Reveal delay={index * 100}>
-                <span className="font-serif text-7xl font-medium italic text-brand">
+                <span className="font-serif text-6xl font-semibold italic text-brand">
                   {index + 1}
                 </span>
                 <h3 className="mt-2 text-base font-medium tracking-wide text-ink">{step.title}</h3>
@@ -273,7 +273,7 @@ export default function HomePage() {
           <div className="rounded-lg border border-border-strong bg-surface p-6 sm:p-14">
             <h2
               id="calc-h"
-              className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl"
+              className="font-serif text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
             >
               See your week in numbers
             </h2>
@@ -289,7 +289,7 @@ export default function HomePage() {
         <Reveal>
           <h2
             id="faq-h"
-            className="font-serif text-4xl font-medium tracking-tight text-ink sm:text-5xl"
+            className="font-serif text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
           >
             Questions tutors ask
           </h2>
@@ -315,7 +315,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
         <Reveal>
           <div className="rounded-lg bg-brand-strong px-6 py-16 text-center text-on-brand sm:px-14 sm:py-24">
-            <h2 className="mx-auto max-w-xl font-serif text-5xl font-medium tracking-tight sm:text-6xl">
+            <h2 className="mx-auto max-w-xl font-serif text-4xl font-semibold tracking-tight sm:text-5xl">
               Give your evenings back.
             </h2>
             <p className="mx-auto mt-4 max-w-md opacity-90">

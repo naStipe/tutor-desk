@@ -50,8 +50,8 @@
   --color-hue-orange: var(--td2-hue-orange);
   --color-hue-lime: var(--td2-hue-lime);
 
-  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-space-grotesk), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
@@ -63,148 +63,146 @@
  * handoff didn't define; they bridge to td2's accent/attention colors where there's a
  * reasonable match and keep their own values where there isn't.
  */
-/* Palette: warm ivory paper, deep forest green as the one brand colour, antique brass for rare
- * emphasis. Dark mode inverts to warm charcoal with a champagne accent. No saturated hues. */
 :root {
-  --td2-bg-page: #f6f3ec;
-  --td2-bg-rail: #faf8f3;
-  --td2-bg-card: #fbf9f5;
-  --td2-bg-inset: #f0ece3;
-  --td2-bg-inset-2: #ebe6db;
-  --td2-bg-inset-3: #eee9de;
-  --td2-bg-inset-4: #f3efe7;
-  --td2-bg-field: #fdfcf9;
-  --td2-bg-row-hover: #f3efe6;
+  --td2-bg-page: #ecede8;
+  --td2-bg-rail: #f9faf7;
+  --td2-bg-card: #f9faf7;
+  --td2-bg-inset: #f0f1ec;
+  --td2-bg-inset-2: #ebede8;
+  --td2-bg-inset-3: #eef0eb;
+  --td2-bg-inset-4: #f3f4f0;
+  --td2-bg-field: #f9faf7;
+  --td2-bg-row-hover: #f3f4f0;
 
-  --td2-border-strong: #cfc8b8;
-  --td2-border-card: #e2dccf;
-  --td2-border-hairline: #e9e4d8;
-  --td2-border-rail: #e2dccf;
-  --td2-border-chip: #ddd6c7;
+  --td2-border-strong: #d3d6cf;
+  --td2-border-card: #dee1d9;
+  --td2-border-hairline: #e6e8e2;
+  --td2-border-rail: #dee1d9;
+  --td2-border-chip: #dee1d9;
 
-  --td2-text-primary: #1c1b18;
-  --td2-text-secondary: #46433c;
-  --td2-text-secondary-2: #55524a;
-  --td2-text-muted: #66625a;
-  --td2-text-faint: #6f6b62;
-  --td2-text-disabled: #6f6b62;
-  --td2-text-disabled-2: #b9b3a5;
+  --td2-text-primary: #23282a;
+  --td2-text-secondary: #454c46;
+  --td2-text-secondary-2: #545b55;
+  --td2-text-muted: #5f665f;
+  --td2-text-faint: #666d66;
+  --td2-text-disabled: #666d66;
+  --td2-text-disabled-2: #b8bdb5;
 
-  --td2-accent: #1f3d30;
-  --td2-accent-ink: #f6f3ec;
-  --td2-accent-text: #1f3d30;
-  --td2-accent-text-strong: #1f3d30;
-  --td2-accent-dot: #8c6d3f;
-  --td2-accent-surface: #ece9de;
-  --td2-accent-surface-border: #d6d1bf;
-  --td2-accent-underline: #cfc8b8;
+  --td2-accent: #1f6b4a;
+  --td2-accent-ink: #f4faf7;
+  --td2-accent-text: #1f6b4a;
+  --td2-accent-text-strong: #155f3f;
+  --td2-accent-dot: #1f6b4a;
+  --td2-accent-surface: #eaf3ee;
+  --td2-accent-surface-border: #cfe4d7;
+  --td2-accent-underline: #cfe4d7;
 
-  --td2-attention: #5a2f45;
-  --td2-attention-ink: #f6f3ec;
-  --td2-attention-border: #d9c7cf;
+  --td2-attention: #5b2ee0;
+  --td2-attention-ink: #ffffff;
+  --td2-attention-border: #d6c9fa;
 
-  --td2-bar-inactive: #e2dccf;
-  --td2-bar-active: #1f3d30;
+  --td2-bar-inactive: #dfe2da;
+  --td2-bar-active: #1f6b4a;
 
   /* Primary fill (buttons, "up next"/prep queue surfaces): inverted per theme. */
-  --td2-primary-bg: #1f3d30;
-  --td2-primary-fg: #f6f3ec;
+  --td2-primary-bg: #1f6b4a;
+  --td2-primary-fg: #f4faf7;
 
-  --td2-brand: #1f3d30;
-  --td2-brand-strong: #162d23;
-  --td2-on-brand: #f6f3ec;
+  --td2-brand: var(--td2-accent-text-strong);
+  --td2-brand-strong: var(--td2-accent-dot);
+  --td2-on-brand: #ffffff;
 
-  --td2-cyan: #3d5a6c;
-  --td2-cyan-strong: #2f4757;
-  --td2-on-cyan: #f6f3ec;
+  --td2-cyan: #0b6680;
+  --td2-cyan-strong: #0a5468;
+  --td2-on-cyan: #ffffff;
 
-  --td2-violet: #5b4a73;
-  --td2-violet-strong: #483a5c;
-  --td2-on-violet: #f6f3ec;
+  --td2-violet: #6d28d9;
+  --td2-violet-strong: #5b21b6;
+  --td2-on-violet: #ffffff;
 
-  --td2-danger: #9b2c2c;
-  --td2-danger-strong: #7f2222;
+  --td2-danger: #b91c1c;
+  --td2-danger-strong: #991b1b;
   --td2-on-danger: #ffffff;
 
-  --td2-warning: #8a5a1c;
-  --td2-warning-strong: #6f4814;
+  --td2-warning: #92400e;
+  --td2-warning-strong: #78350f;
   --td2-on-warning: #ffffff;
 
-  --td2-hue-blue: #4a6d8c;
-  --td2-hue-pink: #a05a72;
-  --td2-hue-orange: #a8693a;
-  --td2-hue-lime: #6b8244;
+  --td2-hue-blue: #2563eb;
+  --td2-hue-pink: #db2777;
+  --td2-hue-orange: #ea580c;
+  --td2-hue-lime: #65a30d;
 
   color-scheme: light;
 }
 
 .dark {
-  --td2-bg-page: #0f0e0c;
-  --td2-bg-rail: #12110f;
-  --td2-bg-card: #161512;
-  --td2-bg-inset: #1d1b17;
-  --td2-bg-inset-2: #1a1814;
-  --td2-bg-inset-3: #201e19;
-  --td2-bg-field: #13120f;
-  --td2-bg-row-hover: #191814;
+  --td2-bg-page: #0a0b0b;
+  --td2-bg-rail: #0c0e0d;
+  --td2-bg-card: #121514;
+  --td2-bg-inset: #191d1c;
+  --td2-bg-inset-2: #171a19;
+  --td2-bg-inset-3: #1c2120;
+  --td2-bg-field: #101312;
+  --td2-bg-row-hover: #151918;
 
-  --td2-border-strong: #342f27;
-  --td2-border-card: #26231d;
-  --td2-border-hairline: #1f1d18;
-  --td2-border-rail: #25221c;
-  --td2-border-chip: #2d2a22;
+  --td2-border-strong: #2b312f;
+  --td2-border-card: #1f2422;
+  --td2-border-hairline: #1b1f1e;
+  --td2-border-rail: #1e2220;
+  --td2-border-chip: #262b29;
 
-  --td2-text-primary: #f2eee6;
-  --td2-text-secondary: #c4beb0;
-  --td2-text-secondary-2: #c4beb0;
-  --td2-text-muted: #98927f;
-  --td2-text-faint: #8a8473;
-  --td2-text-disabled: #8a8473;
-  --td2-text-disabled-2: #4d4940;
+  --td2-text-primary: #f1f3f1;
+  --td2-text-secondary: #b9c0bd;
+  --td2-text-secondary-2: #b9c0bd;
+  --td2-text-muted: #8a918e;
+  --td2-text-faint: #808885;
+  --td2-text-disabled: #808885;
+  --td2-text-disabled-2: #454b49;
 
-  --td2-accent: #cdb27c;
-  --td2-accent-ink: #17120a;
-  --td2-accent-text: #d4ba87;
-  --td2-accent-text-strong: #d4ba87;
-  --td2-accent-dot: #cdb27c;
-  --td2-accent-surface: #1e1b14;
-  --td2-accent-surface-border: #3a3322;
-  --td2-accent-underline: #3a3322;
+  --td2-accent: #34a874;
+  --td2-accent-ink: #06140d;
+  --td2-accent-text: #4cc98f;
+  --td2-accent-text-strong: #4cc98f;
+  --td2-accent-dot: #34a874;
+  --td2-accent-surface: #13201a;
+  --td2-accent-surface-border: #244a37;
+  --td2-accent-underline: #1c3c2c;
 
-  --td2-attention: #d1a3b8;
-  --td2-attention-ink: #1d0f17;
-  --td2-attention-border: #4a3340;
+  --td2-attention: #b08cff;
+  --td2-attention-ink: #140a2b;
+  --td2-attention-border: #362c53;
 
-  --td2-bar-inactive: #272420;
-  --td2-bar-active: #cdb27c;
+  --td2-bar-inactive: #232826;
+  --td2-bar-active: #34a874;
 
-  --td2-primary-bg: #cdb27c;
-  --td2-primary-fg: #17120a;
+  --td2-primary-bg: #34a874;
+  --td2-primary-fg: #06140d;
 
-  --td2-brand: #d4ba87;
-  --td2-brand-strong: #e2cca0;
-  --td2-on-brand: #17120a;
+  --td2-brand: var(--td2-accent-text-strong);
+  --td2-brand-strong: var(--td2-accent-dot);
+  --td2-on-brand: var(--td2-accent-ink);
 
-  --td2-cyan: #8fb0c4;
-  --td2-cyan-strong: #b0cadb;
-  --td2-on-cyan: #0c1820;
+  --td2-cyan: #22d3ee;
+  --td2-cyan-strong: #67e8f9;
+  --td2-on-cyan: #042f2e;
 
-  --td2-violet: #b6a6d1;
-  --td2-violet-strong: #cdc1e2;
-  --td2-on-violet: #19122a;
+  --td2-violet: #a78bfa;
+  --td2-violet-strong: #c4b5fd;
+  --td2-on-violet: #1e1147;
 
-  --td2-danger: #e08a8a;
-  --td2-danger-strong: #eeaaaa;
+  --td2-danger: #f87171;
+  --td2-danger-strong: #fca5a5;
   --td2-on-danger: #2a0a0a;
 
-  --td2-warning: #dcb06a;
-  --td2-warning-strong: #ebc88e;
+  --td2-warning: #fbbf24;
+  --td2-warning-strong: #fde047;
   --td2-on-warning: #2c1a02;
 
-  --td2-hue-blue: #8fb0cc;
-  --td2-hue-pink: #d49bb0;
-  --td2-hue-orange: #d9a074;
-  --td2-hue-lime: #a5bd7e;
+  --td2-hue-blue: #60a5fa;
+  --td2-hue-pink: #f472b6;
+  --td2-hue-orange: #fb923c;
+  --td2-hue-lime: #a3e635;
 
   color-scheme: dark;
 }
@@ -216,14 +214,6 @@ body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "cv11", "ss01";
-  letter-spacing: -0.005em;
-}
-
-h1,
-h2,
-h3 {
-  text-wrap: balance;
 }
 
 * {
@@ -244,13 +234,13 @@ h3 {
 
 @keyframes tdRing {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--td2-accent-dot) 55%, transparent);
+    box-shadow: 0 0 0 0 rgba(52, 168, 116, 0.55);
   }
   70% {
-    box-shadow: 0 0 0 12px color-mix(in srgb, var(--td2-accent-dot) 0%, transparent);
+    box-shadow: 0 0 0 12px rgba(52, 168, 116, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--td2-accent-dot) 0%, transparent);
+    box-shadow: 0 0 0 0 rgba(52, 168, 116, 0);
   }
 }
 

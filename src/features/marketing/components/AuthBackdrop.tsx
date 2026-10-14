@@ -21,7 +21,7 @@ export function AuthBackdrop({ children }: { children: ReactNode }) {
           height={362}
           className="h-7 w-auto"
         />
-        <span className="font-serif text-xl font-semibold tracking-tight text-ink">
+        <span className="font-serif text-lg font-semibold tracking-tight text-ink">
           Tutor<span className="text-brand">Desk</span>
         </span>
       </Link>

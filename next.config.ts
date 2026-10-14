@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // CI (`pnpm run typecheck`) already type-checks every push; skipping the duplicate
+  // pass inside `next build` saves ~14s per Vercel deploy.
+  typescript: { ignoreBuildErrors: true },
   experimental: {
     // Next.js's client-side Router Cache doesn't reuse dynamic pages by
     // default (staleTimes.dynamic: 0), so revisiting a tab you were just on

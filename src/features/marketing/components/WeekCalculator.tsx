@@ -30,7 +30,7 @@ export function WeekCalculator() {
               className="flex justify-between text-sm font-semibold text-ink"
             >
               <span>{field.label}</span>
-              <span className="font-mono text-brand">
+              <span className="font-semibold text-brand">
                 {field.key === "ratePerLesson" ? "$" : ""}
                 {input[field.key]}
                 {field.suffix}
@@ -51,19 +51,21 @@ export function WeekCalculator() {
       </div>
 
       <div className="flex flex-col justify-center gap-4 text-left">
-        <div className="rounded-2xl border border-border bg-surface p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-ink-subtle">
-            Business you run each month
-          </p>
-          <p className="td-gradient-text mt-2 text-5xl font-bold tracking-tight" aria-live="polite">
+        <div className="rounded-lg border border-border-strong bg-surface p-6">
+          <p className="text-sm text-ink-muted">Business you run each month</p>
+          <p
+            className="mt-2 font-serif text-5xl font-semibold tracking-tight text-brand"
+            aria-live="polite"
+          >
             ${monthlyIncome(input).toLocaleString("en-US")}
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-surface p-6">
-          <p className="font-mono text-xs uppercase tracking-widest text-ink-subtle">
-            Admin hours in your week
-          </p>
-          <p className="mt-2 text-5xl font-bold tracking-tight text-ink" aria-live="polite">
+        <div className="rounded-lg border border-border-strong bg-surface p-6">
+          <p className="text-sm text-ink-muted">Admin hours in your week</p>
+          <p
+            className="mt-2 font-serif text-5xl font-semibold tracking-tight text-ink"
+            aria-live="polite"
+          >
             {weeklyAdminHours(input)} h
           </p>
           <p className="mt-2 text-sm text-ink-muted">

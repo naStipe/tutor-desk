@@ -80,6 +80,14 @@
   typecheck, 157 tests, dev server at desktop and 375px (landing and sign-in, dark theme; no horizontal overflow). **Not
   checked**: light theme, `next build`, forgot/reset-password pages, real phone.
 
+- **Landing restyle (2026-10-14)**: the landing page was toned down from the generic "AI" look. Removed from the page
+  (landing only; auth pages still use them): aurora blobs, grain, glass cards, rainbow gradient text, glowing orbs,
+  floating badges, spinning conic border, cursor spotlight cards, marquee, tilt. Now: left-aligned hero with a serif
+  display face (Fraunces via `next/font`, `font-serif`), one hand-drawn underline, hard-edged offset shadows, an editorial
+  numbered feature list, a solid brand CTA block. Kept: scroll progress bar, cursor dot, magnetic buttons, word-mask
+  headline, solid curved button fill, parallax hooks. `Tilt.tsx` and `SpotlightCard.tsx` deleted. Checked: format, lint
+  (0 errors), typecheck, dev server dark and light.
+
 - **Landing hero v2 + SEO (2026-10-14, uncommitted)**: on top of the overhaul above. New client effects layer
   `FxLayer.tsx` (scroll progress bar, trailing cursor dot/ring with `data-cursor` labels, magnetic `data-magnetic`
   buttons, `data-parallax` drift; skipped for reduced motion, cursor only for fine pointers), `Tilt.tsx` (pointer tilt

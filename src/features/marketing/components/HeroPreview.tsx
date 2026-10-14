@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { CheckCircleIcon, ClockIcon } from "../../../components/icons";
+import { ClockIcon } from "../../../components/icons";
 import { CountUp } from "./CountUp";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -23,13 +23,8 @@ const BLOCKS = [
 
 export function HeroPreview() {
   return (
-    <div className="relative mx-auto w-full max-w-4xl [perspective:1400px]">
-      <div
-        aria-hidden
-        className="absolute -inset-6 rounded-[2rem] bg-gradient-to-tr from-brand/30 via-cyan/20 to-violet/30 blur-3xl"
-      />
-
-      <div className="td-glass relative overflow-hidden rounded-2xl border border-border text-left shadow-2xl shadow-black/20 sm:[transform:rotateX(6deg)] sm:transition-transform sm:duration-700 sm:hover:[transform:rotateX(0deg)]">
+    <div className="relative mx-auto w-full max-w-4xl">
+      <div className="relative overflow-hidden rounded-xl border border-border-strong bg-surface text-left shadow-[6px_6px_0_var(--td2-border-strong)]">
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-danger/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-warning/70" />
@@ -44,7 +39,7 @@ export function HeroPreview() {
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-semibold text-ink">This week</p>
               <span className="flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand">
-                <span className="td-pulse-dot h-1.5 w-1.5 rounded-full bg-brand" />7 lessons
+                7 lessons
               </span>
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -99,19 +94,6 @@ export function HeroPreview() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div
-        className="td-pop td-float absolute -left-3 bottom-10 hidden items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-ink shadow-xl shadow-black/15 sm:flex"
-        style={{ animationDelay: "1.6s, 0s" }}
-      >
-        <CheckCircleIcon className="h-4 w-4 text-brand" /> Package covers next lesson
-      </div>
-      <div
-        className="td-pop td-float absolute -right-2 -top-4 hidden items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-ink shadow-xl shadow-black/15 sm:flex"
-        style={{ animationDelay: "2s, 1.2s" }}
-      >
-        <span className="h-2 w-2 rounded-full bg-violet" /> Homework submitted
       </div>
     </div>
   );

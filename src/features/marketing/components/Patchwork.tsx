@@ -42,7 +42,7 @@ export function Patchwork() {
             onClick={() => setAfter(option.value)}
             className={`min-h-11 rounded-full px-5 text-sm font-semibold transition-colors duration-300 ${
               after === option.value
-                ? "bg-brand-strong text-on-brand shadow-md"
+                ? "bg-brand-strong text-on-brand"
                 : "text-ink-muted hover:text-ink"
             }`}
           >
@@ -56,7 +56,7 @@ export function Patchwork() {
           {TOOLS.map((tool, index) => (
             <li
               key={tool.name}
-              className="td-pop w-44 rounded-2xl border border-dashed border-border-strong bg-surface p-5 text-left sm:w-48"
+              className="td-pop w-44 rounded-lg border border-border-strong bg-surface p-5 shadow-[3px_3px_0_var(--td2-border-strong)] text-left sm:w-48"
               style={{ transform: `rotate(${tool.tilt}deg)`, animationDelay: `${index * 70}ms` }}
             >
               <strong className="block text-base text-ink">{tool.name}</strong>
@@ -68,7 +68,7 @@ export function Patchwork() {
           {BENEFITS.map((benefit, index) => (
             <div
               key={benefit.title}
-              className="td-pop rounded-2xl border border-brand/40 bg-surface p-5 shadow-lg shadow-brand/10"
+              className="td-pop rounded-lg border border-brand bg-surface p-5 shadow-[4px_4px_0_var(--td2-accent-dot)]"
               style={{ animationDelay: `${index * 90}ms` }}
             >
               <strong className="block text-base text-ink">{benefit.title}</strong>

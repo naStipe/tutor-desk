@@ -51,6 +51,7 @@
   --color-hue-lime: var(--td2-hue-lime);
 
   --font-sans: var(--font-space-grotesk), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
@@ -665,7 +666,7 @@ button {
   z-index: 100;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--td2-accent-dot), var(--td2-cyan), var(--td2-violet));
+  background: var(--td2-accent-dot);
   pointer-events: none;
   will-change: transform;
 }
@@ -774,7 +775,7 @@ html.td-hide-cursor [aria-modal="true"] * {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--td-fill, var(--td2-cyan));
+  background: var(--td-fill, var(--td2-text-primary));
   transform: translateY(101%);
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
   transition:
@@ -784,7 +785,7 @@ html.td-hide-cursor [aria-modal="true"] * {
 
 @media (hover: hover) {
   .td-fill:hover {
-    color: var(--td2-on-cyan);
+    color: var(--td-fill-text, var(--td2-bg-page));
   }
 
   .td-fill:hover::before {
@@ -841,71 +842,16 @@ html.td-hide-cursor [aria-modal="true"] * {
   }
 }
 
-/* Pointer tilt (Tilt.tsx sets --rx/--ry). */
-.td-tilt {
-  transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  transform-style: preserve-3d;
-}
-
-/* Slowly spinning conic border for the closing call to action. */
-.td-conic {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 1.5rem;
-  padding: 1.5px;
-}
-
-.td-conic::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 50%;
-  width: 220%;
-  aspect-ratio: 1;
-  translate: -50% -50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0 60%,
-    var(--td2-accent-dot),
-    var(--td2-cyan),
-    var(--td2-violet),
-    transparent
-  );
-  animation: tdSpin 7s linear infinite;
-}
-
-@keyframes tdSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Soft glowing orb behind the hero preview. */
-.td-orb {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-  filter: blur(70px);
-  opacity: 0.35;
-  animation: tdFloat 9s ease-in-out infinite;
-}
-
 .td-range {
   accent-color: var(--td2-accent-dot);
   height: 1.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .td-up,
-  .td-conic::before,
-  .td-orb {
+  .td-up {
     animation: none;
   }
 
-  .td-tilt,
   [data-magnetic],
   [data-parallax] {
     transform: none;

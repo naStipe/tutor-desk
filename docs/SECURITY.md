@@ -35,8 +35,8 @@ independently enforced by RLS, exactly like the form-based actions.
 
 Only the Supabase URL and publishable key may appear in `NEXT_PUBLIC_*`. Service-role keys, secret
 keys, access tokens, database passwords, and real `.env` files must never be committed or exposed to
-browser code. Apart from the TD-020 email paths (see "Email notifications and the service-role boundary"), there
-is no service-role dependency, and there is no in-memory or alternate persistence fallback.
+browser code. Apart from the TD-020 email paths (see "Email notifications and the service-role boundary") and account
+deletion (see "Account deletion"), there is no service-role dependency, and there is no in-memory or alternate persistence fallback.
 
 Database changes are committed as SQL migrations before being applied. Supabase MCP and CLI may
 inspect hosted state, but MCP is not an undocumented schema mutation path. Remote databases must
@@ -45,8 +45,10 @@ never be reset or have unrelated data dropped without explicit authorization.
 ## Boundary and browser protections
 
 External inputs are validated with Zod. React escaping remains the default; unsafe HTML injection
-is prohibited. The Next.js configuration preserves anti-framing, content-type, referrer, permissions,
-and Content Security Policy headers established in TD-000.
+is prohibited. `next.config.ts` sends `X-Frame-Options: DENY` (anti-framing; it had been dropped at some
+point and was restored on 2026-10-15), `X-Content-Type-Options`, `Referrer-Policy` and
+`Permissions-Policy` on every route. **No Content Security Policy header is set today**, although TD-000
+intended one; adding it needs care (Next.js inline scripts, the JSON-LD block, Vercel Speed Insights).
 
 ## Email notifications and the service-role boundary (TD-020)
 
@@ -58,7 +60,7 @@ read when an email path runs, never at startup, and never when the master switch
 
 Safeguards:
 
-- The admin client is imported only from `src/features/notifications/` and is never created in the
+- The admin client is imported only from `src/features/notifications/` and `src/features/account/` and is never created in the
   browser (runtime guard). The key is a server-only env var, never `NEXT_PUBLIC_*`, never logged.
 - Cross-tenant reads happen only through `due_lesson_reminders(...)`, a SQL function executable
   **only by `service_role`** (execute revoked from public, anon, authenticated). Its inputs are a
@@ -98,6 +100,36 @@ Template and transport checklist:
 - Auth emails (confirmation, recovery) are owned by Supabase Auth; the sender, SMTP credentials and
   redirect allow-list are configured in the Supabase dashboard (docs/EMAIL_SETUP.md). The recovery
   flow does not reveal whether an address is registered.
+
+
+## Account deletion
+
+`deleteAccountAction` (`src/features/account/actions.ts`) is the second code path that uses the
+service-role client (`createAdminClient`). It deletes the signed-in tutor's own account only.
+
+- **No client-provided id.** The only form field is the typed confirmation email. The target user id
+  comes from `supabase.auth.getUser()` (asks the auth server, so a forged or stale cookie fails), and
+  the typed email must equal that user's email (case-insensitive). Zod validates the field. A tutor
+  cannot name another account, so there is no IDOR path; another tenant's data is reached only
+  through the foreign keys of the session user's own rows.
+- **What is deleted.** Every tutor-owned table references `tutor_profile(user_id)` with `on delete
+  cascade`, and `tutor_profile` references `auth.users(id)` with `on delete cascade`. Deleting the
+  auth user therefore removes students, lessons, lesson series, homework, comments and attachment
+  rows, subjects, rates, lesson packages, package templates and notification logs, plus the portal
+  memberships and invites of the tutor's students (cascade through `student`). Storage objects are
+  not covered by foreign keys, so the action first removes the files listed in
+  `homework_attachment` for that `tutor_id`, in chunks of 100. If that step fails nothing else is
+  deleted and the tutor sees a generic error. No migration is needed.
+- **Not deleted.** The auth accounts of parents or students who joined through the portal (they
+  lose access to this tutor's student, nothing more). Storage files that no `homework_attachment`
+  row points to (an orphan from a crash between upload and insert) would remain; none are expected.
+  Supabase and Vercel backups and logs expire on the providers' schedules.
+- **A user who is both a tutor and a portal member** loses both, because the auth user is removed.
+- **After deletion** the session cookies are cleared (`signOut({ scope: "local" })`, errors
+  ignored) and the tutor is redirected to `/?notice=account-deleted`. Errors never expose provider
+  text.
+- Tests: `src/test/account-deletion.test.ts` (schema, email match, deletion order and failure
+  handling with a fake admin client). **Not tested:** the action end to end against Supabase.
 
 ## Lesson packages (TD-022)
 

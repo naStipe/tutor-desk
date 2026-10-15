@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("TutorDesk Shell", () => {
   test("loads the landing page and verifies foundation shell elements", async ({ page }) => {
@@ -21,6 +21,6 @@ test.describe("TutorDesk Shell", () => {
 
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/sign-in$/);
-    await expect(page.getByRole("heading", { name: "Tutor sign in" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 });

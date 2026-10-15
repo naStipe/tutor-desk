@@ -12,7 +12,7 @@
   (`list_migrations`, which was already out of step with the local file versions), so do not `supabase db push` it again.
   `20261010000000_notification_log.sql` is still **not** applied on the hosted project.
 - Last updated: 2026-10-11
-- Uncommitted work was committed at the end of this session (see git log).
+- Uncommitted work was committed at the end of this session (see git log). The 2026-10-15 marketing, legal, pricing and account-deletion work was committed and pushed to `main` on 2026-10-15.
 
 - **Different payer** (`StudentForm.tsx`): new student form has a checkbox "Someone else pays or is responsible
   (different payer)" that reveals the existing guardian fields. On an existing student (Contacts tab) an "Add payer /
@@ -72,7 +72,7 @@
   were already completed does not pay them. A package does not expire. The email reminder and unpaid-balance logic still
   read `payment_status`, so package lessons count as paid there, which is intended.
 
-- **Marketing visual overhaul (2026-10-13, uncommitted)**: landing page (`src/app/(marketing)/page.tsx`) and the four auth
+- **Marketing visual overhaul (2026-10-13, uncommitted; effects since removed, see the 2026-10-15 entry)**: landing page (`src/app/(marketing)/page.tsx`) and the four auth
   pages restyled. New `src/features/marketing/components/` (`Reveal` scroll reveal, `SpotlightCard` cursor glow, `CountUp`,
   `HeroPreview` demo dashboard with made-up data, `AuthBackdrop` shared shell); new effect classes (`td-aurora`, `td-grid-bg`,
   `td-grain`, `td-gradient-text`, `td-glass`, `td-spot`, marquee, etc.) appended to `globals.css`, all disabled under
@@ -88,7 +88,7 @@
   headline, solid curved button fill, parallax hooks. `Tilt.tsx` and `SpotlightCard.tsx` deleted. Checked: format, lint
   (0 errors), typecheck, dev server dark and light.
 
-- **Landing hero v2 + SEO (2026-10-14, uncommitted)**: on top of the overhaul above. New client effects layer
+- **Landing hero v2 + SEO (2026-10-14, uncommitted; cursor, tilt, magnetic and mask effects since removed, see the 2026-10-15 entry)**: on top of the overhaul above. New client effects layer
   `FxLayer.tsx` (scroll progress bar, trailing cursor dot/ring with `data-cursor` labels, magnetic `data-magnetic`
   buttons, `data-parallax` drift; skipped for reduced motion, cursor only for fine pointers), `Tilt.tsx` (pointer tilt
   on the hero preview), `Patchwork.tsx` (patchwork vs TutorDesk toggle), `WeekCalculator.tsx` + `week-math.ts` (visitor's
@@ -97,8 +97,86 @@
   `metadata` (title, description, canonical, Open Graph, Twitter), JSON-LD (`SoftwareApplication` + `FAQPage`), new
   `src/app/sitemap.ts` and `src/app/robots.ts` (both read `NEXT_PUBLIC_SITE_URL`; private routes disallowed). No new
   dependency, no schema change. Checked: format, lint (0 errors), typecheck, 160 tests, dev server at desktop and 375px
-  (no console errors, no horizontal overflow, toggle and sliders work). **Build fix (2026-10-14)**: `pnpm run build` crashed with `TypeError ... reading 'length'` in webpack `WasmHash` on Node v24.16.0 (also on clean HEAD). The `build` script is now `next build --turbopack`, which builds all 17 routes cleanly. `dev` and `start` are unchanged. **Not checked**: light theme, real phone, Lighthouse, social preview image
-  (`og` still uses the logo PNG).
+  (no console errors, no horizontal overflow, toggle and sliders work). **Build fix (2026-10-14)**: `pnpm run build` crashed with `TypeError ... reading 'length'` in webpack `WasmHash` on Node v24.16.0 (also on clean HEAD). The `build` script is now `next build --turbopack`, which builds all 17 routes cleanly. `dev` and `start` are unchanged. **Not checked**: Lighthouse. The social preview image is now `opengraph-image.tsx`.
+
+- **Landing audit fixes (2026-10-15, uncommitted)**: supersedes the effect lists in the three marketing entries above.
+  Removed for good (CSS, markup and JS): aurora blobs, grid and grain backgrounds, glass cards, gradient text, glowing
+  orbs, spotlight cards, custom cursor, magnetic buttons, hero tilt and float, parallax hooks, per-word headline
+  animation. `FxLayer.tsx` now only draws the scroll progress bar. Auth pages use a flat `bg-canvas` shell and
+  `bg-surface` cards. Fixed: the sticky header (`main` used `overflow-hidden`, now `overflow-x-clip`; header is
+  solid), anchor offset (`scroll-padding-top`, smooth scroll only without reduced motion), mobile header (no
+  "Sign in" text link below `sm`), hero CTAs (primary "Create a free account", later "Create your account", secondary "Sign in" keeps
+  `#sign-in-link`), h1 now reads with spaces, hero preview shows first names only, calculator (minutes under 1 h,
+  monthly admin hours, `aria-valuetext`, label "Lesson income each month"; new `formatDuration`,
+  `monthlyAdminHours`, `weeklyAdminMinutes` in `week-math.ts`), footer links and year, skip link, visible focus ring
+  (`#main-content` focus-visible rule), `metadataBase` moved to `src/app/layout.tsx`, 1200x630 flat
+  `src/app/opengraph-image.tsx` (used for `og:image` and `twitter:image`), header logo `sizes="36px"`. `e2e/auth.spec.ts`
+  landing test now uses `.first()` (the page has several matching links). No dependency, schema or data change.
+  Checked: format, lint (0 errors, same pre-existing warning), typecheck, 162 tests, `pnpm run build`, dev server at
+  1440px light and 375px dark (header sticks, anchors clear it, no horizontal overflow, focus ring, `og:image` tag).
+  **Not checked**: Playwright e2e run, real phone, screen reader, Lighthouse, production preview of the OG image.
+  **Open items needing owner input** (not done, no invented content): pricing statement, testimonials or real
+  screenshots.
+
+- **Privacy and terms pages (2026-10-15, uncommitted)**: new `/privacy` and `/terms` (`src/app/(marketing)/privacy`,
+  `terms`) built on `LegalShell.tsx`; operator, country, contact email and "last updated" date live in
+  `src/features/marketing/legal.ts` (naStipe.dev, Finland, support@nastipe.dev). The landing footer links Privacy, Terms
+  and Contact, the sign-up form shows a "By creating an account you agree to the Terms and Privacy Policy" line
+  (`AuthForm` got an optional `footnote` prop), and both pages are in `sitemap.ts`. The copy reflects the real stack
+  (Supabase Auth and DB in eu-central-1 Frankfurt, Vercel hosting and cookieless Speed Insights, Resend email, optional
+  Google sign-in, session cookie plus `td-theme` local storage) and says the tutor is the controller of student data.
+  **This is a draft written without legal review; the owner should have it checked** (retention wording, the
+  deletion-on-request promise, liability cap, international transfer wording). Deletion was by email request only when this was written; see the next entry. Checked: format, lint (0 errors, same pre-existing warning), typecheck, 162
+  tests, `pnpm run build` (both pages prerender static), dev server pages render, footer and sitemap links. **Not
+  checked**: mobile layout of the legal pages, Playwright e2e. The deletion flow it asked for now exists (next entry).
+
+- **Audit follow-up: verification, mobile nav, account deletion (2026-10-15, uncommitted)**
+  - **Verified** (dev server on port 3100, in-app browser): `/`, `/privacy`, `/terms`, `/sign-in`, `/sign-up` return 200
+    with no horizontal overflow at 375px dark and 1440px light; landing header is sticky; `#features`, `#how`, `#faq`
+    clear the header (`scroll-padding-top` raised to 6rem: the 5rem value left 3px under the 83px mobile header);
+    focus ring shows (skip link first). Playwright could not use its own browser (not installed), so
+    `PLAYWRIGHT_CHANNEL=msedge PLAYWRIGHT_SKIP_WEBSERVER=1 PLAYWRIGHT_BASE_URL=http://localhost:3100 pnpm exec playwright test
+    e2e/app.spec.ts e2e/auth.spec.ts` was used: all 6 `auth.spec.ts` tests pass. `e2e/app.spec.ts` failed for older
+    reasons (no `X-Frame-Options` header, stale heading "Tutor sign in"); fixed in the pricing entry below.
+  - **Mobile section nav**: `MobileNav.tsx` (client; below `sm` at first, now below `md`, see the pricing entry): menu button (44px, `aria-expanded`,
+    `aria-controls`) opens a panel under the sticky header with Features, How it works, FAQ and Sign in (44px rows);
+    closes on link click, Escape (focus returns to the button) and outside press. No dependency. Checked at 375px with
+    a real click: scrolls, closes, target clears the header. (The 375px header check missed that the logo was overlapped; fixed in the pricing entry.) Not checked: screen reader,
+    real phone.
+  - **Account deletion** (`src/features/account/`: `schemas.ts`, `delete.ts`, `actions.ts`,
+    `components/DeleteAccountCard.tsx`; Settings page shows the card): the tutor types their account email; the server
+    action validates with Zod, takes the user from `supabase.auth.getUser()` (no id from the client), checks the email,
+    removes the files listed in `homework_attachment` for that tutor from the `homework-attachments` bucket, then calls
+    `auth.admin.deleteUser` with the service-role client. **No schema change or migration**: every tutor-owned table
+    cascades from `tutor_profile(user_id)` which cascades from `auth.users` (checked in all migrations). Then the session
+    is cleared and the tutor is sent to `/?notice=account-deleted` (`AccountDeletedNotice.tsx`, client-read so the
+    landing stays static). `/privacy` section 6 and `/terms` section 10 now describe self-service deletion; SECURITY.md
+    has an "Account deletion" section (IDOR assessment, what is and is not deleted). `admin.ts` comment widened.
+  - **Tests**: `src/test/account-deletion.test.ts` (8 tests, 170 in the suite: schema, email match, deletion order, failures with a fake admin
+    client). **Not verified**: the action and cascade against any real Supabase. The owner said not to use Docker, so
+    the local stack was not started (Docker Desktop was launched once before that instruction and its stale `run` folder
+    renamed per LOCAL_DEV.md; Docker processes were then stopped), and nothing was run against the hosted project.
+    Also not verified: that `SUPABASE_SERVICE_ROLE_KEY` is set in production, `signOut({scope:"local"})` after deletion
+    clearing cookies, and the Settings card on an authenticated page (checked on a temporary fixture at 375px, removed).
+  - **Owner input**: real screenshots are not needed for now (owner, 2026-10-15; `HeroPreview` demo stays).
+    Testimonials or user counts: none; no section exists, nothing invented.
+
+- **Pricing and release prep (2026-10-15)**: owner set the price to 5 EUR per month.
+  `src/features/marketing/pricing.ts` is the single source (amount, currency, period, included features; the
+  features list names only existing features). Landing: new `#pricing` section (flat card, price, "One plan, every
+  feature", CTA), header/mobile menu/footer links to it, FAQ "How much does it cost?", JSON-LD `Offer` (5 EUR). "Create
+  a free account" is now "Create your account" and the closing CTA names the price. `/terms` section 6 states the
+  price and that **billing is not switched on yet, so nothing is charged today**, with notice before the first charge.
+  Header: inline anchor links, the "Sign in" link and the theme toggle now show from `md` (at 640px five links wrapped
+  and touched the logo); below `md` the menu holds them plus a 44px theme toggle (at 375px the logo had been overlapped
+  by "Get started"). `next.config.ts` sends `X-Frame-Options: DENY` again (SECURITY.md claimed anti-framing and a CSP;
+  the CSP claim is corrected: none is set). `e2e/app.spec.ts` heading fixed. Checked: e2e 7/7 (Edge channel, three
+  runs; one earlier run had a single cold-compile flake), format, lint (1 pre-existing warning + 1 info), typecheck,
+  170 tests, build (`/` still static), in-app browser at 375 dark, 768 and 1440 light (no overflow, header fits).
+  **Not decided by the owner**: whether 5 EUR includes VAT, trial or free period, how billing will be taken (no
+  payment code exists).
+
+- **Next task**: run the account deletion flow once end to end against a disposable Supabase user (local stack if the owner allows Docker, otherwise a throwaway hosted test user) and confirm the cascade, the storage cleanup and the cookie clearing. It needs `SUPABASE_SERVICE_ROLE_KEY` in the Vercel environment; without it the action fails safely with a generic error.
 
 ## Previous Milestone (TD-020)
 

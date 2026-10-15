@@ -3,9 +3,9 @@ import { getEnv } from "../env";
 import type { Database } from "./database.types";
 
 /**
- * Service-role Supabase client. BYPASSES ROW LEVEL SECURITY. This is the first and only such
- * client in the repo; see docs/SECURITY.md ("Service-role boundary"). Import it only from
- * src/features/notifications/, only on the server, and only after the caller has been
+ * Service-role Supabase client. BYPASSES ROW LEVEL SECURITY. See docs/SECURITY.md ("Service-role
+ * boundary" and "Account deletion"). Import it only from src/features/notifications/ and
+ * src/features/account/, only on the server, and only after the caller has been
  * authenticated (cron secret or a validated tutor session). Never pass raw user input into its
  * queries; only values derived from the validated session or from database rows.
  */

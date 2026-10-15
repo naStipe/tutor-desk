@@ -12,8 +12,8 @@ test.describe("Tutor authentication UX", () => {
   test("home page links to sign in and sign up", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("#brand-title")).toContainText("TutorDesk");
-    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Create a free account/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Create your account/ }).first()).toBeVisible();
   });
 
   test("sign-in page renders its form and links", async ({ page }) => {

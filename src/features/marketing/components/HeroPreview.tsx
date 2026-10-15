@@ -6,24 +6,60 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
 // Decorative product preview with made-up demo data. Not real student or revenue figures.
 const BLOCKS = [
-  { day: 0, top: 14, height: 26, name: "Maya · Algebra", tone: "bg-brand/20 border-brand" },
-  { day: 1, top: 40, height: 22, name: "Leo · Physics", tone: "bg-cyan/20 border-cyan" },
-  { day: 2, top: 8, height: 22, name: "Ines · Essay", tone: "bg-violet/20 border-violet" },
+  {
+    day: 0,
+    top: 14,
+    height: 26,
+    name: "Maya",
+    tone: "bg-brand/20 border-brand",
+  },
+  {
+    day: 1,
+    top: 40,
+    height: 22,
+    name: "Leo",
+    tone: "bg-cyan/20 border-cyan",
+  },
+  {
+    day: 2,
+    top: 8,
+    height: 22,
+    name: "Ines",
+    tone: "bg-violet/20 border-violet",
+  },
   {
     day: 2,
     top: 52,
     height: 26,
-    name: "Sam · Calculus",
+    name: "Sam",
     tone: "bg-hue-orange/20 border-hue-orange",
   },
-  { day: 3, top: 26, height: 28, name: "Maya · Algebra", tone: "bg-brand/20 border-brand" },
-  { day: 4, top: 12, height: 24, name: "Noah · French", tone: "bg-hue-pink/20 border-hue-pink" },
-  { day: 4, top: 50, height: 22, name: "Leo · Physics", tone: "bg-cyan/20 border-cyan" },
+  {
+    day: 3,
+    top: 26,
+    height: 28,
+    name: "Maya",
+    tone: "bg-brand/20 border-brand",
+  },
+  {
+    day: 4,
+    top: 12,
+    height: 24,
+    name: "Noah",
+    tone: "bg-hue-pink/20 border-hue-pink",
+  },
+  {
+    day: 4,
+    top: 50,
+    height: 22,
+    name: "Leo",
+    tone: "bg-cyan/20 border-cyan",
+  },
 ];
 
 export function HeroPreview() {
   return (
-    <div className="relative mx-auto w-full max-w-4xl">
+    <div className="relative mx-auto w-full max-w-4xl" aria-hidden="true">
       <div className="relative overflow-hidden rounded-lg border border-border-strong bg-surface text-left shadow-[0_40px_80px_-40px_rgba(40,30,10,0.35)]">
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-border-strong" />

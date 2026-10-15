@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           {
+            // The app is never meant to be framed; blocks clickjacking (e.g. on Settings actions).
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },

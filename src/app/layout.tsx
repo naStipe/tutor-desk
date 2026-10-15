@@ -26,7 +26,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "TutorDesk",
   description:
     "Management SaaS for independent private tutors to manage students, schedules, lessons, homework, and invoicing.",
@@ -42,7 +45,6 @@ export const metadata: Metadata = {
     description:
       "Management SaaS for independent private tutors to manage students, schedules, lessons, homework, and invoicing.",
     type: "website",
-    images: ["/brand/tutordesk-logo-green.png"],
   },
 };
 

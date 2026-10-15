@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthBackdrop } from "../../../features/marketing/components/AuthBackdrop";
+import { signInWithGoogleAction, signUpAction } from "../../../features/auth/actions";
 import { AuthForm } from "../../../features/auth/components/AuthForm";
-import { signUpAction, signInWithGoogleAction } from "../../../features/auth/actions";
+import { AuthBackdrop } from "../../../features/marketing/components/AuthBackdrop";
 import { hasPortalMembership } from "../../../features/students/data";
 import { createClient } from "../../../lib/supabase/server";
 
@@ -25,6 +26,19 @@ export default async function SignUpPage() {
         alternateText="Already registered?"
         alternateHref="/sign-in"
         alternateLabel="Sign in"
+        footnote={
+          <>
+            By creating an account you agree to the{" "}
+            <Link href="/terms" className="font-medium text-ink underline underline-offset-2">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="font-medium text-ink underline underline-offset-2">
+              Privacy Policy
+            </Link>
+            .
+          </>
+        }
       />
     </AuthBackdrop>
   );

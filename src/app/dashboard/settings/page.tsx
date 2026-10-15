@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Card } from "../../../components/Card";
 import { PageHeader } from "../../../components/PageHeader";
+import { DeleteAccountCard } from "../../../features/account/components/DeleteAccountCard";
 import { TemplatesCard } from "../../../features/packages/components/TemplatesCard";
 import { listPackageTemplates } from "../../../features/packages/data";
 import { updateTutorProfileAction } from "../../../features/tutor-profile/actions";
@@ -57,6 +58,7 @@ export default async function SettingsPage() {
           defaultCurrency={profile?.currency ?? "RUB"}
         />
       )}
+      {user.email && <DeleteAccountCard email={user.email} />}
     </div>
   );
 }

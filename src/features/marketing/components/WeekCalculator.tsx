@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { monthlyIncome, weeklyAdminHours } from "../week-math";
+import { formatDuration, monthlyAdminHours, monthlyIncome, weeklyAdminMinutes } from "../week-math";
 
 const FIELDS = [
   { key: "lessonsPerWeek", label: "Lessons per week", min: 2, max: 40, step: 1, suffix: "" },
@@ -43,6 +43,7 @@ export function WeekCalculator() {
               max={field.max}
               step={field.step}
               value={input[field.key]}
+              aria-valuetext={`${field.key === "ratePerLesson" ? "$" : ""}${input[field.key]}${field.suffix}`}
               onChange={(event) => setInput({ ...input, [field.key]: Number(event.target.value) })}
               className="td-range mt-2 w-full"
             />
@@ -52,7 +53,7 @@ export function WeekCalculator() {
 
       <div className="flex flex-col justify-center gap-4 text-left">
         <div className="rounded-lg border border-border-strong bg-surface p-6">
-          <p className="text-sm text-ink-muted">Business you run each month</p>
+          <p className="text-sm text-ink-muted">Lesson income each month</p>
           <p
             className="mt-2 font-serif text-5xl font-semibold tracking-tight text-brand"
             aria-live="polite"
@@ -61,15 +62,16 @@ export function WeekCalculator() {
           </p>
         </div>
         <div className="rounded-lg border border-border-strong bg-surface p-6">
-          <p className="text-sm text-ink-muted">Admin hours in your week</p>
+          <p className="text-sm text-ink-muted">Admin time in your week</p>
           <p
             className="mt-2 font-serif text-5xl font-semibold tracking-tight text-ink"
             aria-live="polite"
           >
-            {weeklyAdminHours(input)} h
+            {formatDuration(weeklyAdminMinutes(input))}
           </p>
           <p className="mt-2 text-sm text-ink-muted">
-            Time you could spend teaching, resting or taking one more student.
+            About {monthlyAdminHours(input)} h a month. Time you could spend teaching, resting or
+            taking one more student.
           </p>
         </div>
       </div>

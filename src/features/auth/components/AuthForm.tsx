@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import { type ReactNode, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { inputClassName } from "../../../components/Field";
 import type { AuthActionState } from "../actions";
 
@@ -33,13 +33,14 @@ type AuthFormProps = {
   alternateLabel: string;
   notice?: string;
   forgotPasswordHref?: string;
+  footnote?: ReactNode;
 };
 
 export function AuthForm(props: AuthFormProps) {
   const [state, formAction] = useActionState(props.action, initialState);
 
   return (
-    <div className="w-full max-w-md td-glass rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
+    <div className="w-full max-w-md bg-surface rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
       <h1 className="text-xl font-bold tracking-tight text-ink">{props.heading}</h1>
       <p className="mt-1 text-sm text-ink-muted">{props.description}</p>
 
@@ -153,6 +154,10 @@ export function AuthForm(props: AuthFormProps) {
             </button>
           </form>
         </>
+      )}
+
+      {props.footnote && (
+        <p className="mt-5 text-center text-xs leading-relaxed text-ink-muted">{props.footnote}</p>
       )}
 
       <p className="mt-6 border-t border-border pt-5 text-center text-xs text-ink-muted">

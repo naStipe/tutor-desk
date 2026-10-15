@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { inputClassName } from "../../../components/Field";
-import { updatePasswordAction, type AuthActionState } from "../actions";
+import { type AuthActionState, updatePasswordAction } from "../actions";
 
 const initialState: AuthActionState = {};
 
@@ -24,7 +24,7 @@ export function UpdatePasswordForm() {
   const [state, formAction] = useActionState(updatePasswordAction, initialState);
 
   return (
-    <div className="w-full max-w-md td-glass rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
+    <div className="w-full max-w-md bg-surface rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
       <h1 className="text-xl font-bold tracking-tight text-ink">Choose a new password</h1>
       <p className="mt-1 text-sm text-ink-muted">
         You're signed in via your reset link. Set a new password below.

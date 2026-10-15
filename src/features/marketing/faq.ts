@@ -1,5 +1,11 @@
 // Single source for the landing FAQ: rendered on the page and mirrored in the FAQPage JSON-LD.
+import { PRICE_SENTENCE } from "./pricing";
+
 export const FAQ = [
+  {
+    q: "How much does it cost?",
+    a: `${PRICE_SENTENCE}. There is one plan and it includes every feature.`,
+  },
   {
     q: "Who is TutorDesk for?",
     a: "Independent, self-employed private tutors who manage their own students, schedule and payments. It is not a school system.",

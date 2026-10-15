@@ -51,7 +51,7 @@ export function Patchwork() {
         ))}
       </fieldset>
 
-      <div className="mt-10 min-h-64">
+      <div className="mt-10 md:min-h-36">
         <ul hidden={after} className="flex flex-wrap justify-center gap-4">
           {TOOLS.map((tool, index) => (
             <li

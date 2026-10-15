@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
 import { inputClassName } from "../../../components/Field";
-import { requestPasswordResetAction, type AuthActionState } from "../actions";
+import { type AuthActionState, requestPasswordResetAction } from "../actions";
 
 const initialState: AuthActionState = {};
 
@@ -25,7 +25,7 @@ export function RequestResetForm() {
   const [state, formAction] = useActionState(requestPasswordResetAction, initialState);
 
   return (
-    <div className="w-full max-w-md td-glass rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
+    <div className="w-full max-w-md bg-surface rounded-2xl border border-border p-6 shadow-2xl shadow-black/10 sm:p-8">
       <h1 className="text-xl font-bold tracking-tight text-ink">Reset your password</h1>
       <p className="mt-1 text-sm text-ink-muted">
         Enter your email and we'll send you a link to reset your password.

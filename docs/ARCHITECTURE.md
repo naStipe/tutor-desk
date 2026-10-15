@@ -61,7 +61,7 @@ recorded by the tutor; see `docs/DOMAIN_MODEL.md` for the ownership caveat this 
 reminder run (`send-lesson-reminders.ts`), and the balance-reminder server action (`actions.ts`).
 `GET /api/cron/lesson-reminders` is the only cron entry point; it is not scheduled until the owner adds
 a `vercel.json` cron entry (docs/EMAIL_SETUP.md). `public.notification_log` (migration
-`20261010000000_notification_log.sql`, not yet applied) records every attempt and enforces one lesson
+`20261010000000_notification_log.sql`, applied to the hosted project on 2026-10-15) records every attempt and enforces one lesson
 reminder per lesson. `src/lib/supabase/admin.ts` is the service-role client used only by this feature
 (docs/SECURITY.md). Auth emails (confirmation, recovery) are sent by Supabase Auth through Resend as
 custom SMTP; no app code sends them.

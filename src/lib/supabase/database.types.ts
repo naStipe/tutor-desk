@@ -821,7 +821,7 @@ export type Database = {
       complete_elapsed_lessons: { Args: never; Returns: number }
       claim_balance_reminder: {
         Args: {
-          p_cooldown?: unknown
+          p_cooldown?: string
           p_student_id: string
           p_to_masked: string
           p_tutor_id: string

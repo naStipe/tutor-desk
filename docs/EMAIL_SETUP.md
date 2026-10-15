@@ -91,13 +91,13 @@ Set in Vercel (Production, and Preview if wanted) and in `.env.local`:
 | `CRON_SECRET` | Long random string (for example `openssl rand -hex 32`). Vercel Cron sends it as `Authorization: Bearer <value>` automatically. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard -> Project Settings -> API. Server-only, bypasses RLS. Never `NEXT_PUBLIC_`. |
 
-## 6. Apply the database migration (owner approval required)
+## 6. Database migration (done)
 
-`supabase/migrations/20261010000000_notification_log.sql` is **not applied** to the hosted project.
-Review it, then apply it yourself (`pnpm run db:push:dry`, then `pnpm run db:push`). It is additive
-(one table and two service-role-only functions). Afterwards run `pnpm run db:types` and commit the
-regenerated `src/lib/supabase/database.types.ts` (TD-020 edited it by hand to match; the regenerated
-file may differ in formatting or in the `interval` argument type).
+`supabase/migrations/20261010000000_notification_log.sql` was applied to the hosted project on
+2026-10-15 with owner approval (Supabase tool; recorded in the hosted migration history as version
+`20261015013525`, name `notification_log`). Do not `supabase db push` it again. The generated types
+match `src/lib/supabase/database.types.ts` for these objects (the `interval` argument is typed
+`string`).
 
 ## 7. How the app emails behave
 

@@ -10,7 +10,7 @@
   SECURITY INVOKER, no `anon` execute); Postgres 17.6. The security advisors list nothing new from it. The generated types
   match the hand-edited `database.types.ts` for these objects. It does **not** appear in the hosted migration history
   (`list_migrations`, which was already out of step with the local file versions), so do not `supabase db push` it again.
-  `20261010000000_notification_log.sql` is still **not** applied on the hosted project.
+  `20261010000000_notification_log.sql` was applied to the hosted project on 2026-10-15 (see the TD-020 section).
 - Last updated: 2026-10-11
 - Uncommitted work was committed at the end of this session (see git log). The 2026-10-15 marketing, legal, pricing and account-deletion work was committed and pushed to `main` on 2026-10-15.
 
@@ -202,11 +202,21 @@
   Env vars (all in `.env.example`): `EMAIL_NOTIFICATIONS_ENABLED`, `RESEND_API_KEY`, `EMAIL_FROM`,
   `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`. With the switch off the cron returns `{"disabled":true}` (after
   the 401 check) and the button is hidden, so existing behavior is unchanged.
-- **Schema (written, NOT applied)**: `supabase/migrations/20261010000000_notification_log.sql` adds
+- **Schema (applied to the hosted project 2026-10-15, see below)**: `supabase/migrations/20261010000000_notification_log.sql` adds
   `public.notification_log` (RLS, tutor select-own only, unique `(kind, lesson_id)`) and two service-role-only
   functions, `due_lesson_reminders` and `claim_balance_reminder`. `src/lib/supabase/database.types.ts` was
   edited by hand so the typed client compiles; `pnpm run db:types:check` will fail against the hosted project
   until the migration is applied and `pnpm run db:types` is rerun (not run: it needs the hosted project).
+- **Hosted apply (2026-10-15, owner approved "apply it")**: before applying, a read-only query confirmed the table and both
+  functions were absent and all 14 referenced columns existed (Postgres 17.6). Applied with the Supabase tool; the
+  hosted history records it as `20261015013525 notification_log` (version differs from the file name, like the other
+  tool-applied migrations; do not `db push` it again). Verified after: RLS on, 1 select policy, table grant
+  `authenticated: SELECT` only, both functions executable by `service_role` only (not `anon`/`authenticated`),
+  `due_lesson_reminders(now, now+24h, 5)` runs (3 rows; nothing was sent, sending stays off). Security advisors list
+  nothing new (pre-existing: 7 SECURITY DEFINER portal/tutor RPCs callable by `authenticated` by design,
+  `portal_invite_attempt` RLS without policy, leaked-password protection off). Generated types match the hand-edited
+  file except `claim_balance_reminder.p_cooldown` (`unknown` -> `string`, fixed). Email sending still needs the env vars
+  and the cron entry in docs/EMAIL_SETUP.md.
 - **Security**: first RLS-bypassing path; safeguards listed in `docs/SECURITY.md` (service-role-only SQL
   function, constant-time cron secret, no user input in the cron path, ownership re-check and advisory-lock
   rate limit on the manual action, escaped templates, masked log).
